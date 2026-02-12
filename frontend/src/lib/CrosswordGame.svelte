@@ -924,6 +924,7 @@
       sans-serif;
     padding: 0;
     margin: 0 auto;
+    max-width: 1440px;
     min-height: 100vh;
     min-height: 100dvh;
     background: var(--bg-secondary);
@@ -1122,14 +1123,12 @@
     gap: 24px;
     padding: 0 32px 32px;
     align-items: flex-start;
-    max-height: calc(100vh - 120px);
   }
 
   @media (max-width: 1024px) {
     .game-layout {
       flex-direction: column;
       padding: 0 16px 16px;
-      max-height: none;
     }
   }
 
@@ -1147,18 +1146,11 @@
      GRID SECTION
      ============================================ */
   .grid-section {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     display: flex;
     flex-direction: column;
     gap: 16px;
     min-width: 0;
-    max-height: calc(100vh - 160px);
-  }
-
-  @media (max-width: 1024px) {
-    .grid-section {
-      max-height: none;
-    }
   }
 
   .grid-wrapper {
@@ -1169,8 +1161,6 @@
     box-shadow:
       0 20px 25px -5px rgba(0, 0, 0, 0.1),
       0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    max-height: 100%;
-    overflow: auto;
   }
 
   .crossword-grid {
@@ -1180,9 +1170,11 @@
     gap: 1px;
     background: #1a1a1a;
     border: 1px solid #1a1a1a;
-    max-width: 100%;
-    max-height: calc(100vh - 200px);
     aspect-ratio: var(--grid-cols) / var(--grid-rows);
+    height: calc(100vh - 200px);
+    max-height: 700px;
+    width: auto;
+    max-width: 100%;
   }
 
   .cell {
