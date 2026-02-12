@@ -598,9 +598,30 @@ function GameModal({
         .map((w: { word: string; clue: string }) => ({
           word: w.word,
           clue: w.clue,
-          main_word_index: undefined,
+          main_word_index: undefined as number | undefined,
         }));
-      setWordsList([...wordsList, ...newWords]);
+
+      // Auto-assign main_word_index: match each main word letter to a word
+      const mw = mainWord.trim().toUpperCase();
+      const allWords = [...wordsList, ...newWords];
+      const usedWordIndices = new Set<number>();
+
+      for (let mi = 0; mi < mw.length; mi++) {
+        const letter = mw[mi];
+        // Find a word that contains this letter and hasn't been assigned yet
+        for (let wi = 0; wi < allWords.length; wi++) {
+          if (usedWordIndices.has(wi)) continue;
+          if (allWords[wi].main_word_index !== undefined) continue;
+          const letterIdx = allWords[wi].word.indexOf(letter);
+          if (letterIdx !== -1) {
+            allWords[wi].main_word_index = letterIdx;
+            usedWordIndices.add(wi);
+            break;
+          }
+        }
+      }
+
+      setWordsList(allWords);
       setAiSettingsOpen(false);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Generation failed");
