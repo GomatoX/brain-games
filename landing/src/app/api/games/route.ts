@@ -36,9 +36,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const accessToken = request.cookies.get("access_token")?.value;
+  let accessToken = request.cookies.get("access_token")?.value;
+
   if (!accessToken) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const refreshToken = request.cookies.get("refresh_token")?.value;
+    if (!refreshToken) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    try {
+      const tokens = await directusRefresh(refreshToken);
+      accessToken = tokens.access_token;
+    } catch {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
   }
 
   try {
@@ -52,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await directusCreateGame(collection, data);
+    const result = await directusCreateGame(collection, data, accessToken);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create";
@@ -61,9 +72,20 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const accessToken = request.cookies.get("access_token")?.value;
+  let accessToken = request.cookies.get("access_token")?.value;
+
   if (!accessToken) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const refreshToken = request.cookies.get("refresh_token")?.value;
+    if (!refreshToken) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    try {
+      const tokens = await directusRefresh(refreshToken);
+      accessToken = tokens.access_token;
+    } catch {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
   }
 
   try {
@@ -77,7 +99,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const result = await directusUpdateGame(collection, id, data);
+    const result = await directusUpdateGame(collection, id, data, accessToken);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update";
@@ -86,9 +108,20 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const accessToken = request.cookies.get("access_token")?.value;
+  let accessToken = request.cookies.get("access_token")?.value;
+
   if (!accessToken) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const refreshToken = request.cookies.get("refresh_token")?.value;
+    if (!refreshToken) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    try {
+      const tokens = await directusRefresh(refreshToken);
+      accessToken = tokens.access_token;
+    } catch {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
   }
 
   try {
@@ -103,7 +136,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await directusDeleteGame(collection, id);
+    await directusDeleteGame(collection, id, accessToken);
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to delete";

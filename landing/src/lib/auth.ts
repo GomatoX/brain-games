@@ -145,24 +145,24 @@ export async function directusGetUserToken(
 }
 
 export async function directusGetGames(accessToken: string) {
-  const token = ADMIN_TOKEN || accessToken;
+  const userFilter = "&filter[user_created][_eq]=$CURRENT_USER";
   const [crosswords, wordgames, sudoku] = await Promise.all([
     fetch(
-      `${API_URL}/items/crosswords?fields=id,status,title,difficulty,words,main_word,date_created&sort=-date_created`,
+      `${API_URL}/items/crosswords?fields=id,status,title,difficulty,words,main_word,date_created&sort=-date_created${userFilter}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       },
     ).then((r) => (r.ok ? r.json() : { data: [] })),
     fetch(
-      `${API_URL}/items/wordgames?fields=id,status,title,word,definition,max_attempts,date_created&sort=-date_created`,
+      `${API_URL}/items/wordgames?fields=id,status,title,word,definition,max_attempts,date_created&sort=-date_created${userFilter}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       },
     ).then((r) => (r.ok ? r.json() : { data: [] })),
     fetch(
-      `${API_URL}/items/sudoku?fields=id,status,title,difficulty,date_created&sort=-date_created`,
+      `${API_URL}/items/sudoku?fields=id,status,title,difficulty,date_created&sort=-date_created${userFilter}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       },
     ).then((r) => (r.ok ? r.json() : { data: [] })),
   ]);
@@ -177,12 +177,13 @@ export async function directusGetGames(accessToken: string) {
 export async function directusCreateGame(
   collection: string,
   data: Record<string, unknown>,
+  accessToken: string,
 ) {
   const res = await fetch(`${API_URL}/items/${collection}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ADMIN_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(data),
   });
@@ -200,12 +201,13 @@ export async function directusUpdateGame(
   collection: string,
   id: string,
   data: Record<string, unknown>,
+  accessToken: string,
 ) {
   const res = await fetch(`${API_URL}/items/${collection}/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ADMIN_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(data),
   });
@@ -219,11 +221,15 @@ export async function directusUpdateGame(
   return result.data;
 }
 
-export async function directusDeleteGame(collection: string, id: string) {
+export async function directusDeleteGame(
+  collection: string,
+  id: string,
+  accessToken: string,
+) {
   const res = await fetch(`${API_URL}/items/${collection}/${id}`, {
     method: "DELETE",
     headers: {
-      Authorization: `Bearer ${ADMIN_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 
