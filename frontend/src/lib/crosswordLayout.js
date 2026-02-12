@@ -106,9 +106,9 @@ function scorePlacement(grid, word, startX, startY, dir) {
 
   // Score formula:
   // - +1000 per intersection (strongly favor overlaps)
-  // - -10 per unit of grid expansion (penalize spreading out)
+  // - -50 per unit of grid expansion (aggressively penalize spreading out)
   // - +100 base for valid placement
-  return intersections * 1000 - expansion * 10 + 100;
+  return intersections * 1000 - expansion * 50 + 100;
 }
 
 /**

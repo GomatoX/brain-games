@@ -832,14 +832,6 @@
       <div class="clues-panel">
         <div class="clues-header">
           <h3>Clues</h3>
-          <div class="clues-tools">
-            <button class="icon-btn-sm" title="Font size">
-              <span class="material-symbols-outlined">format_size</span>
-            </button>
-            <button class="icon-btn-sm" title="Print">
-              <span class="material-symbols-outlined">print</span>
-            </button>
-          </div>
         </div>
 
         <div class="clues-body">
@@ -1368,6 +1360,7 @@
      ============================================ */
   .clues-panel {
     flex: 1;
+    max-width: 400px;
     min-width: 280px;
     display: flex;
     flex-direction: column;
