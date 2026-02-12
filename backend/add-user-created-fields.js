@@ -2,19 +2,40 @@
  * Migration script: Add `user_created` system field to all game collections.
  *
  * Usage:
- *   DIRECTUS_URL=https://api.rustycogs.io ADMIN_TOKEN=<your-admin-token> node add-user-created-fields.js
+ *   DIRECTUS_URL=https://api.rustycogs.io ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=admin123 node add-user-created-fields.js
  *
  * This creates the `user_created` field on crosswords, wordgames, and sudoku
  * if it doesn't already exist.
  */
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL || "http://localhost:8055";
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-if (!ADMIN_TOKEN) {
-  console.error("ADMIN_TOKEN environment variable is required");
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error(
+    "ADMIN_EMAIL and ADMIN_PASSWORD environment variables are required",
+  );
   process.exit(1);
 }
+
+async function getAccessToken() {
+  const res = await fetch(`${DIRECTUS_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText);
+    throw new Error(`Login failed: ${err}`);
+  }
+
+  const { data } = await res.json();
+  return data.access_token;
+}
+
+let ADMIN_TOKEN;
 
 const collections = ["crosswords", "wordgames", "sudoku"];
 
@@ -72,6 +93,15 @@ async function addUserCreatedField(collection) {
 (async () => {
   console.log(`Adding user_created fields to: ${collections.join(", ")}`);
   console.log(`Directus URL: ${DIRECTUS_URL}\n`);
+
+  try {
+    console.log(`Logging in as ${ADMIN_EMAIL}...`);
+    ADMIN_TOKEN = await getAccessToken();
+    console.log("✓ Logged in successfully\n");
+  } catch (err) {
+    console.error(`✗ ${err.message}`);
+    process.exit(1);
+  }
 
   for (const collection of collections) {
     await addUserCreatedField(collection);

@@ -167,7 +167,7 @@ export async function directusGetGames(accessToken: string) {
   const [crosswords, wordgames, sudoku] = await Promise.all([
     fetchCollection(
       "crosswords",
-      "id,status,title,difficulty,words,main_word,user_created,date_created",
+      "id,status,title,difficulty,words,user_created,date_created",
     ),
     fetchCollection(
       "wordgames",
