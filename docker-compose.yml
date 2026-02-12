@@ -5,16 +5,30 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8055:8055"
-    env_file:
-      - ./backend/.env
+    environment:
+      - DB_CLIENT=${DB_CLIENT:-sqlite3}
+      - DB_FILENAME=${DB_FILENAME:-/app/data/data.db}
+      - SECRET=${SECRET}
+      - KEY=${KEY}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@rustycogs.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-8055}
+      - CORS_ENABLED=${CORS_ENABLED:-true}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - PUBLIC_URL=${PUBLIC_URL}
+      - CONTENT_SECURITY_POLICY_DIRECTIVES__FRAME_SRC=${CONTENT_SECURITY_POLICY_DIRECTIVES__FRAME_SRC:-}
+      - CONTENT_SECURITY_POLICY_DIRECTIVES__CHILD_SRC=${CONTENT_SECURITY_POLICY_DIRECTIVES__CHILD_SRC:-}
     volumes:
       - directus_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8055/server/health"]
-      interval: 30s
+      test:
+        ["CMD", "wget", "-q", "--spider", "http://localhost:8055/server/health"]
+      interval: 15s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 60s
 
   frontend:
     build:
