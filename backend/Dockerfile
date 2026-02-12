@@ -2,11 +2,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install build tools for native modules (better-sqlite3)
+RUN apk add --no-cache python3 make g++
+
 # Copy dependency files
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts=false
 
 # Copy project files (snapshot, extensions, etc.)
 COPY . .
