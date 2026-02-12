@@ -1386,48 +1386,4 @@ fields:
       foreign_key_table: directus_users
       foreign_key_column: id
 
-relations:
-  - collection: crosswords
-    field: user_created
-    related_collection: directus_users
-    meta:
-      one_field: null
-      sort_field: null
-      one_deselect_action: nullify
-    schema:
-      table: crosswords
-      column: user_created
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      on_update: NO ACTION
-      on_delete: SET NULL
-
-  - collection: wordgames
-    field: user_created
-    related_collection: directus_users
-    meta:
-      one_field: null
-      sort_field: null
-      one_deselect_action: nullify
-    schema:
-      table: wordgames
-      column: user_created
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      on_update: NO ACTION
-      on_delete: SET NULL
-
-  - collection: sudoku
-    field: user_created
-    related_collection: directus_users
-    meta:
-      one_field: null
-      sort_field: null
-      one_deselect_action: nullify
-    schema:
-      table: sudoku
-      column: user_created
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      on_update: NO ACTION
-      on_delete: SET NULL
+relations: []
