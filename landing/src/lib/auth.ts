@@ -148,7 +148,7 @@ export async function directusGetGames(accessToken: string) {
   const token = ADMIN_TOKEN || accessToken;
   const [crosswords, wordgames, sudoku] = await Promise.all([
     fetch(
-      `${API_URL}/items/crosswords?fields=id,status,title,difficulty,date_created&sort=-date_created`,
+      `${API_URL}/items/crosswords?fields=id,status,title,difficulty,words,main_word,date_created&sort=-date_created`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },

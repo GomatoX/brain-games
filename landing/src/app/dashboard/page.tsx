@@ -11,6 +11,8 @@ interface Game {
   definition?: string;
   max_attempts?: number;
   difficulty?: string;
+  words?: { word: string; clue: string; main_word_index?: number }[];
+  main_word?: string;
 }
 
 interface Games {
@@ -570,10 +572,10 @@ function GameModal({
   // Crossword words
   const [wordsInput, setWordsInput] = useState("");
   const [clueInput, setClueInput] = useState("");
-  const [mainWord, setMainWord] = useState("");
+  const [mainWord, setMainWord] = useState(game?.main_word || "");
   const [wordsList, setWordsList] = useState<
     { word: string; clue: string; main_word_index?: number }[]
-  >([]);
+  >(game?.words || []);
 
   function addWord() {
     const w = wordsInput.trim().toUpperCase();
