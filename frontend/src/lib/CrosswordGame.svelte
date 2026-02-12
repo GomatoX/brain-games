@@ -1119,15 +1119,17 @@
      ============================================ */
   .game-layout {
     display: flex;
-    gap: 32px;
+    gap: 24px;
     padding: 0 32px 32px;
     align-items: flex-start;
+    max-height: calc(100vh - 120px);
   }
 
   @media (max-width: 1024px) {
     .game-layout {
       flex-direction: column;
       padding: 0 16px 16px;
+      max-height: none;
     }
   }
 
@@ -1145,17 +1147,17 @@
      GRID SECTION
      ============================================ */
   .grid-section {
-    flex: none;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 600px;
-    width: 100%;
+    min-width: 0;
+    max-height: calc(100vh - 160px);
   }
 
   @media (max-width: 1024px) {
     .grid-section {
-      max-width: 100%;
+      max-height: none;
     }
   }
 
@@ -1167,6 +1169,8 @@
     box-shadow:
       0 20px 25px -5px rgba(0, 0, 0, 0.1),
       0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-height: 100%;
+    overflow: auto;
   }
 
   .crossword-grid {
@@ -1177,6 +1181,7 @@
     background: #1a1a1a;
     border: 1px solid #1a1a1a;
     max-width: 100%;
+    max-height: calc(100vh - 200px);
     aspect-ratio: var(--grid-cols) / var(--grid-rows);
   }
 
@@ -1359,12 +1364,13 @@
      CLUES PANEL
      ============================================ */
   .clues-panel {
-    flex: 1;
+    flex: 0 0 auto;
+    width: 340px;
     max-width: 400px;
     min-width: 280px;
     display: flex;
     flex-direction: column;
-    height: 630px;
+    max-height: calc(100vh - 160px);
     background: var(--bg-primary);
     border-radius: 12px;
     border: 1px solid var(--border-color);
@@ -1372,12 +1378,16 @@
       0 1px 3px rgba(0, 0, 0, 0.1),
       0 1px 2px rgba(0, 0, 0, 0.06);
     overflow: hidden;
+    position: sticky;
+    top: 16px;
   }
 
   @media (max-width: 1024px) {
     .clues-panel {
-      height: auto;
-      max-height: 500px;
+      width: 100%;
+      max-width: 100%;
+      max-height: 400px;
+      position: static;
     }
   }
 

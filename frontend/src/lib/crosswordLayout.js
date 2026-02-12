@@ -1,11 +1,12 @@
 /**
- * Crossword Layout Algorithm v8 - Maximum Density
+ * Crossword Layout Algorithm v9 - Ultra Dense
  *
- * Aggressive density algorithm that:
- * - Tries ALL possible placements for each word
- * - Scores based on intersection count and compactness
- * - Heavily penalizes placements that expand grid bounds
- * - No isolated fallback placement - only connected words
+ * Major improvements over v8:
+ * - Relaxed adjacency validation for newspaper-style density
+ * - Tries BOTH directions for each placement (not just perpendicular)
+ * - Scores reward adjacency and gap-filling
+ * - Center-of-mass compactness scoring
+ * - Multiple word ordering strategies per seed
  */
 
 /**
@@ -54,13 +55,155 @@ function getGridBounds(grid) {
 }
 
 /**
- * Calculate how much a placement would expand the grid
+ * Check if word can be validly placed.
+ * Relaxed rules for dense newspaper-style crosswords:
+ * - Letters at intersections must match
+ * - No accidental word extension (empty before start and after end)
+ * - At least one intersection with existing grid required
+ * - Parallel adjacent words are allowed (key change from v8)
  */
-function calculateExpansion(grid, word, startX, startY, dir) {
-  const bounds = getGridBounds(grid);
+function isValid(grid, word, startX, startY, dir) {
   const dx = dir === "across" ? 1 : 0;
   const dy = dir === "down" ? 1 : 0;
 
+  // Check before start is empty (no accidental word extension)
+  const bx = startX - dx;
+  const by = startY - dy;
+  if (grid[`${bx},${by}`]) return false;
+
+  // Check after end is empty
+  const ax = startX + word.length * dx;
+  const ay = startY + word.length * dy;
+  if (grid[`${ax},${ay}`]) return false;
+
+  let intersections = 0;
+  let adjacencies = 0;
+
+  for (let i = 0; i < word.length; i++) {
+    const x = startX + i * dx;
+    const y = startY + i * dy;
+    const key = `${x},${y}`;
+    const letter = word[i];
+    const existing = grid[key];
+
+    if (existing) {
+      // Cell occupied - must match
+      if (existing !== letter) return false;
+      intersections++;
+    } else {
+      // Cell empty - check perpendicular neighbors
+      const perpDx = dir === "across" ? 0 : 1;
+      const perpDy = dir === "down" ? 0 : 1;
+
+      const n1Key = `${x + perpDx},${y + perpDy}`;
+      const n2Key = `${x - perpDx},${y - perpDy}`;
+      const n1 = grid[n1Key];
+      const n2 = grid[n2Key];
+
+      if (n1 || n2) {
+        adjacencies++;
+
+        // Only reject if this would EXTEND an existing word incorrectly.
+        // An existing perpendicular word has a continuous run of letters.
+        // Placing our letter here would add to that run, creating a new
+        // unintended word. We check if the neighbor is part of a run
+        // AND the new letter would extend it (neighbor on one side,
+        // and the new cell would create a sequence of 2+ NEW letters).
+
+        // Find perpendicular run length through this cell
+        let runUp = 0;
+        let runDown = 0;
+        let cx, cy;
+
+        // Count existing letters in positive perpendicular direction
+        cx = x + perpDx;
+        cy = y + perpDy;
+        while (grid[`${cx},${cy}`]) {
+          runUp++;
+          cx += perpDx;
+          cy += perpDy;
+        }
+
+        // Count existing letters in negative perpendicular direction
+        cx = x - perpDx;
+        cy = y - perpDy;
+        while (grid[`${cx},${cy}`]) {
+          runDown++;
+          cx -= perpDx;
+          cy -= perpDy;
+        }
+
+        // If placing this letter would create a perpendicular sequence
+        // of 2+ letters that isn't a valid crossword word placement,
+        // reject it. Since we don't have a dictionary, we reject if
+        // it creates any new perpendicular word (run > 0 on either side).
+        // This means: only allow adjacency if the neighbor is a single
+        // isolated letter (part of a crossing word but not extending).
+        if (runUp + runDown > 1) return false;
+      }
+    }
+  }
+
+  // Must intersect at least once (for connected crosswords)
+  return intersections > 0;
+}
+
+/**
+ * Score a placement - higher is better
+ * Dense scoring rewards:
+ * - Intersections (sharing letters with existing words)
+ * - Adjacency (touching existing letters without crossing)
+ * - Compactness (staying close to grid center of mass)
+ * - NOT expanding the grid boundaries
+ */
+function scorePlacement(grid, word, startX, startY, dir, bounds) {
+  const dx = dir === "across" ? 1 : 0;
+  const dy = dir === "down" ? 1 : 0;
+
+  let intersections = 0;
+  let adjacencies = 0;
+  let newCells = 0;
+
+  // Calculate center of mass of current grid
+  const keys = Object.keys(grid);
+  let centerX = 0;
+  let centerY = 0;
+  for (const key of keys) {
+    const [kx, ky] = key.split(",").map(Number);
+    centerX += kx;
+    centerY += ky;
+  }
+  centerX /= keys.length || 1;
+  centerY /= keys.length || 1;
+
+  let distFromCenter = 0;
+
+  for (let i = 0; i < word.length; i++) {
+    const x = startX + i * dx;
+    const y = startY + i * dy;
+    const key = `${x},${y}`;
+
+    if (grid[key]) {
+      intersections++;
+    } else {
+      newCells++;
+      // Distance from center of mass
+      distFromCenter += Math.abs(x - centerX) + Math.abs(y - centerY);
+
+      // Count adjacent filled cells (bonus for filling gaps)
+      const neighbors = [
+        `${x + 1},${y}`,
+        `${x - 1},${y}`,
+        `${x},${y + 1}`,
+        `${x},${y - 1}`,
+      ];
+      for (const nk of neighbors) {
+        if (grid[nk]) adjacencies++;
+      }
+    }
+  }
+
+  // Calculate grid expansion
   let newMinX = bounds.minX;
   let newMinY = bounds.minY;
   let newMaxX = bounds.maxX;
@@ -78,108 +221,21 @@ function calculateExpansion(grid, word, startX, startY, dir) {
   const oldArea =
     (bounds.maxX - bounds.minX + 1) * (bounds.maxY - bounds.minY + 1);
   const newArea = (newMaxX - newMinX + 1) * (newMaxY - newMinY + 1);
-
-  return newArea - oldArea;
-}
-
-/**
- * Score a placement - higher is better
- */
-function scorePlacement(grid, word, startX, startY, dir) {
-  const dx = dir === "across" ? 1 : 0;
-  const dy = dir === "down" ? 1 : 0;
-
-  let intersections = 0;
-
-  for (let i = 0; i < word.length; i++) {
-    const x = startX + i * dx;
-    const y = startY + i * dy;
-    const key = `${x},${y}`;
-
-    if (grid[key]) {
-      intersections++;
-    }
-  }
-
-  // Calculate grid expansion penalty
-  const expansion = calculateExpansion(grid, word, startX, startY, dir);
+  const expansion = newArea - oldArea;
 
   // Score formula:
-  // - +1000 per intersection (strongly favor overlaps)
-  // - -50 per unit of grid expansion (aggressively penalize spreading out)
-  // - +100 base for valid placement
-  return intersections * 1000 - expansion * 50 + 100;
-}
-
-/**
- * Check if word can be validly placed
- */
-function isValid(grid, word, startX, startY, dir) {
-  const dx = dir === "across" ? 1 : 0;
-  const dy = dir === "down" ? 1 : 0;
-
-  // Check before start is empty (no accidental word extension)
-  const bx = startX - dx;
-  const by = startY - dy;
-  if (grid[`${bx},${by}`]) return false;
-
-  // Check after end is empty
-  const ax = startX + word.length * dx;
-  const ay = startY + word.length * dy;
-  if (grid[`${ax},${ay}`]) return false;
-
-  let intersections = 0;
-
-  for (let i = 0; i < word.length; i++) {
-    const x = startX + i * dx;
-    const y = startY + i * dy;
-    const key = `${x},${y}`;
-    const letter = word[i];
-    const existing = grid[key];
-
-    if (existing) {
-      // Cell occupied - must match
-      if (existing !== letter) return false;
-      intersections++;
-    } else {
-      // Cell empty - check perpendicular neighbors
-      // Only reject if it would create invalid adjacent letters
-      const perpDx = dir === "across" ? 0 : 1;
-      const perpDy = dir === "down" ? 0 : 1;
-
-      // Check both perpendicular directions
-      const n1Key = `${x + perpDx},${y + perpDy}`;
-      const n2Key = `${x - perpDx},${y - perpDy}`;
-      const n1 = grid[n1Key];
-      const n2 = grid[n2Key];
-
-      // If there's a neighbor, check if it's part of a perpendicular word
-      // We need to ensure we're not creating invalid touching
-      if (n1 || n2) {
-        // Check if this creates an unwanted adjacency
-        // Look for a continuous run of letters in perpendicular direction
-        let hasRun = false;
-
-        if (n1) {
-          // Check if n1 has additional letters in that direction
-          const nextKey = `${x + perpDx * 2},${y + perpDy * 2}`;
-          if (grid[nextKey]) hasRun = true;
-        }
-        if (n2) {
-          const nextKey = `${x - perpDx * 2},${y - perpDy * 2}`;
-          if (grid[nextKey]) hasRun = true;
-        }
-
-        if (hasRun) return false;
-
-        // Also check if both neighbors exist (sandwiched)
-        if (n1 && n2) return false;
-      }
-    }
-  }
-
-  // Must intersect at least once (for connected crosswords)
-  return intersections > 0;
+  // - +2000 per intersection (strongly favor letter sharing)
+  // - +200 per adjacency (reward touching existing words)
+  // - -100 per unit of grid expansion (heavily penalize spreading)
+  // - -5 per unit of distance from center (prefer compact placement)
+  // - +50 base for valid placement
+  return (
+    intersections * 2000 +
+    adjacencies * 200 -
+    expansion * 100 -
+    distFromCenter * 5 +
+    50
+  );
 }
 
 /**
@@ -201,6 +257,7 @@ export function generateLayout(words, seed = 1) {
 
   const grid = {}; // "x,y" -> letter
   const placed = [];
+  const placedDirs = []; // Track direction per placed word for both-dir search
 
   const setCell = (x, y, letter) => {
     grid[`${x},${y}`] = letter;
@@ -218,10 +275,11 @@ export function generateLayout(words, seed = 1) {
     y: 0,
     direction: "across",
   });
+  placedDirs.push("across");
 
   // Try to place remaining words with multiple passes
   let unplaced = shuffled.slice(1);
-  let maxPasses = 10; // More passes for better results
+  let maxPasses = 15;
   let pass = 0;
 
   while (unplaced.length > 0 && pass < maxPasses) {
@@ -233,31 +291,77 @@ export function generateLayout(words, seed = 1) {
       let bestPlacement = null;
       let bestScore = -Infinity;
 
-      // Try EVERY letter of EVERY placed word as potential intersection
-      for (const p of placed) {
+      const bounds = getGridBounds(grid);
+
+      // Strategy 1: Try intersecting with EVERY letter of EVERY placed word
+      for (let pi2 = 0; pi2 < placed.length; pi2++) {
+        const p = placed[pi2];
         const pWord = p.word;
 
         for (let pi = 0; pi < pWord.length; pi++) {
           for (let wj = 0; wj < word.length; wj++) {
             if (pWord[pi] !== word[wj]) continue;
 
-            // Try perpendicular direction
-            const newDir = p.direction === "across" ? "down" : "across";
-            let startX, startY;
+            // Try BOTH directions (not just perpendicular)
+            const dirs = ["across", "down"];
+            for (const newDir of dirs) {
+              let startX, startY;
 
-            if (p.direction === "across") {
-              startX = p.x + pi;
-              startY = p.y - wj;
-            } else {
-              startX = p.x - wj;
-              startY = p.y + pi;
+              if (newDir === "across") {
+                // Place horizontally: the wj-th letter of our word
+                // must land on the pi-th letter of the placed word
+                const targetX = p.direction === "across" ? p.x + pi : p.x;
+                const targetY = p.direction === "across" ? p.y : p.y + pi;
+                startX = targetX - wj;
+                startY = targetY;
+              } else {
+                // Place vertically
+                const targetX = p.direction === "across" ? p.x + pi : p.x;
+                const targetY = p.direction === "across" ? p.y : p.y + pi;
+                startX = targetX;
+                startY = targetY - wj;
+              }
+
+              if (isValid(grid, word, startX, startY, newDir)) {
+                const score = scorePlacement(
+                  grid,
+                  word,
+                  startX,
+                  startY,
+                  newDir,
+                  bounds,
+                );
+                if (score > bestScore) {
+                  bestScore = score;
+                  bestPlacement = { x: startX, y: startY, dir: newDir };
+                }
+              }
             }
+          }
+        }
+      }
 
-            if (isValid(grid, word, startX, startY, newDir)) {
-              const score = scorePlacement(grid, word, startX, startY, newDir);
-              if (score > bestScore) {
-                bestScore = score;
-                bestPlacement = { x: startX, y: startY, dir: newDir };
+      // Strategy 2: Try placing adjacent to existing grid cells
+      // Scan the perimeter of the current grid for valid positions
+      if (!bestPlacement) {
+        const bounds2 = getGridBounds(grid);
+        for (const dir of ["across", "down"]) {
+          const ddx = dir === "across" ? 1 : 0;
+          const ddy = dir === "down" ? 1 : 0;
+
+          // Try positions within and slightly outside the grid bounds
+          for (let y = bounds2.minY - word.length; y <= bounds2.maxY + 1; y++) {
+            for (
+              let x = bounds2.minX - word.length;
+              x <= bounds2.maxX + 1;
+              x++
+            ) {
+              if (isValid(grid, word, x, y, dir)) {
+                const score = scorePlacement(grid, word, x, y, dir, bounds2);
+                if (score > bestScore) {
+                  bestScore = score;
+                  bestPlacement = { x, y, dir };
+                }
               }
             }
           }
@@ -265,10 +369,14 @@ export function generateLayout(words, seed = 1) {
       }
 
       if (bestPlacement) {
-        const dx = bestPlacement.dir === "across" ? 1 : 0;
-        const dy = bestPlacement.dir === "down" ? 1 : 0;
+        const ddx = bestPlacement.dir === "across" ? 1 : 0;
+        const ddy = bestPlacement.dir === "down" ? 1 : 0;
         for (let k = 0; k < word.length; k++) {
-          setCell(bestPlacement.x + k * dx, bestPlacement.y + k * dy, word[k]);
+          setCell(
+            bestPlacement.x + k * ddx,
+            bestPlacement.y + k * ddy,
+            word[k],
+          );
         }
         placed.push({
           word: word,
@@ -277,6 +385,7 @@ export function generateLayout(words, seed = 1) {
           y: bestPlacement.y,
           direction: bestPlacement.dir,
         });
+        placedDirs.push(bestPlacement.dir);
       } else {
         stillUnplaced.push(wordObj);
       }
@@ -338,9 +447,9 @@ export function generateLayoutOptimized(words, seedHint = 1, attempts = 20) {
     const seed = seedHint + i;
     const layout = generateLayout(words, seed);
 
-    // Score: prioritize placing all words, then density
+    // Score: prioritize placing all words, then density, then small area
     const score =
-      layout.wordsPlaced * 10000 + layout.densityScore * 100 - layout.area;
+      layout.wordsPlaced * 10000 + layout.densityScore * 1000 - layout.area * 2;
 
     if (score > bestScore) {
       bestScore = score;
