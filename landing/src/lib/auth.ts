@@ -147,32 +147,39 @@ export async function directusGetUserToken(
 export async function directusGetGames(accessToken: string) {
   const me = await directusGetMe(accessToken);
   const userFilter = `&filter[user_created][_eq]=${me.id}`;
+
+  async function fetchCollection(collection: string, fields: string) {
+    const res = await fetch(
+      `${API_URL}/items/${collection}?fields=${fields}&sort=-date_created${userFilter}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (!res.ok) {
+      console.error(
+        `Failed to fetch ${collection}:`,
+        await res.text().catch(() => res.statusText),
+      );
+      return [];
+    }
+    const json = await res.json();
+    return json.data || [];
+  }
+
   const [crosswords, wordgames, sudoku] = await Promise.all([
-    fetch(
-      `${API_URL}/items/crosswords?fields=id,status,title,difficulty,words,main_word,date_created&sort=-date_created${userFilter}`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
-    ).then((r) => (r.ok ? r.json() : { data: [] })),
-    fetch(
-      `${API_URL}/items/wordgames?fields=id,status,title,word,definition,max_attempts,date_created&sort=-date_created${userFilter}`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
-    ).then((r) => (r.ok ? r.json() : { data: [] })),
-    fetch(
-      `${API_URL}/items/sudoku?fields=id,status,title,difficulty,date_created&sort=-date_created${userFilter}`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      },
-    ).then((r) => (r.ok ? r.json() : { data: [] })),
+    fetchCollection(
+      "crosswords",
+      "id,status,title,difficulty,words,main_word,user_created,date_created",
+    ),
+    fetchCollection(
+      "wordgames",
+      "id,status,title,word,definition,max_attempts,user_created,date_created",
+    ),
+    fetchCollection(
+      "sudoku",
+      "id,status,title,difficulty,user_created,date_created",
+    ),
   ]);
 
-  return {
-    crosswords: crosswords.data || [],
-    wordgames: wordgames.data || [],
-    sudoku: sudoku.data || [],
-  };
+  return { crosswords, wordgames, sudoku };
 }
 
 export async function directusCreateGame(

@@ -463,6 +463,47 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
 
+  - collection: crosswords
+    field: user_created
+    type: uuid
+    meta:
+      collection: crosswords
+      field: user_created
+      special:
+        - user-created
+      interface: select-dropdown-m2o
+      options:
+        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+      display: user
+      display_options: null
+      readonly: true
+      hidden: true
+      sort: 9
+      width: half
+      translations: null
+      note: null
+      conditions: null
+      required: false
+      group: null
+      validation: null
+      validation_message: null
+    schema:
+      name: user_created
+      table: crosswords
+      data_type: uuid
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+
   # ==========================================
   # WORDGAMES COLLECTION
   # ==========================================
@@ -848,6 +889,47 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+
+  - collection: wordgames
+    field: user_created
+    type: uuid
+    meta:
+      collection: wordgames
+      field: user_created
+      special:
+        - user-created
+      interface: select-dropdown-m2o
+      options:
+        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+      display: user
+      display_options: null
+      readonly: true
+      hidden: true
+      sort: 10
+      width: half
+      translations: null
+      note: null
+      conditions: null
+      required: false
+      group: null
+      validation: null
+      validation_message: null
+    schema:
+      name: user_created
+      table: wordgames
+      data_type: uuid
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
 
   # ==========================================
   # SUDOKU COLLECTION
@@ -1263,4 +1345,89 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
 
-relations: []
+  - collection: sudoku
+    field: user_created
+    type: uuid
+    meta:
+      collection: sudoku
+      field: user_created
+      special:
+        - user-created
+      interface: select-dropdown-m2o
+      options:
+        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+      display: user
+      display_options: null
+      readonly: true
+      hidden: true
+      sort: 10
+      width: half
+      translations: null
+      note: null
+      conditions: null
+      required: false
+      group: null
+      validation: null
+      validation_message: null
+    schema:
+      name: user_created
+      table: sudoku
+      data_type: uuid
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+
+relations:
+  - collection: crosswords
+    field: user_created
+    related_collection: directus_users
+    meta:
+      one_field: null
+      sort_field: null
+      one_deselect_action: nullify
+    schema:
+      table: crosswords
+      column: user_created
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      on_update: NO ACTION
+      on_delete: SET NULL
+
+  - collection: wordgames
+    field: user_created
+    related_collection: directus_users
+    meta:
+      one_field: null
+      sort_field: null
+      one_deselect_action: nullify
+    schema:
+      table: wordgames
+      column: user_created
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      on_update: NO ACTION
+      on_delete: SET NULL
+
+  - collection: sudoku
+    field: user_created
+    related_collection: directus_users
+    meta:
+      one_field: null
+      sort_field: null
+      one_deselect_action: nullify
+    schema:
+      table: sudoku
+      column: user_created
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      on_update: NO ACTION
+      on_delete: SET NULL
