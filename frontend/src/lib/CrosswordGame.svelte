@@ -1149,6 +1149,7 @@
     flex: 1 1 50%;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 16px;
     min-width: 0;
   }
@@ -1171,8 +1172,8 @@
     background: #1a1a1a;
     border: 1px solid #1a1a1a;
     aspect-ratio: var(--grid-cols) / var(--grid-rows);
-    height: calc(100vh - 200px);
-    max-height: 700px;
+    height: calc(100vh - 180px);
+    max-height: 800px;
     width: auto;
     max-width: 100%;
   }

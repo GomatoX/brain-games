@@ -77,7 +77,6 @@ function isValid(grid, word, startX, startY, dir) {
   if (grid[`${ax},${ay}`]) return false;
 
   let intersections = 0;
-  let adjacencies = 0;
 
   for (let i = 0; i < word.length; i++) {
     const x = startX + i * dx;
@@ -90,58 +89,11 @@ function isValid(grid, word, startX, startY, dir) {
       // Cell occupied - must match
       if (existing !== letter) return false;
       intersections++;
-    } else {
-      // Cell empty - check perpendicular neighbors
-      const perpDx = dir === "across" ? 0 : 1;
-      const perpDy = dir === "down" ? 0 : 1;
-
-      const n1Key = `${x + perpDx},${y + perpDy}`;
-      const n2Key = `${x - perpDx},${y - perpDy}`;
-      const n1 = grid[n1Key];
-      const n2 = grid[n2Key];
-
-      if (n1 || n2) {
-        adjacencies++;
-
-        // Only reject if this would EXTEND an existing word incorrectly.
-        // An existing perpendicular word has a continuous run of letters.
-        // Placing our letter here would add to that run, creating a new
-        // unintended word. We check if the neighbor is part of a run
-        // AND the new letter would extend it (neighbor on one side,
-        // and the new cell would create a sequence of 2+ NEW letters).
-
-        // Find perpendicular run length through this cell
-        let runUp = 0;
-        let runDown = 0;
-        let cx, cy;
-
-        // Count existing letters in positive perpendicular direction
-        cx = x + perpDx;
-        cy = y + perpDy;
-        while (grid[`${cx},${cy}`]) {
-          runUp++;
-          cx += perpDx;
-          cy += perpDy;
-        }
-
-        // Count existing letters in negative perpendicular direction
-        cx = x - perpDx;
-        cy = y - perpDy;
-        while (grid[`${cx},${cy}`]) {
-          runDown++;
-          cx -= perpDx;
-          cy -= perpDy;
-        }
-
-        // If placing this letter would create a perpendicular sequence
-        // of 2+ letters that isn't a valid crossword word placement,
-        // reject it. Since we don't have a dictionary, we reject if
-        // it creates any new perpendicular word (run > 0 on either side).
-        // This means: only allow adjacency if the neighbor is a single
-        // isolated letter (part of a crossing word but not extending).
-        if (runUp + runDown > 1) return false;
-      }
     }
+    // No perpendicular adjacency restriction — words can freely
+    // touch each other, just like in newspaper crosswords.
+    // The only rules are: letter matching at intersections,
+    // and no accidental word extension (checked above).
   }
 
   // Must intersect at least once (for connected crosswords)
@@ -269,8 +221,7 @@ export function generateLayout(words, seed = 1) {
     setCell(i, 0, first.word[i]);
   }
   placed.push({
-    word: first.word,
-    clue: first.clue,
+    ...first,
     x: 0,
     y: 0,
     direction: "across",
@@ -379,8 +330,7 @@ export function generateLayout(words, seed = 1) {
           );
         }
         placed.push({
-          word: word,
-          clue: wordObj.clue,
+          ...wordObj,
           x: bestPlacement.x,
           y: bestPlacement.y,
           direction: bestPlacement.dir,
