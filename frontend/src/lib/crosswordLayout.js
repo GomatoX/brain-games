@@ -56,11 +56,11 @@ function getGridBounds(grid) {
 
 /**
  * Check if word can be validly placed.
- * Relaxed rules for dense newspaper-style crosswords:
+ * Rules for dense crosswords:
  * - Letters at intersections must match
  * - No accidental word extension (empty before start and after end)
  * - At least one intersection with existing grid required
- * - Parallel adjacent words are allowed (key change from v8)
+ * - Perpendicular neighbors must not create unintended word runs
  */
 function isValid(grid, word, startX, startY, dir) {
   const dx = dir === "across" ? 1 : 0;
@@ -89,11 +89,37 @@ function isValid(grid, word, startX, startY, dir) {
       // Cell occupied - must match
       if (existing !== letter) return false;
       intersections++;
+    } else {
+      // Cell empty - check perpendicular neighbors to prevent
+      // invalid parallel word touching
+      const perpDx = dir === "across" ? 0 : 1;
+      const perpDy = dir === "down" ? 0 : 1;
+
+      const n1Key = `${x + perpDx},${y + perpDy}`;
+      const n2Key = `${x - perpDx},${y - perpDy}`;
+      const n1 = grid[n1Key];
+      const n2 = grid[n2Key];
+
+      if (n1 || n2) {
+        // Reject if neighbor has a run of 2+ letters (would create
+        // an unintended perpendicular word)
+        let hasRun = false;
+
+        if (n1) {
+          const nextKey = `${x + perpDx * 2},${y + perpDy * 2}`;
+          if (grid[nextKey]) hasRun = true;
+        }
+        if (n2) {
+          const nextKey = `${x - perpDx * 2},${y - perpDy * 2}`;
+          if (grid[nextKey]) hasRun = true;
+        }
+
+        if (hasRun) return false;
+
+        // Reject if sandwiched between two existing letters
+        if (n1 && n2) return false;
+      }
     }
-    // No perpendicular adjacency restriction — words can freely
-    // touch each other, just like in newspaper crosswords.
-    // The only rules are: letter matching at intersections,
-    // and no accidental word extension (checked above).
   }
 
   // Must intersect at least once (for connected crosswords)
