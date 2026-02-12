@@ -1132,6 +1132,9 @@
       flex-direction: column;
       padding: 0 16px 16px;
     }
+    .grid-section {
+      max-width: 100%;
+    }
   }
 
   @media (max-width: 768px) {
@@ -1154,6 +1157,8 @@
     align-items: center;
     gap: 16px;
     min-width: 0;
+    max-width: 55%;
+    overflow: hidden;
   }
 
   .grid-wrapper {
@@ -1164,6 +1169,9 @@
     box-shadow:
       0 20px 25px -5px rgba(0, 0, 0, 0.1),
       0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .crossword-grid {
@@ -1174,10 +1182,8 @@
     background: #1a1a1a;
     border: 1px solid #1a1a1a;
     aspect-ratio: var(--grid-cols) / var(--grid-rows);
-    height: calc(100vh - 180px);
-    max-height: 800px;
-    width: auto;
-    max-width: 100%;
+    width: 100%;
+    max-height: calc(100vh - 200px);
   }
 
   .cell {
