@@ -14,8 +14,8 @@ RUN npm ci --omit=dev --ignore-scripts=false
 # Copy project files (snapshot, extensions, etc.)
 COPY . .
 
-# Create data directory for SQLite
-RUN mkdir -p /app/data
+# Create required directories for Directus
+RUN mkdir -p /app/data /app/uploads /app/extensions
 
 # Expose Directus port
 EXPOSE 8055

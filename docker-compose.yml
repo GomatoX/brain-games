@@ -21,6 +21,7 @@ services:
       - CONTENT_SECURITY_POLICY_DIRECTIVES__CHILD_SRC=${CONTENT_SECURITY_POLICY_DIRECTIVES__CHILD_SRC:-}
     volumes:
       - directus_data:/app/data
+      - directus_uploads:/app/uploads
     restart: unless-stopped
     healthcheck:
       test:
@@ -60,3 +61,4 @@ services:
 
 volumes:
   directus_data:
+  directus_uploads:
