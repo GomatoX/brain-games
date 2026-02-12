@@ -130,26 +130,72 @@ function checkPlacement(grid, word, sx, sy, dir) {
 // ─── Density Score ────────────────────────────────────────────────────
 
 /**
- * Density Score = how many characters of the new word touch existing ones.
- * Intersections count double (strongest contact).
+ * Placement score combining:
+ *  - Touching characters  (how many cells of the word contact existing letters)
+ *  - Grid expansion penalty (penalise layouts that grow the bounding box)
+ *  - Compactness bonus     (prefer placement near the grid's centre of mass)
  */
 function densityScore(grid, word, x, y, dir) {
   const dx = dir === "across" ? 1 : 0;
   const dy = dir === "down" ? 1 : 0;
-  let score = 0;
+
+  // 1. Touching characters
+  let touching = 0;
   for (let i = 0; i < word.length; i++) {
     const cx = x + i * dx;
     const cy = y + i * dy;
     if (grid[`${cx},${cy}`]) {
-      score += 2; // intersection
+      touching += 2; // intersection — strongest touch
     } else {
-      if (grid[`${cx + 1},${cy}`]) score++;
-      if (grid[`${cx - 1},${cy}`]) score++;
-      if (grid[`${cx},${cy + 1}`]) score++;
-      if (grid[`${cx},${cy - 1}`]) score++;
+      if (grid[`${cx + 1},${cy}`]) touching++;
+      if (grid[`${cx - 1},${cy}`]) touching++;
+      if (grid[`${cx},${cy + 1}`]) touching++;
+      if (grid[`${cx},${cy - 1}`]) touching++;
     }
   }
-  return score;
+
+  // 2. Grid expansion penalty
+  const bounds = getGridBounds(grid);
+  let nMinX = bounds.minX,
+    nMinY = bounds.minY,
+    nMaxX = bounds.maxX,
+    nMaxY = bounds.maxY;
+  for (let i = 0; i < word.length; i++) {
+    const cx = x + i * dx;
+    const cy = y + i * dy;
+    nMinX = Math.min(nMinX, cx);
+    nMinY = Math.min(nMinY, cy);
+    nMaxX = Math.max(nMaxX, cx);
+    nMaxY = Math.max(nMaxY, cy);
+  }
+  const oldArea =
+    (bounds.maxX - bounds.minX + 1) * (bounds.maxY - bounds.minY + 1);
+  const newArea = (nMaxX - nMinX + 1) * (nMaxY - nMinY + 1);
+  const expansion = newArea - oldArea;
+
+  // 3. Compactness: distance from centre of mass
+  const keys = Object.keys(grid);
+  let comX = 0,
+    comY = 0;
+  for (const k of keys) {
+    const [kx, ky] = k.split(",").map(Number);
+    comX += kx;
+    comY += ky;
+  }
+  comX /= keys.length || 1;
+  comY /= keys.length || 1;
+
+  let distFromCom = 0;
+  for (let i = 0; i < word.length; i++) {
+    const cx = x + i * dx;
+    const cy = y + i * dy;
+    if (!grid[`${cx},${cy}`]) {
+      distFromCom += Math.abs(cx - comX) + Math.abs(cy - comY);
+    }
+  }
+
+  // Combined score (higher = better)
+  return touching * 2000 - expansion * 100 - distFromCom * 5 + 50;
 }
 
 // ─── 1×1 Hole Detection ──────────────────────────────────────────────
