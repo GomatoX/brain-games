@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist
+.next
+.svelte-kit
+
+# Directus data
+backend/data.db
+backend/uploads
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+./mocks/*

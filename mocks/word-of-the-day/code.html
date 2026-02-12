@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Word of the Day - Rustycogs.io</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c25e40", // Rust/Terracotta
+                        "primary-dark": "#a0492d",
+                        "primary-light": "#fcece8",
+                        "gold-muted": "#dcb162", // Muted Gold for misplaced letters
+                        "surface": "#ffffff",
+                        "surface-offset": "#f9fafb", // Very light grey
+                        "text-main": "#0f172a", // Slate 900
+                        "text-muted": "#64748b", // Slate 500
+                        "border-light": "#e2e8f0", // Slate 200
+                        "key-bg": "#e2e8f0",
+                        "code-bg": "#1e293b", 
+                    },
+                    fontFamily: {
+                        "serif": ["Playfair Display", "serif"],
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'tile': '0 2px 4px rgba(0,0,0,0.05)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 20px rgba(194, 94, 64, 0.15)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c25e40; 
+        }@keyframes subtle-pulse {
+            0%, 100% { border-color: #cbd5e1; }
+            50% { border-color: #94a3b8; }
+        }
+        .active-tile {
+            animation: subtle-pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-surface text-text-main font-sans min-h-screen flex flex-col antialiased selection:bg-primary/20 selection:text-primary-dark">
+<header class="border-b border-border-light bg-white sticky top-0 z-50">
+<div class="flex justify-center w-full">
+<div class="flex max-w-lg w-full items-center justify-between px-4 py-3">
+<button class="text-text-muted hover:text-text-main transition-colors p-1 rounded hover:bg-surface-offset">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<div class="flex flex-col items-center">
+<h1 class="font-serif text-2xl font-bold tracking-tight text-text-main leading-none">Word of the Day</h1>
+<span class="text-[10px] uppercase tracking-widest text-text-muted font-medium mt-1">Professional Edition</span>
+</div>
+<div class="flex gap-1">
+<button class="text-text-muted hover:text-primary transition-colors p-1 rounded hover:bg-surface-offset relative group">
+<span class="material-symbols-outlined text-2xl">help</span>
+<div class="absolute right-0 top-full mt-2 w-max px-3 py-1.5 bg-text-main text-white text-xs font-medium rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                        How to play
+                    </div>
+</button>
+<button class="text-text-muted hover:text-primary transition-colors p-1 rounded hover:bg-surface-offset">
+<span class="material-symbols-outlined text-2xl">leaderboard</span>
+</button>
+<button class="text-text-muted hover:text-primary transition-colors p-1 rounded hover:bg-surface-offset">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center p-4 w-full bg-surface relative overflow-hidden">
+<div class="w-full max-w-[350px] sm:max-w-[400px] flex flex-col items-center h-full justify-start gap-2 py-4 md:py-8">
+<div class="grid grid-rows-6 gap-[6px] w-full aspect-[5/6] mb-8 select-none">
+<div class="grid grid-cols-5 gap-[6px]">
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-primary text-white border-primary shadow-tile transform transition-all duration-500">c</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-slate-400 text-white border-slate-400 shadow-tile transform transition-all duration-500">r</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-slate-400 text-white border-slate-400 shadow-tile transform transition-all duration-500">a</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-slate-400 text-white border-slate-400 shadow-tile transform transition-all duration-500">n</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-gold-muted text-white border-gold-muted shadow-tile transform transition-all duration-500">e</div>
+</div>
+<div class="grid grid-cols-5 gap-[6px]">
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-primary text-white border-primary shadow-tile transform transition-all duration-500">c</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-primary text-white border-primary shadow-tile transform transition-all duration-500">l</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-slate-400 text-white border-slate-400 shadow-tile transform transition-all duration-500">o</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-slate-400 text-white border-slate-400 shadow-tile transform transition-all duration-500">t</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-semibold uppercase bg-slate-400 text-white border-slate-400 shadow-tile transform transition-all duration-500">h</div>
+</div>
+<div class="grid grid-cols-5 gap-[6px]">
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-bold uppercase bg-white text-text-main border-slate-400 active-tile">c</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-bold uppercase bg-white text-text-main border-slate-400 active-tile">l</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-bold uppercase bg-white text-text-main border-slate-400 active-tile">e</div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-bold uppercase bg-white text-text-main border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl md:text-4xl font-serif font-bold uppercase bg-white text-text-main border-border-light"></div>
+</div>
+<div class="grid grid-cols-5 gap-[6px]">
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+</div>
+<div class="grid grid-cols-5 gap-[6px]">
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+</div>
+<div class="grid grid-cols-5 gap-[6px]">
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+<div class="w-full h-full border-2 flex items-center justify-center text-3xl font-serif font-medium uppercase bg-white border-border-light"></div>
+</div>
+</div>
+<div class="w-full mt-auto">
+<div class="border-t border-border-light pt-6">
+<h2 class="font-serif text-xl font-bold text-text-main mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">info</span>
+                    How to Play
+                </h2>
+<ul class="space-y-3 text-sm text-text-muted">
+<li class="flex items-start gap-2.5">
+<span class="w-1.5 h-1.5 rounded-full bg-text-main mt-1.5 flex-shrink-0"></span>
+<span class="leading-snug">Guess the word in <span class="font-semibold text-text-main">6 tries</span>.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="w-1.5 h-1.5 rounded-full bg-text-main mt-1.5 flex-shrink-0"></span>
+<span class="leading-snug">Each guess must be a valid <span class="font-semibold text-text-main">5-letter word</span>.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="w-1.5 h-1.5 rounded-full bg-text-main mt-1.5 flex-shrink-0"></span>
+<span class="leading-snug">The color of the tiles will change to show how close your guess was.</span>
+</li>
+</ul>
+<div class="flex gap-4 mt-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-primary text-white font-bold flex items-center justify-center text-xs rounded shadow-sm">A</div>
+<span class="text-xs font-medium text-text-muted">Correct</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-gold-muted text-white font-bold flex items-center justify-center text-xs rounded shadow-sm">B</div>
+<span class="text-xs font-medium text-text-muted">Misplaced</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-slate-400 text-white font-bold flex items-center justify-center text-xs rounded shadow-sm">C</div>
+<span class="text-xs font-medium text-text-muted">Incorrect</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-2 right-2 md:bottom-4 md:right-8 opacity-60 hover:opacity-100 transition-opacity">
+<div class="flex flex-col items-end">
+<span class="text-[9px] md:text-[10px] text-text-muted uppercase tracking-wider font-semibold">Powered by</span>
+<a class="flex items-center gap-1.5 text-text-main group" href="#">
+<span class="material-symbols-outlined text-primary text-base md:text-lg group-hover:rotate-180 transition-transform duration-700">settings_suggest</span>
+<span class="text-xs md:text-sm font-serif font-bold">rustycogs.io</span>
+</a>
+</div>
+</div>
+</main>
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+<div class="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+</div>
+</div>
+
+</body></html>

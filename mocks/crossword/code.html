@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Crossword - Rustycogs.io</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c25e40", // Rust/Terracotta
+                        "primary-dark": "#a0492d",
+                        "primary-light": "#fcece8",
+                        "surface": "#ffffff",
+                        "surface-offset": "#f9fafb", // Very light grey
+                        "text-main": "#0f172a", // Slate 900
+                        "text-muted": "#64748b", // Slate 500
+                        "border-light": "#e2e8f0", // Slate 200
+                        "grid-black": "#1a1a1a",
+                    },
+                    fontFamily: {
+                        "serif": ["Playfair Display", "serif"],
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        'grid': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .crossword-grid {
+            display: grid;
+            grid-template-columns: repeat(11, 1fr);
+            gap: 1px;
+            background-color: #1a1a1a;
+            border: 1px solid #1a1a1a;
+        }
+        .cell {
+            background-color: white;
+            aspect-ratio: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+        }
+        .cell.black {
+            background-color: #1a1a1a;
+            cursor: default;
+        }
+        .cell.active {
+            background-color: #fcece8;}
+        .cell.selected {
+            background-color: #fcece8;
+            box-shadow: inset 0 0 0 2px #c25e40;
+        }
+        .cell-num {
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            font-size: 0.65rem;
+            line-height: 1;
+            font-weight: 600;
+            color: #0f172a;
+        }.clue-scroll::-webkit-scrollbar { width: 6px; }
+        .clue-scroll::-webkit-scrollbar-track { background: transparent; }
+        .clue-scroll::-webkit-scrollbar-thumb { background-color: #e2e8f0; border-radius: 3px; }
+        .clue-scroll::-webkit-scrollbar-thumb:hover { background-color: #cbd5e1; }
+    </style>
+</head>
+<body class="bg-surface-offset text-text-main font-sans min-h-screen flex flex-col antialiased">
+<header class="bg-white border-b border-border-light sticky top-0 z-50">
+<div class="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl">settings_suggest</span>
+<h2 class="text-text-main font-bold font-serif tracking-tight text-lg">Rustycogs<span class="text-text-muted font-sans font-normal text-sm ml-2 opacity-70">/ Games Demo</span></h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center text-xs font-medium text-text-muted bg-surface-offset px-3 py-1.5 rounded-full border border-border-light">
+<span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                    API Connected
+                </div>
+<button class="text-sm font-semibold text-text-muted hover:text-primary transition-colors">Exit Demo</button>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center w-full py-8 md:py-12 px-4">
+<div class="w-full max-w-6xl">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<span class="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm">Hard</span>
+<span class="text-text-muted text-xs font-medium uppercase tracking-wide">Oct 24, 2023</span>
+</div>
+<h1 class="text-3xl md:text-4xl font-serif font-bold text-text-main leading-tight">The Editor's Cryptic</h1>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto">
+<div class="flex-1 md:flex-none flex items-center justify-center gap-3 bg-white border border-border-light px-5 py-2.5 rounded-full shadow-sm">
+<span class="material-symbols-outlined text-primary text-xl">timer</span>
+<span class="font-mono text-lg font-medium tracking-widest text-text-main">14:23</span>
+<div class="w-px h-4 bg-border-light mx-1"></div>
+<button class="text-text-muted hover:text-primary transition-colors flex items-center" title="Pause">
+<span class="material-symbols-outlined text-xl">pause_circle</span>
+</button>
+</div>
+<button class="bg-white hover:bg-surface-offset p-2.5 rounded-full border border-border-light shadow-sm text-text-muted hover:text-primary transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col lg:flex-row gap-8 xl:gap-16 items-start">
+<div class="flex-none w-full lg:w-auto flex flex-col gap-6">
+<div class="bg-white p-2 shadow-grid rounded-md border border-border-light">
+<div class="crossword-grid w-full max-w-[600px] aspect-square mx-auto">
+<div class="cell active"><span class="cell-num">1</span>T</div>
+<div class="cell active"><span class="cell-num">2</span>R</div>
+<div class="cell active selected"><span class="cell-num">3</span>A</div>
+<div class="cell active"><span class="cell-num">4</span>D</div>
+<div class="cell active"><span class="cell-num">5</span>E</div>
+<div class="cell black"></div>
+<div class="cell"><span class="cell-num">6</span>S</div>
+<div class="cell">P</div>
+<div class="cell"><span class="cell-num">7</span>A</div>
+<div class="cell">C</div>
+<div class="cell">E</div>
+<div class="cell">R</div>
+<div class="cell black"></div>
+<div class="cell">B</div>
+<div class="cell black"></div>
+<div class="cell">A</div>
+<div class="cell black"></div>
+<div class="cell">T</div>
+<div class="cell black"></div>
+<div class="cell">C</div>
+<div class="cell black"></div>
+<div class="cell">V</div>
+<div class="cell"><span class="cell-num">8</span>A</div>
+<div class="cell">L</div>
+<div class="cell">B</div>
+<div class="cell">U</div>
+<div class="cell">M</div>
+<div class="cell black"></div>
+<div class="cell"><span class="cell-num">9</span>R</div>
+<div class="cell">O</div>
+<div class="cell">U</div>
+<div class="cell">T</div>
+<div class="cell">E</div>
+<div class="cell">C</div>
+<div class="cell black"></div>
+<div class="cell">E</div>
+<div class="cell black"></div>
+<div class="cell">E</div>
+<div class="cell black"></div>
+<div class="cell">A</div>
+<div class="cell black"></div>
+<div class="cell">T</div>
+<div class="cell black"></div>
+<div class="cell">N</div>
+<div class="cell"><span class="cell-num">10</span>T</div>
+<div class="cell">H</div>
+<div class="cell">Y</div>
+<div class="cell">M</div>
+<div class="cell">E</div>
+<div class="cell black"></div>
+<div class="cell"><span class="cell-num">11</span>T</div>
+<div class="cell">O</div>
+<div class="cell">E</div>
+<div class="cell">D</div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell">L</div>
+<div class="cell black"></div>
+<div class="cell">E</div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell"><span class="cell-num">12</span>P</div>
+<div class="cell">R</div>
+<div class="cell">O</div>
+<div class="cell">U</div>
+<div class="cell">D</div>
+<div class="cell black"></div>
+<div class="cell"><span class="cell-num">13</span>G</div>
+<div class="cell">R</div>
+<div class="cell">A</div>
+<div class="cell">D</div>
+<div class="cell">E</div>
+<div class="cell">L</div>
+<div class="cell black"></div>
+<div class="cell">P</div>
+<div class="cell black"></div>
+<div class="cell">A</div>
+<div class="cell black"></div>
+<div class="cell">Y</div>
+<div class="cell black"></div>
+<div class="cell">L</div>
+<div class="cell black"></div>
+<div class="cell">D</div>
+<div class="cell"><span class="cell-num">14</span>A</div>
+<div class="cell">D</div>
+<div class="cell">E</div>
+<div class="cell">P</div>
+<div class="cell">T</div>
+<div class="cell black"></div>
+<div class="cell"><span class="cell-num">15</span>S</div>
+<div class="cell">H</div>
+<div class="cell">I</div>
+<div class="cell">F</div>
+<div class="cell">T</div>
+<div class="cell">N</div>
+<div class="cell black"></div>
+<div class="cell">R</div>
+<div class="cell black"></div>
+<div class="cell">E</div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell black"></div>
+<div class="cell">B</div>
+<div class="cell black"></div>
+<div class="cell">E</div>
+<div class="cell"><span class="cell-num">16</span>T</div>
+<div class="cell">O</div>
+<div class="cell">A</div>
+<div class="cell">S</div>
+<div class="cell">T</div>
+<div class="cell black"></div>
+<div class="cell"><span class="cell-num">17</span>S</div>
+<div class="cell">A</div>
+<div class="cell">I</div>
+<div class="cell">L</div>
+<div class="cell">S</div>
+</div>
+</div>
+<div class="flex justify-between items-center px-1">
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-border-light shadow-sm text-text-main text-sm font-medium hover:border-primary hover:text-primary transition-all group">
+<span class="material-symbols-outlined text-lg text-text-muted group-hover:text-primary transition-colors">check</span>
+                                Check
+                            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-border-light shadow-sm text-text-main text-sm font-medium hover:border-primary hover:text-primary transition-all group">
+<span class="material-symbols-outlined text-lg text-text-muted group-hover:text-primary transition-colors">lightbulb</span>
+                                Hint
+                            </button>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg text-text-muted text-sm font-medium hover:bg-white hover:text-text-main transition-all">
+<span class="material-symbols-outlined text-lg">visibility</span>
+                            Reveal
+                        </button>
+</div>
+</div>
+<div class="flex-grow w-full lg:w-96 flex flex-col h-[600px] lg:h-[630px] bg-white rounded-xl shadow-card border border-border-light overflow-hidden">
+<div class="bg-surface-offset px-6 py-4 border-b border-border-light flex justify-between items-center">
+<h3 class="font-serif font-bold text-lg text-text-main">Clues</h3>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white text-text-muted">
+<span class="material-symbols-outlined text-lg">format_size</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white text-text-muted">
+<span class="material-symbols-outlined text-lg">print</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto clue-scroll">
+<div class="p-6">
+<div class="mb-8">
+<h4 class="font-serif font-bold text-xl text-text-main mb-4 border-b border-border-light pb-2">Across</h4>
+<ul class="space-y-1">
+<li class="group cursor-pointer bg-primary-light rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-primary transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-primary font-sans">1</span>
+<span class="text-text-main text-sm font-sans leading-relaxed">Exchange occurring in market square (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">6</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Room beyond the atmosphere (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">8</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Collection of musical tracks (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">9</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Way to travel regularly (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">10</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Herb found in time (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">11</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Walked quietly using digits (4)</span>
+</div>
+</li>
+</ul>
+</div>
+<div>
+<h4 class="font-serif font-bold text-xl text-text-main mb-4 border-b border-border-light pb-2">Down</h4>
+<ul class="space-y-1">
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">1</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Paper outlining heavy area (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">2</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Religious leader in abbey (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">3</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Supportive side in cathedral (5)</span>
+</div>
+</li>
+<li class="group cursor-pointer hover:bg-surface-offset rounded-lg -mx-3 px-3 py-2.5 border-l-4 border-transparent transition-all">
+<div class="flex gap-3">
+<span class="font-bold text-text-main font-sans">4</span>
+<span class="text-text-muted group-hover:text-text-main text-sm font-sans leading-relaxed transition-colors">Start of evening for performer (5)</span>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="bg-primary text-white p-4 flex justify-between items-center shadow-lg z-10">
+<div class="flex flex-col">
+<span class="text-xs font-bold uppercase tracking-wider text-primary-light mb-1">Current Clue</span>
+<span class="font-serif font-medium text-lg">1 Across: Exchange occurring in market square (5)</span>
+</div>
+<button class="hover:bg-white/10 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">keyboard_tab</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-white border-t border-border-light py-8 text-center text-text-muted text-sm">
+<p>Powered by Rustycogs.io © 2023</p>
+</footer>
+
+</body></html>
