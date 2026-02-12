@@ -576,6 +576,52 @@ function GameModal({
   const [wordsList, setWordsList] = useState<
     { word: string; clue: string; main_word_index?: number }[]
   >(game?.words || []);
+  // AI generation state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
+  const [aiWordCount, setAiWordCount] = useState(
+    difficulty === "easy" ? 5 : difficulty === "hard" ? 12 : 8,
+  );
+  const [aiLanguage, setAiLanguage] = useState<"lt" | "en">("lt");
+
+  async function generateWithAI() {
+    if (!mainWord.trim()) return;
+    setAiLoading(true);
+    setAiError("");
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mainWord: mainWord.trim(),
+          wordCount: aiWordCount,
+          difficulty,
+          language: aiLanguage,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Generation failed");
+      }
+      const { words } = await res.json();
+      // Merge: add AI words that don't already exist
+      const existing = new Set(wordsList.map((w) => w.word));
+      const newWords = words
+        .filter((w: { word: string; clue: string }) => !existing.has(w.word))
+        .map((w: { word: string; clue: string }) => ({
+          word: w.word,
+          clue: w.clue,
+          main_word_index: undefined,
+        }));
+      setWordsList([...wordsList, ...newWords]);
+      setAiSettingsOpen(false);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Generation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   function addWord() {
     const w = wordsInput.trim().toUpperCase();
@@ -872,6 +918,111 @@ function GameModal({
                   className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
                   placeholder="e.g. BRAIN"
                 />
+              </div>
+
+              {/* AI Generation */}
+              <div className="mb-4">
+                {mainWord.trim() && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
+                      disabled={aiLoading}
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-[#c25e40] to-[#e07b5b] text-white rounded-lg text-sm font-medium transition-all hover:shadow-md hover:shadow-[#c25e40]/20 disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {aiLoading ? (
+                        <>
+                          <span className="material-symbols-outlined text-base animate-spin">
+                            progress_activity
+                          </span>
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-base">✨</span>
+                          Generate with AI
+                          <span className="material-symbols-outlined text-sm">
+                            {aiSettingsOpen ? "expand_less" : "expand_more"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+
+                    {aiSettingsOpen && !aiLoading && (
+                      <div className="mt-2 p-4 bg-slate-50 rounded-lg border border-[#e2e8f0] space-y-3">
+                        {/* Word Count */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-medium text-[#0f172a]">
+                              Number of words
+                            </label>
+                            <span className="text-xs font-mono font-bold text-[#c25e40]">
+                              {aiWordCount}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={3}
+                            max={20}
+                            value={aiWordCount}
+                            onChange={(e) =>
+                              setAiWordCount(Number(e.target.value))
+                            }
+                            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#c25e40]"
+                          />
+                          <div className="flex justify-between text-[10px] text-[#94a3b8] mt-0.5">
+                            <span>3</span>
+                            <span>20</span>
+                          </div>
+                        </div>
+
+                        {/* Language */}
+                        <div>
+                          <label className="text-xs font-medium text-[#0f172a] block mb-1">
+                            Language
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setAiLanguage("lt")}
+                              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                aiLanguage === "lt"
+                                  ? "bg-[#c25e40] text-white border-[#c25e40]"
+                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-[#c25e40]"
+                              }`}
+                            >
+                              🇱🇹 Lithuanian
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAiLanguage("en")}
+                              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                aiLanguage === "en"
+                                  ? "bg-[#c25e40] text-white border-[#c25e40]"
+                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-[#c25e40]"
+                              }`}
+                            >
+                              🇬🇧 English
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Generate Action */}
+                        <button
+                          type="button"
+                          onClick={generateWithAI}
+                          className="w-full px-4 py-2 bg-[#0f172a] text-white rounded-lg text-sm font-medium hover:bg-[#1e293b] transition-colors"
+                        >
+                          Generate {aiWordCount} words
+                        </button>
+                      </div>
+                    )}
+
+                    {aiError && (
+                      <p className="text-xs text-red-600 mt-1.5">{aiError}</p>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Words & Clues */}

@@ -46,6 +46,7 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8055}
       - NEXT_PUBLIC_FRONTEND_URL=${NEXT_PUBLIC_FRONTEND_URL:-http://localhost:5173}
       - DIRECTUS_ADMIN_TOKEN=${DIRECTUS_ADMIN_TOKEN:-}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
     restart: unless-stopped
 
 volumes:
