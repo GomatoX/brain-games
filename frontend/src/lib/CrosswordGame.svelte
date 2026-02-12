@@ -152,7 +152,8 @@
 
     // Use auto-layout algorithm if words don't have positions
     let layoutWords = words;
-    let size = puzzle.grid_size || 15;
+    let cols = puzzle.grid_size || 15;
+    let rows = puzzle.grid_size || 15;
 
     // Check if words have manual positions (x, y defined)
     const hasManualPositions = words.some(
@@ -165,7 +166,8 @@
         ? generateLayoutOptimized(words, currentSeed, 1000)
         : generateLayout(words, currentSeed);
       layoutWords = layout.placedWords;
-      size = layout.gridSize;
+      cols = layout.gridWidth || layout.gridSize;
+      rows = layout.gridHeight || layout.gridSize;
       currentSeed = layout.seed; // Update to the best seed found
 
       // Propagate main_word_index from original words to layout words
@@ -186,13 +188,13 @@
     }
 
     // Store computed grid size
-    gridSize = size;
+    gridSize = Math.max(cols, rows);
 
-    // Initialize empty grid
-    grid = Array(size)
+    // Initialize grid with actual dimensions (rectangular, not square)
+    grid = Array(rows)
       .fill(null)
       .map(() =>
-        Array(size)
+        Array(cols)
           .fill(null)
           .map(() => ({
             letter: "",
@@ -208,8 +210,8 @@
 
     // Sort words by position for consistent numbering
     const sortedWords = [...layoutWords].sort((a, b) => {
-      const posA = a.y * size + a.x;
-      const posB = b.y * size + b.x;
+      const posA = a.y * cols + a.x;
+      const posB = b.y * cols + b.x;
       return posA - posB;
     });
 
@@ -232,7 +234,7 @@
         const cellX = direction === "across" ? x + i : x;
         const cellY = direction === "down" ? y + i : y;
 
-        if (cellY < size && cellX < size && grid[cellY] && grid[cellY][cellX]) {
+        if (cellY < rows && cellX < cols && grid[cellY] && grid[cellY][cellX]) {
           grid[cellY][cellX].letter = answer[i].toUpperCase();
           grid[cellY][cellX].isBlocked = false;
           grid[cellY][cellX].wordIds.push(wordIndex);

@@ -414,6 +414,8 @@ export function generateLayout(words, seed = 1) {
     placedWords: placed,
     grid: matrix,
     gridSize: Math.max(width, height, 5),
+    gridWidth: width,
+    gridHeight: height,
     success: placed.length === words.length,
     seed,
     densityScore: letterCount / area,

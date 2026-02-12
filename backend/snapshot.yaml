@@ -1,134 +1,148 @@
 version: 1
-directus: "12.0.0"
-
+directus: 11.14.1
+vendor: sqlite
 collections:
   - collection: crosswords
     meta:
-      collection: crosswords
-      icon: grid_on
-      note: Crossword games with auto-layout
-      display_template: "{{title}}"
-      hidden: false
-      singleton: false
-      translations: null
-      archive_field: status
-      archive_app_filter: true
-      archive_value: archived
-      unarchive_value: draft
-      sort_field: null
       accountability: all
-      color: null
-      item_duplication_fields: null
-      sort: 1
-      group: null
+      archive_app_filter: true
+      archive_field: status
+      archive_value: archived
       collapse: open
-      preview_url: "{{FRONTEND_URL}}/?id={{id}}&preview=true"
+      collection: crosswords
+      color: null
+      display_template: '{{title}}'
+      group: null
+      hidden: false
+      icon: grid_on
+      item_duplication_fields: null
+      note: Crossword games with auto-layout
+      preview_url: '{{FRONTEND_URL}}/?id={{id}}&preview=true'
+      singleton: false
+      sort: 1
+      sort_field: null
+      translations: null
+      unarchive_value: draft
       versioning: false
     schema:
       name: crosswords
-
-  - collection: wordgames
-    meta:
-      collection: wordgames
-      icon: spellcheck
-      note: Word of the Day guessing games
-      display_template: "{{word}} - {{title}}"
-      hidden: false
-      singleton: false
-      translations: null
-      archive_field: status
-      archive_app_filter: true
-      archive_value: archived
-      unarchive_value: draft
-      sort_field: null
-      accountability: all
-      color: null
-      item_duplication_fields: null
-      sort: 2
-      group: null
-      collapse: open
-      preview_url: "{{FRONTEND_URL}}/?id={{id}}&type=word&preview=true"
-      versioning: false
-    schema:
-      name: wordgames
-
   - collection: sudoku
     meta:
-      collection: sudoku
-      icon: tag
-      note: Sudoku puzzles with varying difficulty
-      display_template: "{{title}}"
-      hidden: false
-      singleton: false
-      translations: null
-      archive_field: status
-      archive_app_filter: true
-      archive_value: archived
-      unarchive_value: draft
-      sort_field: null
       accountability: all
-      color: null
-      item_duplication_fields: null
-      sort: 3
-      group: null
+      archive_app_filter: true
+      archive_field: status
+      archive_value: archived
       collapse: open
-      preview_url: "{{FRONTEND_URL}}/?id={{id}}&type=sudoku&preview=true"
+      collection: sudoku
+      color: null
+      display_template: '{{title}}'
+      group: null
+      hidden: false
+      icon: tag
+      item_duplication_fields: null
+      note: Sudoku puzzles with varying difficulty
+      preview_url: '{{FRONTEND_URL}}/?id={{id}}&type=sudoku&preview=true'
+      singleton: false
+      sort: 3
+      sort_field: null
+      translations: null
+      unarchive_value: draft
       versioning: false
     schema:
       name: sudoku
-
+  - collection: wordgames
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: status
+      archive_value: archived
+      collapse: open
+      collection: wordgames
+      color: null
+      display_template: '{{word}} - {{title}}'
+      group: null
+      hidden: false
+      icon: spellcheck
+      item_duplication_fields: null
+      note: Word of the Day guessing games
+      preview_url: '{{FRONTEND_URL}}/?id={{id}}&type=word&preview=true'
+      singleton: false
+      sort: 2
+      sort_field: null
+      translations: null
+      unarchive_value: draft
+      versioning: false
+    schema:
+      name: wordgames
 fields:
-  # ==========================================
-  # CROSSWORDS COLLECTION
-  # ==========================================
   - collection: crosswords
     field: id
     type: uuid
     meta:
       collection: crosswords
-      field: id
-      special:
-        - uuid
-      interface: input
-      options: null
+      conditions: null
       display: raw
       display_options: null
-      readonly: true
-      hidden: true
-      sort: 1
-      width: full
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: id
       group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 1
+      special:
+        - uuid
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: id
       table: crosswords
-      data_type: uuid
+      data_type: char
       default_value: null
-      max_length: null
+      max_length: 36
       numeric_precision: null
       numeric_scale: null
       is_nullable: false
-      is_unique: false
+      is_unique: true
+      is_indexed: false
       is_primary_key: true
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: status
     type: string
     meta:
       collection: crosswords
+      conditions: null
+      display: labels
+      display_options:
+        choices:
+          - background: '#D3DAE4'
+            foreground: '#18222F'
+            text: Draft
+            value: draft
+          - background: '#B2DFDB'
+            foreground: '#18222F'
+            text: Published
+            value: published
+          - background: '#F5F5F5'
+            foreground: '#18222F'
+            text: Archived
+            value: archived
+        showAsDot: true
       field: status
-      special: null
+      group: null
+      hidden: false
       interface: select-dropdown
+      note: null
       options:
         choices:
           - text: Draft
@@ -137,33 +151,15 @@ fields:
             value: published
           - text: Archived
             value: archived
-      display: labels
-      display_options:
-        showAsDot: true
-        choices:
-          - text: Draft
-            value: draft
-            foreground: "#18222F"
-            background: "#D3DAE4"
-          - text: Published
-            value: published
-            foreground: "#18222F"
-            background: "#B2DFDB"
-          - text: Archived
-            value: archived
-            foreground: "#18222F"
-            background: "#F5F5F5"
       readonly: false
-      hidden: false
-      sort: 2
-      width: full
-      translations: null
-      note: null
-      conditions: null
       required: false
-      group: null
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: status
       table: crosswords
@@ -174,36 +170,37 @@ fields:
       numeric_scale: null
       is_nullable: false
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: title
     type: string
     meta:
       collection: crosswords
-      field: title
-      special: null
-      interface: input
-      options:
-        placeholder: Enter crossword title
+      conditions: null
       display: raw
       display_options: null
-      readonly: false
-      hidden: false
-      sort: 3
-      width: full
-      translations: null
-      note: The name of the crossword game
-      conditions: null
-      required: true
+      field: title
       group: null
+      hidden: false
+      interface: input
+      note: The name of the crossword game
+      options:
+        placeholder: Enter crossword title
+      readonly: false
+      required: true
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: title
       table: crosswords
@@ -214,21 +211,40 @@ fields:
       numeric_scale: null
       is_nullable: false
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: difficulty
     type: string
     meta:
       collection: crosswords
+      conditions: null
+      display: labels
+      display_options:
+        choices:
+          - background: '#4CAF50'
+            foreground: '#FFFFFF'
+            text: Easy
+            value: easy
+          - background: '#FF9800'
+            foreground: '#FFFFFF'
+            text: Medium
+            value: medium
+          - background: '#c25e40'
+            foreground: '#FFFFFF'
+            text: Hard
+            value: hard
+        showAsDot: false
       field: difficulty
-      special: null
+      group: null
+      hidden: false
       interface: select-dropdown
+      note: Puzzle difficulty level
       options:
         choices:
           - text: Easy
@@ -237,33 +253,15 @@ fields:
             value: medium
           - text: Hard
             value: hard
-      display: labels
-      display_options:
-        showAsDot: false
-        choices:
-          - text: Easy
-            value: easy
-            foreground: "#FFFFFF"
-            background: "#4CAF50"
-          - text: Medium
-            value: medium
-            foreground: "#FFFFFF"
-            background: "#FF9800"
-          - text: Hard
-            value: hard
-            foreground: "#FFFFFF"
-            background: "#c25e40"
       readonly: false
-      hidden: false
-      sort: 4
-      width: half
-      translations: null
-      note: Puzzle difficulty level
-      conditions: null
       required: false
-      group: null
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: difficulty
       table: crosswords
@@ -274,36 +272,37 @@ fields:
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: scheduled_date
     type: date
     meta:
       collection: crosswords
-      field: scheduled_date
-      special: null
-      interface: datetime
-      options: null
+      conditions: null
       display: datetime
       display_options:
         relative: false
-      readonly: false
-      hidden: false
-      sort: 5
-      width: half
-      translations: null
-      note: Date when this puzzle should be published
-      conditions: null
-      required: false
+      field: scheduled_date
       group: null
+      hidden: false
+      interface: datetime
+      note: Date when this puzzle should be published
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: scheduled_date
       table: crosswords
@@ -314,674 +313,310 @@ fields:
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: words
     type: json
     meta:
       collection: crosswords
+      conditions: null
+      display: raw
+      display_options: null
       field: words
-      special:
-        - cast-json
+      group: null
+      hidden: false
       interface: list
+      note: Add words and clues - positions are calculated automatically!
       options:
-        template: "{{word}}"
         fields:
           - field: word
-            name: Word
-            type: string
             meta:
               interface: input
               options:
                 placeholder: HELLO
-              width: half
               required: true
-          - field: clue
-            name: Clue
+              width: half
+            name: Word
             type: string
+          - field: clue
             meta:
               interface: input
               options:
                 placeholder: A greeting
-              width: full
               required: true
-      display: raw
-      display_options: null
+              width: full
+            name: Clue
+            type: string
+        template: '{{word}}'
       readonly: false
-      hidden: false
-      sort: 6
-      width: full
-      translations: null
-      note: Add words and clues - positions are calculated automatically!
-      conditions: null
       required: false
-      group: null
+      searchable: true
+      sort: 6
+      special:
+        - cast-json
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: words
       table: crosswords
       data_type: json
-      default_value: "[]"
+      default_value: []
       max_length: null
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: date_created
     type: timestamp
     meta:
       collection: crosswords
-      field: date_created
-      special:
-        - date-created
-      interface: datetime
-      options: null
+      conditions: null
       display: datetime
       display_options:
         relative: true
-      readonly: true
-      hidden: true
-      sort: 7
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: date_created
       group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 7
+      special:
+        - date-created
+        - cast-timestamp
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: date_created
       table: crosswords
-      data_type: timestamp
+      data_type: datetime
       default_value: null
       max_length: null
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: date_updated
     type: timestamp
     meta:
       collection: crosswords
-      field: date_updated
-      special:
-        - date-updated
-      interface: datetime
-      options: null
+      conditions: null
       display: datetime
       display_options:
         relative: true
-      readonly: true
-      hidden: true
-      sort: 8
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: date_updated
       group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 8
+      special:
+        - date-updated
+        - cast-timestamp
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: date_updated
       table: crosswords
-      data_type: timestamp
+      data_type: datetime
       default_value: null
       max_length: null
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: crosswords
     field: user_created
-    type: uuid
+    type: string
     meta:
       collection: crosswords
-      field: user_created
-      special:
-        - user-created
-      interface: select-dropdown-m2o
-      options:
-        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+      conditions: null
       display: user
       display_options: null
-      readonly: true
-      hidden: true
-      sort: 9
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: user_created
       group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      searchable: true
+      sort: 9
+      special:
+        - user-created
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: user_created
       table: crosswords
-      data_type: uuid
+      data_type: char
       default_value: null
-      max_length: null
+      max_length: 36
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-
-  # ==========================================
-  # WORDGAMES COLLECTION
-  # ==========================================
-  - collection: wordgames
-    field: id
-    type: uuid
-    meta:
-      collection: wordgames
-      field: id
-      special:
-        - uuid
-      interface: input
-      options: null
-      display: raw
-      display_options: null
-      readonly: true
-      hidden: true
-      sort: 1
-      width: full
-      translations: null
-      note: null
-      conditions: null
-      required: false
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: id
-      table: wordgames
-      data_type: uuid
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: true
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
-  - collection: wordgames
-    field: status
+  - collection: crosswords
+    field: main_word
     type: string
     meta:
-      collection: wordgames
-      field: status
-      special: null
-      interface: select-dropdown
-      options:
-        choices:
-          - text: Draft
-            value: draft
-          - text: Published
-            value: published
-          - text: Archived
-            value: archived
-      display: labels
-      display_options:
-        showAsDot: true
-        choices:
-          - text: Draft
-            value: draft
-            foreground: "#18222F"
-            background: "#D3DAE4"
-          - text: Published
-            value: published
-            foreground: "#18222F"
-            background: "#B2DFDB"
-          - text: Archived
-            value: archived
-            foreground: "#18222F"
-            background: "#F5F5F5"
-      readonly: false
-      hidden: false
-      sort: 2
-      width: full
-      translations: null
-      note: null
+      collection: crosswords
       conditions: null
-      required: false
+      display: raw
+      display_options: null
+      field: main_word
       group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: status
-      table: wordgames
-      data_type: varchar
-      default_value: draft
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: title
-    type: string
-    meta:
-      collection: wordgames
-      field: title
-      special: null
+      hidden: false
       interface: input
-      options:
-        placeholder: "Word of the Day - Feb 7"
-      display: raw
-      display_options: null
-      readonly: false
-      hidden: false
-      sort: 3
-      width: full
-      translations: null
-      note: Title for this word game
-      conditions: null
-      required: false
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: title
-      table: wordgames
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: word
-    type: string
-    meta:
-      collection: wordgames
-      field: word
-      special: null
-      interface: input
-      options:
-        placeholder: KNYGĄ
-      display: raw
-      display_options: null
-      readonly: false
-      hidden: false
-      sort: 4
-      width: half
-      translations: null
-      note: The target word to guess (uppercase)
-      conditions: null
-      required: true
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: word
-      table: wordgames
-      data_type: varchar
-      default_value: null
-      max_length: 50
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: definition
-    type: text
-    meta:
-      collection: wordgames
-      field: definition
-      special: null
-      interface: input-multiline
-      options:
-        placeholder: A brief definition or hint
-      display: raw
-      display_options: null
-      readonly: false
-      hidden: false
-      sort: 5
-      width: full
-      translations: null
-      note: Definition shown after the game ends
-      conditions: null
-      required: false
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: definition
-      table: wordgames
-      data_type: text
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: max_attempts
-    type: integer
-    meta:
-      collection: wordgames
-      field: max_attempts
-      special: null
-      interface: input
-      options:
-        min: 3
-        max: 10
-      display: raw
-      display_options: null
-      readonly: false
-      hidden: false
-      sort: 6
-      width: half
-      translations: null
-      note: Maximum number of guesses (default 6)
-      conditions: null
-      required: false
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: max_attempts
-      table: wordgames
-      data_type: integer
-      default_value: 6
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: scheduled_date
-    type: date
-    meta:
-      collection: wordgames
-      field: scheduled_date
-      special: null
-      interface: datetime
+      note: Main hidden word revealed on completion
       options: null
-      display: datetime
-      display_options:
-        relative: false
       readonly: false
-      hidden: false
-      sort: 7
-      width: half
-      translations: null
-      note: Date when this word game should appear
-      conditions: null
       required: false
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: scheduled_date
-      table: wordgames
-      data_type: date
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: date_created
-    type: timestamp
-    meta:
-      collection: wordgames
-      field: date_created
-      special:
-        - date-created
-      interface: datetime
-      options: null
-      display: datetime
-      display_options:
-        relative: true
-      readonly: true
-      hidden: true
-      sort: 8
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: date_created
-      table: wordgames
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: date_updated
-    type: timestamp
-    meta:
-      collection: wordgames
-      field: date_updated
-      special:
-        - date-updated
-      interface: datetime
-      options: null
-      display: datetime
-      display_options:
-        relative: true
-      readonly: true
-      hidden: true
-      sort: 9
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
-      group: null
-      validation: null
-      validation_message: null
-    schema:
-      name: date_updated
-      table: wordgames
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-
-  - collection: wordgames
-    field: user_created
-    type: uuid
-    meta:
-      collection: wordgames
-      field: user_created
-      special:
-        - user-created
-      interface: select-dropdown-m2o
-      options:
-        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
-      display: user
-      display_options: null
-      readonly: true
-      hidden: true
+      searchable: true
       sort: 10
-      width: half
+      special: null
       translations: null
-      note: null
-      conditions: null
-      required: false
-      group: null
       validation: null
       validation_message: null
+      width: full
     schema:
-      name: user_created
-      table: wordgames
-      data_type: uuid
+      name: main_word
+      table: crosswords
+      data_type: varchar
       default_value: null
-      max_length: null
+      max_length: 255
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-
-  # ==========================================
-  # SUDOKU COLLECTION
-  # ==========================================
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: sudoku
     field: id
     type: uuid
     meta:
       collection: sudoku
-      field: id
-      special:
-        - uuid
-      interface: input
-      options: null
+      conditions: null
       display: raw
       display_options: null
-      readonly: true
-      hidden: true
-      sort: 1
-      width: full
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: id
       group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 1
+      special:
+        - uuid
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: id
       table: sudoku
-      data_type: uuid
+      data_type: char
       default_value: null
-      max_length: null
+      max_length: 36
       numeric_precision: null
       numeric_scale: null
       is_nullable: false
-      is_unique: false
+      is_unique: true
+      is_indexed: false
       is_primary_key: true
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: status
     type: string
     meta:
       collection: sudoku
+      conditions: null
+      display: labels
+      display_options:
+        choices:
+          - background: '#D3DAE4'
+            foreground: '#18222F'
+            text: Draft
+            value: draft
+          - background: '#B2DFDB'
+            foreground: '#18222F'
+            text: Published
+            value: published
+          - background: '#F5F5F5'
+            foreground: '#18222F'
+            text: Archived
+            value: archived
+        showAsDot: true
       field: status
-      special: null
+      group: null
+      hidden: false
       interface: select-dropdown
+      note: null
       options:
         choices:
           - text: Draft
@@ -990,33 +625,15 @@ fields:
             value: published
           - text: Archived
             value: archived
-      display: labels
-      display_options:
-        showAsDot: true
-        choices:
-          - text: Draft
-            value: draft
-            foreground: "#18222F"
-            background: "#D3DAE4"
-          - text: Published
-            value: published
-            foreground: "#18222F"
-            background: "#B2DFDB"
-          - text: Archived
-            value: archived
-            foreground: "#18222F"
-            background: "#F5F5F5"
       readonly: false
-      hidden: false
-      sort: 2
-      width: full
-      translations: null
-      note: null
-      conditions: null
       required: false
-      group: null
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: status
       table: sudoku
@@ -1027,36 +644,37 @@ fields:
       numeric_scale: null
       is_nullable: false
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: title
     type: string
     meta:
       collection: sudoku
-      field: title
-      special: null
-      interface: input
-      options:
-        placeholder: "Sudoku #42"
+      conditions: null
       display: raw
       display_options: null
-      readonly: false
-      hidden: false
-      sort: 3
-      width: full
-      translations: null
-      note: Title for this puzzle
-      conditions: null
-      required: true
+      field: title
       group: null
+      hidden: false
+      interface: input
+      note: Title for this puzzle
+      options:
+        placeholder: 'Sudoku #42'
+      readonly: false
+      required: true
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: title
       table: sudoku
@@ -1067,21 +685,44 @@ fields:
       numeric_scale: null
       is_nullable: false
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: difficulty
     type: string
     meta:
       collection: sudoku
+      conditions: null
+      display: labels
+      display_options:
+        choices:
+          - background: '#4CAF50'
+            foreground: '#FFFFFF'
+            text: Easy
+            value: easy
+          - background: '#FF9800'
+            foreground: '#FFFFFF'
+            text: Medium
+            value: medium
+          - background: '#c25e40'
+            foreground: '#FFFFFF'
+            text: Hard
+            value: hard
+          - background: '#7B1FA2'
+            foreground: '#FFFFFF'
+            text: Expert
+            value: expert
+        showAsDot: false
       field: difficulty
-      special: null
+      group: null
+      hidden: false
       interface: select-dropdown
+      note: Puzzle difficulty
       options:
         choices:
           - text: Easy
@@ -1092,37 +733,15 @@ fields:
             value: hard
           - text: Expert
             value: expert
-      display: labels
-      display_options:
-        showAsDot: false
-        choices:
-          - text: Easy
-            value: easy
-            foreground: "#FFFFFF"
-            background: "#4CAF50"
-          - text: Medium
-            value: medium
-            foreground: "#FFFFFF"
-            background: "#FF9800"
-          - text: Hard
-            value: hard
-            foreground: "#FFFFFF"
-            background: "#c25e40"
-          - text: Expert
-            value: expert
-            foreground: "#FFFFFF"
-            background: "#7B1FA2"
       readonly: false
-      hidden: false
-      sort: 4
-      width: half
-      translations: null
-      note: Puzzle difficulty
-      conditions: null
       required: false
-      group: null
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: difficulty
       table: sudoku
@@ -1133,38 +752,40 @@ fields:
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: puzzle
     type: json
     meta:
       collection: sudoku
-      field: puzzle
-      special:
-        - cast-json
-      interface: input-code
-      options:
-        language: json
-        template: "[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]"
+      conditions: null
       display: raw
       display_options: null
-      readonly: false
-      hidden: false
-      sort: 5
-      width: full
-      translations: null
-      note: "9x9 grid as a 2D array. Use 0 for empty cells."
-      conditions: null
-      required: true
+      field: puzzle
       group: null
+      hidden: false
+      interface: input-code
+      note: 9x9 grid as a 2D array. Use 0 for empty cells.
+      options:
+        language: json
+        template: >-
+          [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]
+      readonly: false
+      required: true
+      searchable: true
+      sort: 5
+      special:
+        - cast-json
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: puzzle
       table: sudoku
@@ -1175,37 +796,38 @@ fields:
       numeric_scale: null
       is_nullable: false
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: solution
     type: json
     meta:
       collection: sudoku
-      field: solution
-      special:
-        - cast-json
-      interface: input-code
-      options:
-        language: json
+      conditions: null
       display: raw
       display_options: null
-      readonly: false
-      hidden: false
-      sort: 6
-      width: full
-      translations: null
-      note: "Complete 9x9 solution grid"
-      conditions: null
-      required: true
+      field: solution
       group: null
+      hidden: false
+      interface: input-code
+      note: Complete 9x9 solution grid
+      options:
+        language: json
+      readonly: false
+      required: true
+      searchable: true
+      sort: 6
+      special:
+        - cast-json
+      translations: null
       validation: null
       validation_message: null
+      width: full
     schema:
       name: solution
       table: sudoku
@@ -1216,36 +838,37 @@ fields:
       numeric_scale: null
       is_nullable: false
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: scheduled_date
     type: date
     meta:
       collection: sudoku
-      field: scheduled_date
-      special: null
-      interface: datetime
-      options: null
+      conditions: null
       display: datetime
       display_options:
         relative: false
-      readonly: false
-      hidden: false
-      sort: 7
-      width: half
-      translations: null
-      note: Date when this puzzle should appear
-      conditions: null
-      required: false
+      field: scheduled_date
       group: null
+      hidden: false
+      interface: datetime
+      note: Date when this puzzle should appear
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: scheduled_date
       table: sudoku
@@ -1256,134 +879,576 @@ fields:
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: date_created
     type: timestamp
     meta:
       collection: sudoku
-      field: date_created
-      special:
-        - date-created
-      interface: datetime
-      options: null
+      conditions: null
       display: datetime
       display_options:
         relative: true
-      readonly: true
-      hidden: true
-      sort: 8
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: date_created
       group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 8
+      special:
+        - date-created
+        - cast-timestamp
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: date_created
       table: sudoku
-      data_type: timestamp
+      data_type: datetime
       default_value: null
       max_length: null
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: date_updated
     type: timestamp
     meta:
       collection: sudoku
-      field: date_updated
-      special:
-        - date-updated
-      interface: datetime
-      options: null
+      conditions: null
       display: datetime
       display_options:
         relative: true
-      readonly: true
-      hidden: true
-      sort: 9
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: date_updated
       group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 9
+      special:
+        - date-updated
+        - cast-timestamp
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: date_updated
       table: sudoku
-      data_type: timestamp
+      data_type: datetime
       default_value: null
       max_length: null
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-
   - collection: sudoku
     field: user_created
-    type: uuid
+    type: string
     meta:
       collection: sudoku
-      field: user_created
-      special:
-        - user-created
-      interface: select-dropdown-m2o
-      options:
-        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
+      conditions: null
       display: user
       display_options: null
-      readonly: true
-      hidden: true
-      sort: 10
-      width: half
-      translations: null
-      note: null
-      conditions: null
-      required: false
+      field: user_created
       group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      searchable: true
+      sort: 10
+      special:
+        - user-created
+      translations: null
       validation: null
       validation_message: null
+      width: half
     schema:
       name: user_created
       table: sudoku
-      data_type: uuid
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: id
+    type: uuid
+    meta:
+      collection: wordgames
+      conditions: null
+      display: raw
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 1
+      special:
+        - uuid
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: wordgames
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: status
+    type: string
+    meta:
+      collection: wordgames
+      conditions: null
+      display: labels
+      display_options:
+        choices:
+          - background: '#D3DAE4'
+            foreground: '#18222F'
+            text: Draft
+            value: draft
+          - background: '#B2DFDB'
+            foreground: '#18222F'
+            text: Published
+            value: published
+          - background: '#F5F5F5'
+            foreground: '#18222F'
+            text: Archived
+            value: archived
+        showAsDot: true
+      field: status
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: null
+      options:
+        choices:
+          - text: Draft
+            value: draft
+          - text: Published
+            value: published
+          - text: Archived
+            value: archived
+      readonly: false
+      required: false
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: status
+      table: wordgames
+      data_type: varchar
+      default_value: draft
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: title
+    type: string
+    meta:
+      collection: wordgames
+      conditions: null
+      display: raw
+      display_options: null
+      field: title
+      group: null
+      hidden: false
+      interface: input
+      note: Title for this word game
+      options:
+        placeholder: Word of the Day - Feb 7
+      readonly: false
+      required: false
+      searchable: true
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: title
+      table: wordgames
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: word
+    type: string
+    meta:
+      collection: wordgames
+      conditions: null
+      display: raw
+      display_options: null
+      field: word
+      group: null
+      hidden: false
+      interface: input
+      note: The target word to guess (uppercase)
+      options:
+        placeholder: KNYGĄ
+      readonly: false
+      required: true
+      searchable: true
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: word
+      table: wordgames
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: definition
+    type: text
+    meta:
+      collection: wordgames
+      conditions: null
+      display: raw
+      display_options: null
+      field: definition
+      group: null
+      hidden: false
+      interface: input-multiline
+      note: Definition shown after the game ends
+      options:
+        placeholder: A brief definition or hint
+      readonly: false
+      required: false
+      searchable: true
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: definition
+      table: wordgames
+      data_type: text
       default_value: null
       max_length: null
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
       is_unique: false
+      is_indexed: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: max_attempts
+    type: integer
+    meta:
+      collection: wordgames
+      conditions: null
+      display: raw
+      display_options: null
+      field: max_attempts
+      group: null
+      hidden: false
+      interface: input
+      note: Maximum number of guesses (default 6)
+      options:
+        max: 10
+        min: 3
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: max_attempts
+      table: wordgames
+      data_type: integer
+      default_value: 6
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: scheduled_date
+    type: date
+    meta:
+      collection: wordgames
+      conditions: null
+      display: datetime
+      display_options:
+        relative: false
+      field: scheduled_date
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date when this word game should appear
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: scheduled_date
+      table: wordgames
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: date_created
+    type: timestamp
+    meta:
+      collection: wordgames
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 8
+      special:
+        - date-created
+        - cast-timestamp
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: wordgames
+      data_type: datetime
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: wordgames
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 9
+      special:
+        - date-updated
+        - cast-timestamp
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: wordgames
+      data_type: datetime
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: wordgames
+    field: user_created
+    type: string
+    meta:
+      collection: wordgames
+      conditions: null
+      display: user
+      display_options: null
+      field: user_created
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      searchable: true
+      sort: 10
+      special:
+        - user-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_created
+      table: wordgames
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+systemFields: []
 relations: []
