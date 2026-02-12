@@ -2,14 +2,11 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install yarn
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
-
 # Copy dependency files
-COPY package.json yarn.lock* ./
+COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN yarn install --frozen-lockfile --production
+RUN npm ci --omit=dev
 
 # Copy project files (snapshot, extensions, etc.)
 COPY . .
