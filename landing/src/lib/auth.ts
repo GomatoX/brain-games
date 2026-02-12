@@ -145,7 +145,8 @@ export async function directusGetUserToken(
 }
 
 export async function directusGetGames(accessToken: string) {
-  const userFilter = "&filter[user_created][_eq]=$CURRENT_USER";
+  const me = await directusGetMe(accessToken);
+  const userFilter = `&filter[user_created][_eq]=${me.id}`;
   const [crosswords, wordgames, sudoku] = await Promise.all([
     fetch(
       `${API_URL}/items/crosswords?fields=id,status,title,difficulty,words,main_word,date_created&sort=-date_created${userFilter}`,
