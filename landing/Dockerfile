@@ -3,17 +3,13 @@ FROM node:20-alpine AS deps
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
-
-COPY package.json yarn.lock* ./
-RUN yarn install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Stage 2: Build
 FROM node:20-alpine AS build
 
 WORKDIR /app
-
-RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -24,7 +20,7 @@ ARG NEXT_PUBLIC_FRONTEND_URL=""
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_FRONTEND_URL=${NEXT_PUBLIC_FRONTEND_URL}
 
-RUN yarn build
+RUN npm run build
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner

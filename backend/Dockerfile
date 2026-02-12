@@ -21,4 +21,4 @@ RUN mkdir -p /app/data /app/uploads /app/extensions
 EXPOSE 8055
 
 # Bootstrap (apply schema + create admin) then start
-CMD ["sh", "-c", "npx directus bootstrap && npx directus start"]
+CMD ["sh", "-c", "npx directus bootstrap && npx directus schema apply --yes ./snapshot.yaml && npx directus start"]
