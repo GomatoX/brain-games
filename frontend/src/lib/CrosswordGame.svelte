@@ -933,7 +933,7 @@
   /* Theme Colors - Rustycogs Design System */
   .light-theme {
     --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
+    --bg-secondary: #ffffff;
     --text-primary: #0f172a;
     --text-secondary: #64748b;
     --border-color: #e2e8f0;
@@ -1146,7 +1146,7 @@
      GRID SECTION
      ============================================ */
   .grid-section {
-    flex: 0 1 auto;
+    flex: 1 1 50%;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1356,9 +1356,7 @@
      CLUES PANEL
      ============================================ */
   .clues-panel {
-    flex: 0 0 auto;
-    width: 340px;
-    max-width: 400px;
+    flex: 1 1 50%;
     min-width: 280px;
     display: flex;
     flex-direction: column;
