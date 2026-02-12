@@ -1,17 +1,16 @@
 /**
- * Crossword Layout Algorithm v9 - Ultra Dense
+ * Crossword Layout Algorithm v10 — Recursive Backtracking + Density Scoring
  *
- * Major improvements over v8:
- * - Relaxed adjacency validation for newspaper-style density
- * - Tries BOTH directions for each placement (not just perpendicular)
- * - Scores reward adjacency and gap-filling
- * - Center-of-mass compactness scoring
- * - Multiple word ordering strategies per seed
+ * 1. Data structure  — 2D matrix output
+ * 2. Pre-processing  — words sorted by length descending
+ * 3. Dense logic     — recursive backtracking; placements scored by Density Score
+ * 4. Density Score   — how many characters of the new word touch existing ones
+ * 5. Heuristic       — rejects placements that create unfillable 1×1 holes
+ * 6. Validation      — no side-by-side adjacency unless intersecting
  */
 
-/**
- * Seeded random number generator (mulberry32)
- */
+// ─── Utility ──────────────────────────────────────────────────────────
+
 function createRandom(seed) {
   return function () {
     let t = (seed += 0x6d2b79f5);
@@ -21,9 +20,6 @@ function createRandom(seed) {
   };
 }
 
-/**
- * Shuffle array using seeded random
- */
 function seededShuffle(array, random) {
   const result = [...array];
   for (let i = result.length - 1; i > 0; i--) {
@@ -33,9 +29,8 @@ function seededShuffle(array, random) {
   return result;
 }
 
-/**
- * Get current grid bounds
- */
+// ─── Grid helpers (hash-map internally, 2D matrix on output) ──────────
+
 function getGridBounds(grid) {
   let minX = Infinity,
     minY = Infinity,
@@ -48,382 +43,351 @@ function getGridBounds(grid) {
     maxX = Math.max(maxX, x);
     maxY = Math.max(maxY, y);
   }
-  if (minX === Infinity) {
-    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-  }
-  return { minX, minY, maxX, maxY };
+  return minX === Infinity
+    ? { minX: 0, minY: 0, maxX: 0, maxY: 0 }
+    : { minX, minY, maxX, maxY };
 }
 
+/** Place a word, incrementing per-cell reference counts. */
+function placeWord(grid, refs, word, x, y, dir) {
+  const dx = dir === "across" ? 1 : 0;
+  const dy = dir === "down" ? 1 : 0;
+  for (let i = 0; i < word.length; i++) {
+    const key = `${x + i * dx},${y + i * dy}`;
+    grid[key] = word[i];
+    refs[key] = (refs[key] || 0) + 1;
+  }
+}
+
+/** Remove a word; only delete cells whose ref count drops to 0. */
+function removeWord(grid, refs, word, x, y, dir) {
+  const dx = dir === "across" ? 1 : 0;
+  const dy = dir === "down" ? 1 : 0;
+  for (let i = 0; i < word.length; i++) {
+    const key = `${x + i * dx},${y + i * dy}`;
+    refs[key]--;
+    if (refs[key] <= 0) {
+      delete grid[key];
+      delete refs[key];
+    }
+  }
+}
+
+/** Convert hash-map grid → 2D matrix (null = empty). */
+function gridToMatrix(grid, bounds) {
+  const w = bounds.maxX - bounds.minX + 1;
+  const h = bounds.maxY - bounds.minY + 1;
+  const m = Array.from({ length: h }, () => Array(w).fill(null));
+  for (const [key, letter] of Object.entries(grid)) {
+    const [x, y] = key.split(",").map(Number);
+    m[y - bounds.minY][x - bounds.minX] = letter;
+  }
+  return { matrix: m, width: w, height: h };
+}
+
+// ─── Validation ───────────────────────────────────────────────────────
+
 /**
- * Check if word can be validly placed.
- * Rules for dense crosswords:
+ * Check basic placement validity.
+ * Returns intersection count (≥0) or -1 if invalid.
+ *
+ * Rules enforced:
  * - Letters at intersections must match
- * - No accidental word extension (empty before start and after end)
- * - At least one intersection with existing grid required
- * - Perpendicular neighbors must not create unintended word runs
+ * - No word extension (cell before start / after end must be empty)
+ * - No invalid parallel adjacency (prevents accidental words)
  */
-function isValid(grid, word, startX, startY, dir) {
+function checkPlacement(grid, word, sx, sy, dir) {
   const dx = dir === "across" ? 1 : 0;
   const dy = dir === "down" ? 1 : 0;
 
-  // Check before start is empty (no accidental word extension)
-  const bx = startX - dx;
-  const by = startY - dy;
-  if (grid[`${bx},${by}`]) return false;
-
-  // Check after end is empty
-  const ax = startX + word.length * dx;
-  const ay = startY + word.length * dy;
-  if (grid[`${ax},${ay}`]) return false;
+  // word-extension guard
+  if (grid[`${sx - dx},${sy - dy}`]) return -1;
+  if (grid[`${sx + word.length * dx},${sy + word.length * dy}`]) return -1;
 
   let intersections = 0;
-
   for (let i = 0; i < word.length; i++) {
-    const x = startX + i * dx;
-    const y = startY + i * dy;
-    const key = `${x},${y}`;
-    const letter = word[i];
-    const existing = grid[key];
+    const x = sx + i * dx;
+    const y = sy + i * dy;
+    const existing = grid[`${x},${y}`];
 
     if (existing) {
-      // Cell occupied - must match
-      if (existing !== letter) return false;
+      if (existing !== word[i]) return -1;
       intersections++;
     } else {
-      // Cell empty - check perpendicular neighbors to prevent
-      // invalid parallel word touching
-      const perpDx = dir === "across" ? 0 : 1;
-      const perpDy = dir === "down" ? 0 : 1;
-
-      const n1Key = `${x + perpDx},${y + perpDy}`;
-      const n2Key = `${x - perpDx},${y - perpDy}`;
-      const n1 = grid[n1Key];
-      const n2 = grid[n2Key];
-
-      if (n1 || n2) {
-        // Reject if neighbor has a run of 2+ letters (would create
-        // an unintended perpendicular word)
-        let hasRun = false;
-
-        if (n1) {
-          const nextKey = `${x + perpDx * 2},${y + perpDy * 2}`;
-          if (grid[nextKey]) hasRun = true;
-        }
-        if (n2) {
-          const nextKey = `${x - perpDx * 2},${y - perpDy * 2}`;
-          if (grid[nextKey]) hasRun = true;
-        }
-
-        if (hasRun) return false;
-
-        // Reject if sandwiched between two existing letters
-        if (n1 && n2) return false;
-      }
+      // perpendicular adjacency check
+      const px = dir === "across" ? 0 : 1;
+      const py = dir === "down" ? 0 : 1;
+      const n1 = grid[`${x + px},${y + py}`];
+      const n2 = grid[`${x - px},${y - py}`];
+      if (n1 && n2) return -1; // sandwiched
+      if (n1 && grid[`${x + px * 2},${y + py * 2}`]) return -1;
+      if (n2 && grid[`${x - px * 2},${y - py * 2}`]) return -1;
     }
   }
-
-  // Must intersect at least once (for connected crosswords)
-  return intersections > 0;
+  return intersections;
 }
 
+// ─── Density Score ────────────────────────────────────────────────────
+
 /**
- * Score a placement - higher is better
- * Dense scoring rewards:
- * - Intersections (sharing letters with existing words)
- * - Adjacency (touching existing letters without crossing)
- * - Compactness (staying close to grid center of mass)
- * - NOT expanding the grid boundaries
+ * Density Score = how many characters of the new word touch existing ones.
+ * Intersections count double (strongest contact).
  */
-function scorePlacement(grid, word, startX, startY, dir, bounds) {
+function densityScore(grid, word, x, y, dir) {
+  const dx = dir === "across" ? 1 : 0;
+  const dy = dir === "down" ? 1 : 0;
+  let score = 0;
+  for (let i = 0; i < word.length; i++) {
+    const cx = x + i * dx;
+    const cy = y + i * dy;
+    if (grid[`${cx},${cy}`]) {
+      score += 2; // intersection
+    } else {
+      if (grid[`${cx + 1},${cy}`]) score++;
+      if (grid[`${cx - 1},${cy}`]) score++;
+      if (grid[`${cx},${cy + 1}`]) score++;
+      if (grid[`${cx},${cy - 1}`]) score++;
+    }
+  }
+  return score;
+}
+
+// ─── 1×1 Hole Detection ──────────────────────────────────────────────
+
+/**
+ * Would placing this word create an unfillable 1×1 hole?
+ * (An empty cell walled-in on all four orthogonal sides.)
+ */
+function wouldCreateHoles(grid, word, x, y, dir) {
   const dx = dir === "across" ? 1 : 0;
   const dy = dir === "down" ? 1 : 0;
 
-  let intersections = 0;
-  let adjacencies = 0;
-  let newCells = 0;
-
-  // Calculate center of mass of current grid
-  const keys = Object.keys(grid);
-  let centerX = 0;
-  let centerY = 0;
-  for (const key of keys) {
-    const [kx, ky] = key.split(",").map(Number);
-    centerX += kx;
-    centerY += ky;
-  }
-  centerX /= keys.length || 1;
-  centerY /= keys.length || 1;
-
-  let distFromCenter = 0;
-
+  // temporarily place new cells
+  const tmp = [];
   for (let i = 0; i < word.length; i++) {
-    const x = startX + i * dx;
-    const y = startY + i * dy;
-    const key = `${x},${y}`;
+    const key = `${x + i * dx},${y + i * dy}`;
+    if (!grid[key]) {
+      grid[key] = word[i];
+      tmp.push(key);
+    }
+  }
 
-    if (grid[key]) {
-      intersections++;
-    } else {
-      newCells++;
-      // Distance from center of mass
-      distFromCenter += Math.abs(x - centerX) + Math.abs(y - centerY);
-
-      // Count adjacent filled cells (bonus for filling gaps)
-      const neighbors = [
-        `${x + 1},${y}`,
-        `${x - 1},${y}`,
-        `${x},${y + 1}`,
-        `${x},${y - 1}`,
-      ];
-      for (const nk of neighbors) {
-        if (grid[nk]) adjacencies++;
+  let found = false;
+  const checked = new Set();
+  for (const key of tmp) {
+    if (found) break;
+    const [cx, cy] = key.split(",").map(Number);
+    for (const [nx, ny] of [
+      [cx + 1, cy],
+      [cx - 1, cy],
+      [cx, cy + 1],
+      [cx, cy - 1],
+    ]) {
+      const nk = `${nx},${ny}`;
+      if (checked.has(nk) || grid[nk]) continue;
+      checked.add(nk);
+      if (
+        grid[`${nx + 1},${ny}`] &&
+        grid[`${nx - 1},${ny}`] &&
+        grid[`${nx},${ny + 1}`] &&
+        grid[`${nx},${ny - 1}`]
+      ) {
+        found = true;
+        break;
       }
     }
   }
 
-  // Calculate grid expansion
-  let newMinX = bounds.minX;
-  let newMinY = bounds.minY;
-  let newMaxX = bounds.maxX;
-  let newMaxY = bounds.maxY;
-
-  for (let i = 0; i < word.length; i++) {
-    const x = startX + i * dx;
-    const y = startY + i * dy;
-    newMinX = Math.min(newMinX, x);
-    newMinY = Math.min(newMinY, y);
-    newMaxX = Math.max(newMaxX, x);
-    newMaxY = Math.max(newMaxY, y);
-  }
-
-  const oldArea =
-    (bounds.maxX - bounds.minX + 1) * (bounds.maxY - bounds.minY + 1);
-  const newArea = (newMaxX - newMinX + 1) * (newMaxY - newMinY + 1);
-  const expansion = newArea - oldArea;
-
-  // Score formula:
-  // - +2000 per intersection (strongly favor letter sharing)
-  // - +200 per adjacency (reward touching existing words)
-  // - -100 per unit of grid expansion (heavily penalize spreading)
-  // - -5 per unit of distance from center (prefer compact placement)
-  // - +50 base for valid placement
-  return (
-    intersections * 2000 +
-    adjacencies * 200 -
-    expansion * 100 -
-    distFromCenter * 5 +
-    50
-  );
+  // undo temporary cells
+  for (const key of tmp) delete grid[key];
+  return found;
 }
 
+// ─── Placement Finder ─────────────────────────────────────────────────
+
 /**
- * Generate a crossword layout from words
+ * Find all valid, deduplicated placements for `word` that intersect
+ * with at least one already-placed word.  Sorted by density score desc.
  */
+function findPlacements(grid, word, placed) {
+  const seen = new Set();
+  const results = [];
+
+  for (const p of placed) {
+    const pw = p.word;
+    const pd = p.direction;
+    for (let pi = 0; pi < pw.length; pi++) {
+      for (let wj = 0; wj < word.length; wj++) {
+        if (pw[pi] !== word[wj]) continue;
+        const tx = pd === "across" ? p.x + pi : p.x;
+        const ty = pd === "across" ? p.y : p.y + pi;
+
+        for (const dir of ["across", "down"]) {
+          const sx = dir === "across" ? tx - wj : tx;
+          const sy = dir === "down" ? ty - wj : ty;
+          const key = `${sx},${sy},${dir}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+
+          const ix = checkPlacement(grid, word, sx, sy, dir);
+          if (ix > 0) {
+            results.push({
+              x: sx,
+              y: sy,
+              dir,
+              score: densityScore(grid, word, sx, sy, dir),
+            });
+          }
+        }
+      }
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  return results;
+}
+
+// ─── Recursive Backtracking Solver ────────────────────────────────────
+
+const BEAM_WIDTH = 5;
+
+function solve(grid, refs, words, idx, placed, deadline) {
+  if (idx >= words.length) return true;
+  if (Date.now() > deadline) return false;
+
+  const word = words[idx].word;
+  const candidates = findPlacements(grid, word, placed).slice(0, BEAM_WIDTH);
+
+  for (const c of candidates) {
+    if (wouldCreateHoles(grid, word, c.x, c.y, c.dir)) continue;
+
+    placeWord(grid, refs, word, c.x, c.y, c.dir);
+    placed.push({ ...words[idx], x: c.x, y: c.y, direction: c.dir });
+
+    if (solve(grid, refs, words, idx + 1, placed, deadline)) return true;
+
+    placed.pop();
+    removeWord(grid, refs, word, c.x, c.y, c.dir);
+  }
+
+  return false;
+}
+
+// ─── Greedy fallback (multi-pass, used when backtracking times out) ───
+
+function greedyPlace(grid, refs, words, placed) {
+  let unplaced = [...words];
+  let passes = 15;
+
+  while (unplaced.length > 0 && passes-- > 0) {
+    const still = [];
+    for (const wo of unplaced) {
+      const candidates = findPlacements(grid, wo.word, placed);
+      const valid = candidates.filter(
+        (c) => !wouldCreateHoles(grid, wo.word, c.x, c.y, c.dir),
+      );
+      if (valid.length > 0) {
+        const best = valid[0];
+        placeWord(grid, refs, wo.word, best.x, best.y, best.dir);
+        placed.push({ ...wo, x: best.x, y: best.y, direction: best.dir });
+      } else {
+        still.push(wo);
+      }
+    }
+    if (still.length === unplaced.length) break;
+    unplaced = still;
+  }
+
+  if (unplaced.length > 0) {
+    console.warn(
+      `Could not place ${unplaced.length} words:`,
+      unplaced.map((w) => w.word),
+    );
+  }
+}
+
+// ─── Public API ───────────────────────────────────────────────────────
+
 export function generateLayout(words, seed = 1) {
   if (!words || words.length === 0) {
-    return { placedWords: [], gridSize: 10, success: false, seed };
+    return {
+      placedWords: [],
+      grid: [],
+      gridSize: 10,
+      success: false,
+      seed,
+      densityScore: 0,
+      wordsPlaced: 0,
+      area: 0,
+    };
   }
 
   const random = createRandom(seed);
 
-  // Sort by word length (longest first) then shuffle for variety
+  // Pre-processing: sort by length descending, then seeded shuffle
   const sorted = [...words]
     .map((w) => ({ ...w, word: w.word.toUpperCase() }))
     .sort((a, b) => b.word.length - a.word.length);
-
   const shuffled = seededShuffle(sorted, random);
 
-  const grid = {}; // "x,y" -> letter
+  const grid = {};
+  const refs = {};
   const placed = [];
-  const placedDirs = []; // Track direction per placed word for both-dir search
 
-  const setCell = (x, y, letter) => {
-    grid[`${x},${y}`] = letter;
-  };
-
-  // Place first word horizontally at origin
+  // Place first word at origin
   const first = shuffled[0];
-  for (let i = 0; i < first.word.length; i++) {
-    setCell(i, 0, first.word[i]);
-  }
-  placed.push({
-    ...first,
-    x: 0,
-    y: 0,
-    direction: "across",
-  });
-  placedDirs.push("across");
+  placeWord(grid, refs, first.word, 0, 0, "across");
+  placed.push({ ...first, x: 0, y: 0, direction: "across" });
 
-  // Try to place remaining words with multiple passes
-  let unplaced = shuffled.slice(1);
-  let maxPasses = 15;
-  let pass = 0;
+  // Phase 1: recursive backtracking (time-budgeted)
+  const remaining = shuffled.slice(1);
+  const deadline = Date.now() + 200;
+  const btOk = solve(grid, refs, remaining, 0, placed, deadline);
 
-  while (unplaced.length > 0 && pass < maxPasses) {
-    pass++;
-    const stillUnplaced = [];
-
-    for (const wordObj of unplaced) {
-      const word = wordObj.word;
-      let bestPlacement = null;
-      let bestScore = -Infinity;
-
-      const bounds = getGridBounds(grid);
-
-      // Strategy 1: Try intersecting with EVERY letter of EVERY placed word
-      for (let pi2 = 0; pi2 < placed.length; pi2++) {
-        const p = placed[pi2];
-        const pWord = p.word;
-
-        for (let pi = 0; pi < pWord.length; pi++) {
-          for (let wj = 0; wj < word.length; wj++) {
-            if (pWord[pi] !== word[wj]) continue;
-
-            // Try BOTH directions (not just perpendicular)
-            const dirs = ["across", "down"];
-            for (const newDir of dirs) {
-              let startX, startY;
-
-              if (newDir === "across") {
-                // Place horizontally: the wj-th letter of our word
-                // must land on the pi-th letter of the placed word
-                const targetX = p.direction === "across" ? p.x + pi : p.x;
-                const targetY = p.direction === "across" ? p.y : p.y + pi;
-                startX = targetX - wj;
-                startY = targetY;
-              } else {
-                // Place vertically
-                const targetX = p.direction === "across" ? p.x + pi : p.x;
-                const targetY = p.direction === "across" ? p.y : p.y + pi;
-                startX = targetX;
-                startY = targetY - wj;
-              }
-
-              if (isValid(grid, word, startX, startY, newDir)) {
-                const score = scorePlacement(
-                  grid,
-                  word,
-                  startX,
-                  startY,
-                  newDir,
-                  bounds,
-                );
-                if (score > bestScore) {
-                  bestScore = score;
-                  bestPlacement = { x: startX, y: startY, dir: newDir };
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Strategy 2: Try placing adjacent to existing grid cells
-      // Scan the perimeter of the current grid for valid positions
-      if (!bestPlacement) {
-        const bounds2 = getGridBounds(grid);
-        for (const dir of ["across", "down"]) {
-          const ddx = dir === "across" ? 1 : 0;
-          const ddy = dir === "down" ? 1 : 0;
-
-          // Try positions within and slightly outside the grid bounds
-          for (let y = bounds2.minY - word.length; y <= bounds2.maxY + 1; y++) {
-            for (
-              let x = bounds2.minX - word.length;
-              x <= bounds2.maxX + 1;
-              x++
-            ) {
-              if (isValid(grid, word, x, y, dir)) {
-                const score = scorePlacement(grid, word, x, y, dir, bounds2);
-                if (score > bestScore) {
-                  bestScore = score;
-                  bestPlacement = { x, y, dir };
-                }
-              }
-            }
-          }
-        }
-      }
-
-      if (bestPlacement) {
-        const ddx = bestPlacement.dir === "across" ? 1 : 0;
-        const ddy = bestPlacement.dir === "down" ? 1 : 0;
-        for (let k = 0; k < word.length; k++) {
-          setCell(
-            bestPlacement.x + k * ddx,
-            bestPlacement.y + k * ddy,
-            word[k],
-          );
-        }
-        placed.push({
-          ...wordObj,
-          x: bestPlacement.x,
-          y: bestPlacement.y,
-          direction: bestPlacement.dir,
-        });
-        placedDirs.push(bestPlacement.dir);
-      } else {
-        stillUnplaced.push(wordObj);
-      }
-    }
-
-    // If no progress, break
-    if (stillUnplaced.length === unplaced.length) {
-      break;
-    }
-    unplaced = stillUnplaced;
+  // Phase 2: greedy fallback for any words backtracking couldn't place
+  if (!btOk) {
+    const placedSet = new Set(placed.map((p) => p.word));
+    const leftover = remaining.filter((w) => !placedSet.has(w.word));
+    if (leftover.length > 0) greedyPlace(grid, refs, leftover, placed);
   }
 
-  // Log unplaced words (these couldn't be connected)
-  if (unplaced.length > 0) {
-    console.warn(
-      `Could not place ${unplaced.length} words (no valid intersections):`,
-      unplaced.map((w) => w.word),
-    );
-  }
-
-  // Normalize coordinates to start at (0, 0)
+  // Build 2D matrix before normalising coordinates
   const bounds = getGridBounds(grid);
+  const { matrix, width, height } = gridToMatrix(grid, bounds);
+
+  // Normalise placed-word coordinates to (0,0)-based
   for (const p of placed) {
     p.x -= bounds.minX;
     p.y -= bounds.minY;
   }
 
-  const width = bounds.maxX - bounds.minX + 1;
-  const height = bounds.maxY - bounds.minY + 1;
-  const size = Math.max(width, height, 5);
-
-  // Calculate density score for comparison
   const letterCount = Object.keys(grid).length;
   const area = width * height;
-  const densityScore = letterCount / area; // Higher is better
 
   return {
     placedWords: placed,
-    gridSize: size,
+    grid: matrix,
+    gridSize: Math.max(width, height, 5),
     success: placed.length === words.length,
-    seed: seed,
-    densityScore: densityScore,
+    seed,
+    densityScore: letterCount / area,
     wordsPlaced: placed.length,
-    area: area,
+    area,
   };
 }
 
 /**
- * Try multiple seeds and return the layout with best density
- * @param {Array} words - Words to place
- * @param {number} seedHint - Starting seed (will try variations around it)
- * @param {number} attempts - Number of seeds to try (default: 20)
+ * Try multiple seeds and return the best layout.
  */
-export function generateLayoutOptimized(words, seedHint = 1, attempts = 20) {
+export function generateLayoutOptimized(words, seedHint = 1, attempts = 50) {
   let bestLayout = null;
   let bestScore = -Infinity;
+  const overallDeadline = Date.now() + 5000; // 5 s total cap
 
   for (let i = 0; i < attempts; i++) {
-    const seed = seedHint + i;
-    const layout = generateLayout(words, seed);
+    if (Date.now() > overallDeadline) break;
 
-    // Score: prioritize placing all words, then density, then small area
+    const layout = generateLayout(words, seedHint + i);
     const score =
       layout.wordsPlaced * 10000 + layout.densityScore * 1000 - layout.area * 2;
 
@@ -431,6 +395,9 @@ export function generateLayoutOptimized(words, seedHint = 1, attempts = 20) {
       bestScore = score;
       bestLayout = layout;
     }
+
+    // early exit on excellent result
+    if (layout.success && layout.densityScore > 0.55) break;
   }
 
   console.log(
