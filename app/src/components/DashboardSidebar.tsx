@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { platformConfig, isWhiteLabel } from "@/lib/platform";
 
 interface User {
@@ -19,11 +20,7 @@ export default function DashboardSidebar({ user }: { user: User }) {
 
   async function handleLogout() {
     setLoggingOut(true);
-    await fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "logout" }),
-    });
+    await signOut({ redirect: false });
     router.push("/login");
   }
 

@@ -216,7 +216,6 @@ export default function BrandingContent({
     setError("");
 
     const data: Record<string, unknown> = {
-      collection: "branding",
       name: formName.trim(),
     };
     for (const f of ALL_FIELDS) {
@@ -226,13 +225,13 @@ export default function BrandingContent({
     try {
       if (editing) {
         data.id = editing.id;
-        await fetch("/api/games", {
+        await fetch("/api/branding", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
       } else {
-        await fetch("/api/games", {
+        await fetch("/api/branding", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -249,7 +248,7 @@ export default function BrandingContent({
 
   async function handleDelete(id: string) {
     try {
-      await fetch(`/api/games?collection=branding&id=${id}`, {
+      await fetch(`/api/branding?id=${id}`, {
         method: "DELETE",
       });
       await fetchPresets();

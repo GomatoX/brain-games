@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -19,20 +20,28 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth", {
+      // 1. Create the account
+      const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "register",
-          email,
-          password,
-          firstName,
-          lastName,
-        }),
+        body: JSON.stringify({ email, password, firstName, lastName }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
+      // 2. Auto-login via NextAuth client-side (sets cookie properly)
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        // Account created but auto-login failed — redirect to login
+        router.push("/login");
+        return;
+      }
 
       router.push("/dashboard");
     } catch (err) {

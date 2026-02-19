@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { auth } from "@/lib/auth";
 
 const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY || "";
 
@@ -36,8 +37,8 @@ Return a JSON array of objects with "word" and "clue" fields. Words should be UP
 }
 
 export async function POST(request: NextRequest) {
-  const accessToken = request.cookies.get("access_token")?.value;
-  if (!accessToken) {
+  const session = await auth();
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

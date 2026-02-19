@@ -7,6 +7,19 @@ type GameType = "crosswords" | "wordgames" | "sudoku";
 
 const tables = { crosswords, wordgames, sudoku } as const;
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+/**
+ * Preflight handler for CORS
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
+
 /**
  * Public API for game embeds.
  * GET /api/public/games?type=crosswords&id=xxx
@@ -23,7 +36,7 @@ export async function GET(request: NextRequest) {
   if (!type || !id || !(type in tables)) {
     return NextResponse.json(
       { error: "type and id are required" },
-      { status: 400 },
+      { status: 400, headers: corsHeaders },
     );
   }
 
@@ -36,7 +49,10 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (!game) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Not found" },
+        { status: 404, headers: corsHeaders },
+      );
     }
 
     // If draft, check token auth
@@ -45,7 +61,10 @@ export async function GET(request: NextRequest) {
       const token = authHeader?.replace("Bearer ", "");
 
       if (!token) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Not found" },
+          { status: 404, headers: corsHeaders },
+        );
       }
 
       // Verify token belongs to the game owner
@@ -56,7 +75,10 @@ export async function GET(request: NextRequest) {
         .limit(1);
 
       if (!owner || owner.apiToken !== token) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Not found" },
+          { status: 404, headers: corsHeaders },
+        );
       }
     }
 
@@ -125,11 +147,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Wrap in { data: ... } to match Directus response shape
-    return NextResponse.json({ data: gameData });
+    return NextResponse.json({ data: gameData }, { headers: corsHeaders });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch game" },
-      { status: 500 },
+      { status: 500, headers: corsHeaders },
     );
   }
 }

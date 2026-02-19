@@ -15,7 +15,7 @@
   const apiBase =
     import.meta.env.VITE_API_URL ||
     urlParams.get("api") ||
-    (import.meta.env.DEV ? "http://localhost:8055" : window.location.origin);
+    (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
 </script>
 
 {#if puzzleId}
