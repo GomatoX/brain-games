@@ -5,14 +5,14 @@ const FRONTEND_URL =
 
 export default function Home() {
   return (
-    <div className="bg-white text-[#0f172a] font-[family-name:var(--font-inter)] min-h-screen flex flex-col overflow-x-hidden antialiased selection:bg-[#c25e40]/20 selection:text-[#a0492d]">
+    <div className="bg-white text-[#0f172a] font-[family-name:var(--font-inter)] min-h-screen flex flex-col overflow-x-hidden antialiased selection:bg-rust/20 selection:text-rust-dark">
       {/* Header */}
       <div className="relative w-full border-b border-[#e2e8f0] bg-white/95 backdrop-blur-[8px] sticky top-0 z-50 transition-all duration-300">
         <div className="flex justify-center">
           <div className="flex flex-1 max-w-[1280px] flex-col">
             <header className="flex items-center justify-between whitespace-nowrap px-6 py-4 md:px-10">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center text-[#c25e40]">
+                <div className="flex items-center justify-center text-rust">
                   <span className="material-symbols-outlined text-3xl">
                     settings_suggest
                   </span>
@@ -24,19 +24,19 @@ export default function Home() {
               <div className="hidden md:flex flex-1 justify-end gap-8 items-center">
                 <div className="flex items-center gap-8">
                   <a
-                    className="text-[#64748b] hover:text-[#c25e40] text-sm font-medium transition-colors"
+                    className="text-[#64748b] hover:text-rust text-sm font-medium transition-colors"
                     href="#games"
                   >
                     Games
                   </a>
                   <a
-                    className="text-[#64748b] hover:text-[#c25e40] text-sm font-medium transition-colors"
+                    className="text-[#64748b] hover:text-rust text-sm font-medium transition-colors"
                     href="#integration"
                   >
                     Integration
                   </a>
                   <a
-                    className="text-[#64748b] hover:text-[#c25e40] text-sm font-medium transition-colors"
+                    className="text-[#64748b] hover:text-rust text-sm font-medium transition-colors"
                     href="#contact"
                   >
                     Get Started
@@ -45,13 +45,13 @@ export default function Home() {
                 <div className="flex gap-3">
                   <a
                     href="/login"
-                    className="flex cursor-pointer items-center justify-center rounded-lg h-10 px-5 text-[#0f172a] hover:text-[#c25e40] transition-all text-sm font-semibold border border-transparent hover:bg-[#f9fafb]"
+                    className="flex cursor-pointer items-center justify-center rounded-lg h-10 px-5 text-[#0f172a] hover:text-rust transition-all text-sm font-semibold border border-transparent hover:bg-[#f9fafb]"
                   >
                     <span className="truncate">Publisher Login</span>
                   </a>
                   <a
                     href="/register"
-                    className="flex cursor-pointer items-center justify-center rounded-lg h-10 px-6 bg-[#c25e40] hover:bg-[#a0492d] transition-all text-white text-sm font-semibold shadow-sm hover:shadow-md"
+                    className="flex cursor-pointer items-center justify-center rounded-lg h-10 px-6 bg-rust hover:bg-rust-dark transition-all text-white text-sm font-semibold shadow-sm hover:shadow-md"
                   >
                     <span className="truncate">Get Started Free</span>
                   </a>
@@ -70,14 +70,14 @@ export default function Home() {
             {/* Left Content */}
             <div className="flex flex-col gap-6 lg:w-1/2">
               <div className="flex flex-col gap-5 text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#fcece8]/50 border border-[#fcece8] w-fit">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#c25e40]">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rust-light/50 border border-rust-light w-fit">
+                  <span className="text-xs font-bold uppercase tracking-wider text-rust">
                     For Digital Publishers
                   </span>
                 </div>
                 <h1 className="text-[#0f172a] text-5xl md:text-6xl lg:text-7xl font-serif font-medium leading-[1.1] tracking-tight">
                   Engage Your Audience with{" "}
-                  <span className="text-[#c25e40] italic">Premium</span> Brain
+                  <span className="text-rust italic">Premium</span> Brain
                   Games
                 </h1>
                 <p className="text-[#64748b] text-lg font-light leading-relaxed max-w-lg">
@@ -89,13 +89,13 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <a
                   href="/register"
-                  className="flex cursor-pointer items-center justify-center rounded-lg h-12 px-8 bg-[#c25e40] hover:bg-[#a0492d] text-white text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                  className="flex cursor-pointer items-center justify-center rounded-lg h-12 px-8 bg-rust hover:bg-rust-dark text-white text-base font-semibold shadow-md hover:shadow-lg transition-all"
                 >
                   Get Started Free
                 </a>
                 <a
                   href="#games"
-                  className="flex cursor-pointer items-center justify-center rounded-lg h-12 px-8 bg-white border border-[#e2e8f0] hover:border-[#c25e40] text-[#0f172a] hover:text-[#c25e40] text-base font-semibold transition-all shadow-sm"
+                  className="flex cursor-pointer items-center justify-center rounded-lg h-12 px-8 bg-white border border-[#e2e8f0] hover:border-rust text-[#0f172a] hover:text-rust text-base font-semibold transition-all shadow-sm"
                 >
                   View Live Examples
                 </a>
@@ -136,13 +136,13 @@ export default function Home() {
                     </div>
                     {/* Bar Chart */}
                     <div className="h-40 w-full flex items-end justify-between gap-1 px-2">
-                      <div className="w-full bg-[#c25e40]/10 rounded-t h-[40%] hover:bg-[#c25e40]/20 transition-colors"></div>
-                      <div className="w-full bg-[#c25e40]/20 rounded-t h-[55%] hover:bg-[#c25e40]/30 transition-colors"></div>
-                      <div className="w-full bg-[#c25e40]/30 rounded-t h-[45%] hover:bg-[#c25e40]/40 transition-colors"></div>
-                      <div className="w-full bg-[#c25e40]/40 rounded-t h-[70%] hover:bg-[#c25e40]/50 transition-colors"></div>
-                      <div className="w-full bg-[#c25e40]/60 rounded-t h-[60%] hover:bg-[#c25e40]/70 transition-colors"></div>
-                      <div className="w-full bg-[#c25e40]/80 rounded-t h-[85%] hover:bg-[#c25e40]/90 transition-colors"></div>
-                      <div className="w-full bg-[#c25e40] rounded-t h-[95%] hover:bg-[#a0492d] transition-colors shadow-lg shadow-[#c25e40]/20"></div>
+                      <div className="w-full bg-rust/10 rounded-t h-[40%] hover:bg-rust/20 transition-colors"></div>
+                      <div className="w-full bg-rust/20 rounded-t h-[55%] hover:bg-rust/30 transition-colors"></div>
+                      <div className="w-full bg-rust/30 rounded-t h-[45%] hover:bg-rust/40 transition-colors"></div>
+                      <div className="w-full bg-rust/40 rounded-t h-[70%] hover:bg-rust/50 transition-colors"></div>
+                      <div className="w-full bg-rust/60 rounded-t h-[60%] hover:bg-rust/70 transition-colors"></div>
+                      <div className="w-full bg-rust/80 rounded-t h-[85%] hover:bg-rust/90 transition-colors"></div>
+                      <div className="w-full bg-rust rounded-t h-[95%] hover:bg-rust-dark transition-colors shadow-lg shadow-rust/20"></div>
                     </div>
                     {/* Stats */}
                     <div className="grid grid-cols-3 gap-4 mt-auto">
@@ -168,7 +168,7 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Decorative Blurs */}
-                <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-[#c25e40]/10 rounded-full blur-xl -z-10"></div>
+                <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-rust/10 rounded-full blur-xl -z-10"></div>
                 <div className="absolute -left-6 -top-6 w-32 h-32 bg-orange-100 rounded-full blur-xl -z-10"></div>
               </div>
             </div>
@@ -239,7 +239,7 @@ export default function Home() {
                     href={`${FRONTEND_URL}/?id=1`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="relative z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-[#c25e40] group-hover:text-[#c25e40] transition-colors"
+                    className="relative z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-rust group-hover:text-rust transition-colors"
                   >
                     <span className="material-symbols-outlined text-lg">
                       visibility
@@ -289,7 +289,7 @@ export default function Home() {
                     href={`${FRONTEND_URL}/?id=1&type=word`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="absolute z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-[#c25e40] group-hover:text-[#c25e40] transition-colors top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                    className="absolute z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-rust group-hover:text-rust transition-colors top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
                   >
                     <span className="material-symbols-outlined text-lg">
                       visibility
@@ -300,11 +300,16 @@ export default function Home() {
               </div>
 
               {/* Sudoku Card */}
-              <div className="bg-white rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_0_rgba(0,0,0,0.06)] hover:shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 overflow-hidden border border-[#e2e8f0] group flex flex-col">
+              <div className="bg-white rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_0_rgba(0,0,0,0.06)] transition-all duration-300 overflow-hidden border border-[#e2e8f0] flex flex-col opacity-75">
                 <div className="p-6 pb-0 flex items-center justify-between">
-                  <h3 className="font-serif text-xl font-bold text-[#0f172a]">
-                    Sudoku Challenge
-                  </h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-serif text-xl font-bold text-[#0f172a]">
+                      Sudoku Challenge
+                    </h3>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700">
+                      Coming Soon
+                    </span>
+                  </div>
                   <div className="h-8 w-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
                     <span className="material-symbols-outlined text-lg">
                       tag
@@ -317,8 +322,8 @@ export default function Home() {
                     mode and hints system.
                   </p>
                 </div>
-                <div className="mt-auto relative bg-slate-50 border-t border-[#e2e8f0] h-48 flex items-center justify-center p-4 group-hover:bg-slate-100 transition-colors">
-                  <div className="grid grid-cols-3 gap-0.5 bg-slate-300 p-0.5 w-24 h-24 opacity-60">
+                <div className="mt-auto relative bg-slate-50 border-t border-[#e2e8f0] h-48 flex items-center justify-center p-4">
+                  <div className="grid grid-cols-3 gap-0.5 bg-slate-300 p-0.5 w-24 h-24 opacity-40">
                     <div className="bg-white flex items-center justify-center text-xs">
                       5
                     </div>
@@ -339,17 +344,12 @@ export default function Home() {
                     </div>
                     <div className="bg-white"></div>
                   </div>
-                  <a
-                    href={`${FRONTEND_URL}/?id=1&type=sudoku`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="absolute z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-[#c25e40] group-hover:text-[#c25e40] transition-colors top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                  >
+                  <span className="absolute z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#94a3b8] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 cursor-default">
                     <span className="material-symbols-outlined text-lg">
-                      visibility
+                      lock
                     </span>
-                    Live Demo
-                  </a>
+                    Coming Soon
+                  </span>
                 </div>
               </div>
             </div>
@@ -361,7 +361,7 @@ export default function Home() {
           <div className="max-w-[1280px] mx-auto px-4 md:px-10 flex flex-col lg:flex-row gap-16 items-center">
             <div className="lg:w-1/2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 w-fit mb-6">
-                <span className="material-symbols-outlined text-[#c25e40] text-sm">
+                <span className="material-symbols-outlined text-rust text-sm">
                   code
                 </span>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#64748b]">
@@ -480,20 +480,20 @@ export default function Home() {
         {/* CTA Section */}
         <div
           id="contact"
-          className="w-full bg-[#c25e40] py-16 text-center text-white scroll-mt-20"
+          className="w-full bg-rust py-16 text-center text-white scroll-mt-20"
         >
           <div className="max-w-[800px] mx-auto px-6">
             <h2 className="text-3xl font-serif font-medium mb-4">
               Ready to boost your engagement metrics?
             </h2>
-            <p className="text-[#fcece8] text-lg mb-8 max-w-2xl mx-auto">
+            <p className="text-rust-light text-lg mb-8 max-w-2xl mx-auto">
               Create your free publisher account, add your games, and start
               embedding them anywhere in minutes.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a
                 href="/register"
-                className="bg-white text-[#c25e40] hover:bg-slate-100 font-bold py-3 px-8 rounded-lg shadow-lg transition-colors"
+                className="bg-white text-rust hover:bg-slate-100 font-bold py-3 px-8 rounded-lg shadow-lg transition-colors"
               >
                 Create Free Account
               </a>
@@ -514,7 +514,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-2 text-[#0f172a] mb-4">
-                <span className="material-symbols-outlined text-[#c25e40] text-2xl">
+                <span className="material-symbols-outlined text-rust text-2xl">
                   settings_suggest
                 </span>
                 <h3 className="text-lg font-bold font-serif">Rustycogs.io</h3>
@@ -530,7 +530,7 @@ export default function Home() {
               <ul className="flex flex-col gap-3 text-sm text-[#64748b]">
                 <li>
                   <a
-                    className="hover:text-[#c25e40] transition-colors"
+                    className="hover:text-rust transition-colors"
                     href="#games"
                   >
                     Games Catalog
@@ -538,7 +538,7 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    className="hover:text-[#c25e40] transition-colors"
+                    className="hover:text-rust transition-colors"
                     href="#integration"
                   >
                     Integration Guide
@@ -546,7 +546,7 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    className="hover:text-[#c25e40] transition-colors"
+                    className="hover:text-rust transition-colors"
                     href="#contact"
                   >
                     Get Started
@@ -561,7 +561,7 @@ export default function Home() {
               <ul className="flex flex-col gap-3 text-sm text-[#64748b]">
                 <li>
                   <a
-                    className="hover:text-[#c25e40] transition-colors"
+                    className="hover:text-rust transition-colors"
                     href="/login"
                   >
                     Publisher Login
@@ -569,7 +569,7 @@ export default function Home() {
                 </li>
                 <li>
                   <a
-                    className="hover:text-[#c25e40] transition-colors"
+                    className="hover:text-rust transition-colors"
                     href="/register"
                   >
                     Create Account

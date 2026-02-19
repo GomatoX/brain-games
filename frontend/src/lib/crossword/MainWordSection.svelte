@@ -1,5 +1,8 @@
 <script>
+  import { t } from "../i18n.js";
+
   export let mainWordProgress = [];
+  export let mainWordData = null;
   export let elapsedTime = 0;
   export let mainWord = "";
 
@@ -12,7 +15,7 @@
 
 {#if mainWord && mainWordProgress.length > 0}
   <div class="main-word-section">
-    <h3 class="main-word-title">Dienos kryžiažodžio frazė</h3>
+    <h3 class="main-word-title">{$t("crossword.mainWordTitle")}</h3>
     <div class="main-word-slots">
       {#each mainWordProgress as slot, i}
         <div
@@ -30,7 +33,7 @@
       {/each}
     </div>
     <div class="timer-badge">
-      <span class="timer-label">Jūsų laikas:</span>
+      <span class="timer-label">{$t("crossword.yourTime")}</span>
       <span class="timer-value">{formatTime(elapsedTime)}</span>
     </div>
   </div>

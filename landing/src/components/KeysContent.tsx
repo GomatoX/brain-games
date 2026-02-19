@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8055";
 const FRONTEND_URL =
@@ -14,6 +14,7 @@ export default function KeysContent({
   const [token, setToken] = useState<string | null>(initialToken);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [lang, setLang] = useState("lt");
 
   async function handleGenerate() {
     setGenerating(true);
@@ -53,6 +54,13 @@ export default function KeysContent({
     setTimeout(() => setCopied(null), 2000);
   }
 
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => d.language && setLang(d.language))
+      .catch(() => {});
+  }, []);
+
   const crosswordEmbed = `<!-- Load the game engine -->
 <script src="${FRONTEND_URL}/dist/crossword-engine.iife.js"><\/script>
 
@@ -61,6 +69,7 @@ export default function KeysContent({
   puzzle-id="latest"
   api-url="${API_URL}"
   ${token ? `token="${token}"` : 'token="YOUR_API_TOKEN"'}
+  lang="${lang}"
   theme="light"></crossword-game>`;
 
   const wordGameEmbed = `<!-- Load the game engine -->
@@ -71,6 +80,7 @@ export default function KeysContent({
   puzzle-id="latest"
   api-url="${API_URL}"
   ${token ? `token="${token}"` : 'token="YOUR_API_TOKEN"'}
+  lang="${lang}"
   theme="light"></word-game>`;
 
   return (
@@ -131,7 +141,7 @@ export default function KeysContent({
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="px-4 py-2 bg-[#c25e40] hover:bg-[#a0492d] disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-rust hover:bg-rust-dark disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 {generating ? "Generating…" : "Generate Token"}
               </button>

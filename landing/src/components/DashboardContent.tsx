@@ -56,6 +56,7 @@ export default function DashboardContent({
     type: GameType;
   } | null>(null);
   const [embedCopied, setEmbedCopied] = useState(false);
+  const [lang, setLang] = useState("lt");
 
   function getEmbedSnippet(gameId: string | number, gameType: GameType) {
     const tagMap: Record<GameType, { tag: string; script: string }> = {
@@ -81,6 +82,7 @@ export default function DashboardContent({
   puzzle-id="${gameId}"
   api-url="${API_URL}"
   token="YOUR_API_TOKEN"
+  lang="${lang}"
   theme="light"></${tag}>`;
   }
 
@@ -99,6 +101,18 @@ export default function DashboardContent({
       }
     } catch {
       // Silently fail
+    }
+  }
+
+  async function fetchLang() {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.language) setLang(data.language);
+      }
+    } catch {
+      // ignore
     }
   }
 
@@ -135,15 +149,17 @@ export default function DashboardContent({
   }
 
   const totalGames =
-    (games?.crosswords.length || 0) +
-    (games?.wordgames.length || 0) +
-    (games?.sudoku.length || 0);
+    (games?.crosswords.length || 0) + (games?.wordgames.length || 0);
 
   const publishedCount = games
-    ? [...games.crosswords, ...games.wordgames, ...games.sudoku].filter(
+    ? [...games.crosswords, ...games.wordgames].filter(
         (g) => g.status === "published",
       ).length
     : 0;
+
+  useEffect(() => {
+    fetchLang();
+  }, []);
 
   return (
     <div>
@@ -200,6 +216,7 @@ export default function DashboardContent({
           onDelete={(id) => setDeleteConfirm({ type: "crosswords", id })}
           onToggleStatus={handleToggleStatus}
           onShowCode={(g) => setEmbedPopover({ game: g, type: "crosswords" })}
+          lang={lang}
         />
         <GameSection
           title="Word Games"
@@ -221,26 +238,34 @@ export default function DashboardContent({
           onDelete={(id) => setDeleteConfirm({ type: "wordgames", id })}
           onToggleStatus={handleToggleStatus}
           onShowCode={(g) => setEmbedPopover({ game: g, type: "wordgames" })}
+          lang={lang}
         />
-        <GameSection
-          title="Sudoku"
-          icon="tag"
-          iconColor="purple"
-          games={games?.sudoku || []}
-          type="sudoku"
-          onAdd={() => setModal({ open: true, mode: "create", type: "sudoku" })}
-          onEdit={(g) =>
-            setModal({
-              open: true,
-              mode: "edit",
-              type: "sudoku",
-              game: g,
-            })
-          }
-          onDelete={(id) => setDeleteConfirm({ type: "sudoku", id })}
-          onToggleStatus={handleToggleStatus}
-          onShowCode={(g) => setEmbedPopover({ game: g, type: "sudoku" })}
-        />
+        {/* Sudoku - Coming Soon */}
+        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden opacity-60">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#e2e8f0]">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-purple-50 flex items-center justify-center">
+                <span className="material-symbols-outlined text-lg text-purple-600">
+                  tag
+                </span>
+              </div>
+              <h2 className="text-lg font-bold text-[#0f172a] font-serif">
+                Sudoku
+              </h2>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700">
+                Coming Soon
+              </span>
+            </div>
+          </div>
+          <div className="p-12 text-center">
+            <span className="material-symbols-outlined text-4xl text-[#cbd5e1] mb-3 block">
+              lock
+            </span>
+            <p className="text-[#94a3b8] text-sm">
+              Sudoku puzzles are coming soon. Stay tuned!
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Create/Edit Modal */}
@@ -292,7 +317,7 @@ export default function DashboardContent({
           <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
             <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#c25e40]">
+                <span className="material-symbols-outlined text-rust">
                   code
                 </span>
                 <h2 className="text-lg font-semibold text-[#0f172a]">
@@ -408,6 +433,7 @@ function GameSection({
   onDelete,
   onToggleStatus,
   onShowCode,
+  lang,
 }: {
   title: string;
   icon: string;
@@ -419,6 +445,7 @@ function GameSection({
   onDelete: (id: string | number) => void;
   onToggleStatus: (type: GameType, id: string | number, status: string) => void;
   onShowCode: (game: Game) => void;
+  lang: string;
 }) {
   const colorMap: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
@@ -440,7 +467,7 @@ function GameSection({
         </span>
         <button
           onClick={onAdd}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#c25e40] text-white rounded-lg hover:bg-[#a0492d] transition-colors"
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors"
         >
           <span className="material-symbols-outlined text-sm">add</span>
           New
@@ -481,7 +508,7 @@ function GameSection({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onShowCode(game)}
-                  className="p-1.5 text-[#64748b] hover:text-[#c25e40] transition-colors rounded-lg hover:bg-slate-100"
+                  className="p-1.5 text-[#64748b] hover:text-rust transition-colors rounded-lg hover:bg-slate-100"
                   title="Embed Code"
                 >
                   <span className="material-symbols-outlined text-lg">
@@ -489,7 +516,7 @@ function GameSection({
                   </span>
                 </button>
                 <a
-                  href={`${FRONTEND_URL}/?id=${game.id}${type !== "crosswords" ? `&type=${type === "wordgames" ? "word" : "sudoku"}` : ""}`}
+                  href={`${FRONTEND_URL}/?id=${game.id}${type !== "crosswords" ? `&type=${type === "wordgames" ? "word" : "sudoku"}` : ""}&lang=${lang}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 text-[#64748b] hover:text-blue-600 transition-colors rounded-lg hover:bg-slate-100"
@@ -588,7 +615,19 @@ function GameModal({
         }
       })
       .catch(() => {});
-  }, []);
+
+    // Pre-select default branding when creating a new game
+    if (!game) {
+      fetch("/api/settings")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.default_branding) {
+            setSelectedBranding(String(data.default_branding));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [game]);
 
   async function generateWithAI() {
     if (!mainWord.trim()) return;
@@ -712,6 +751,7 @@ function GameModal({
         collection: type,
         title,
         status,
+        branding: selectedBranding || null,
       };
 
       if (type === "crosswords") {
@@ -724,7 +764,6 @@ function GameModal({
         if (mainWord.trim()) {
           baseData.main_word = mainWord.trim().toUpperCase();
         }
-        baseData.branding = selectedBranding || null;
         if (wordsList.length > 0) {
           baseData.words = wordsList.map((w) => {
             const entry: Record<string, unknown> = {
@@ -837,7 +876,7 @@ function GameModal({
             <p className="text-xs text-[#64748b] mb-5">
               Paste this snippet into your website&apos;s HTML to display the
               game. Make sure your API token is active on the{" "}
-              <span className="font-medium text-[#c25e40]">
+              <span className="font-medium text-rust">
                 API Keys &amp; Embeds
               </span>{" "}
               page.
@@ -846,7 +885,7 @@ function GameModal({
             <div className="flex justify-end">
               <button
                 onClick={onClose}
-                className="px-5 py-2 text-sm bg-[#c25e40] text-white rounded-lg hover:bg-[#a0492d] transition-colors font-medium"
+                className="px-5 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors font-medium"
               >
                 Done
               </button>
@@ -888,7 +927,7 @@ function GameModal({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
               placeholder="Game title"
               required
             />
@@ -902,7 +941,7 @@ function GameModal({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
@@ -918,7 +957,7 @@ function GameModal({
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+                className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
               >
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -927,6 +966,27 @@ function GameModal({
             </div>
           )}
 
+          {/* Branding Preset */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+              Branding Preset{" "}
+              <span className="text-xs text-[#64748b] font-normal">
+                (optional)
+              </span>
+            </label>
+            <select
+              value={selectedBranding}
+              onChange={(e) => setSelectedBranding(e.target.value)}
+              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+            >
+              <option value="">Default (no branding)</option>
+              {brandingPresets.map((p) => (
+                <option key={String(p.id)} value={String(p.id)}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
           {/* Crossword — Words + Clues */}
           {type === "crosswords" && (
             <>
@@ -942,31 +1002,9 @@ function GameModal({
                   type="text"
                   value={mainWord}
                   onChange={(e) => setMainWord(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
                   placeholder="e.g. BRAIN"
                 />
-              </div>
-
-              {/* Branding Preset */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
-                  Branding Preset{" "}
-                  <span className="text-xs text-[#64748b] font-normal">
-                    (optional)
-                  </span>
-                </label>
-                <select
-                  value={selectedBranding}
-                  onChange={(e) => setSelectedBranding(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
-                >
-                  <option value="">Default (no branding)</option>
-                  {brandingPresets.map((p) => (
-                    <option key={String(p.id)} value={String(p.id)}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* AI Generation */}
@@ -977,7 +1015,7 @@ function GameModal({
                       type="button"
                       onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
                       disabled={aiLoading}
-                      className="w-full px-4 py-2.5 bg-gradient-to-r from-[#c25e40] to-[#e07b5b] text-white rounded-lg text-sm font-medium transition-all hover:shadow-md hover:shadow-[#c25e40]/20 disabled:opacity-60 flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-rust to-rust-dark text-white rounded-lg text-sm font-medium transition-all hover:shadow-md hover:shadow-rust/20 disabled:opacity-60 flex items-center justify-center gap-2"
                     >
                       {aiLoading ? (
                         <>
@@ -1005,7 +1043,7 @@ function GameModal({
                             <label className="text-xs font-medium text-[#0f172a]">
                               Number of words
                             </label>
-                            <span className="text-xs font-mono font-bold text-[#c25e40]">
+                            <span className="text-xs font-mono font-bold text-rust">
                               {aiWordCount}
                             </span>
                           </div>
@@ -1017,7 +1055,7 @@ function GameModal({
                             onChange={(e) =>
                               setAiWordCount(Number(e.target.value))
                             }
-                            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#c25e40]"
+                            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rust"
                           />
                           <div className="flex justify-between text-[10px] text-[#94a3b8] mt-0.5">
                             <span>3</span>
@@ -1036,8 +1074,8 @@ function GameModal({
                               onClick={() => setAiLanguage("lt")}
                               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                                 aiLanguage === "lt"
-                                  ? "bg-[#c25e40] text-white border-[#c25e40]"
-                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-[#c25e40]"
+                                  ? "bg-rust text-white border-rust"
+                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust"
                               }`}
                             >
                               🇱🇹 Lithuanian
@@ -1047,8 +1085,8 @@ function GameModal({
                               onClick={() => setAiLanguage("en")}
                               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                                 aiLanguage === "en"
-                                  ? "bg-[#c25e40] text-white border-[#c25e40]"
-                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-[#c25e40]"
+                                  ? "bg-rust text-white border-rust"
+                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust"
                               }`}
                             >
                               🇬🇧 English
@@ -1091,7 +1129,7 @@ function GameModal({
                           addWord();
                         }
                       }}
-                      className="w-36 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+                      className="w-36 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
                       placeholder="Word"
                     />
                     <input
@@ -1104,7 +1142,7 @@ function GameModal({
                           addWord();
                         }
                       }}
-                      className="flex-1 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+                      className="flex-1 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
                       placeholder="Clue (optional)"
                     />
                     <button
@@ -1159,8 +1197,8 @@ function GameModal({
                                   }}
                                   className={`w-6 h-6 flex items-center justify-center text-xs font-mono font-bold rounded border transition-all ${
                                     isSelected
-                                      ? "bg-[#c25e40] text-white border-[#c25e40] ring-2 ring-[#c25e40]/30"
-                                      : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-[#c25e40] hover:bg-[#fcece8]"
+                                      ? "bg-rust text-white border-rust ring-2 ring-rust/30"
+                                      : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust hover:bg-rust-light"
                                   }`}
                                   title={`Select letter "${letter}" for main word`}
                                 >
@@ -1203,7 +1241,7 @@ function GameModal({
                   type="text"
                   value={word}
                   onChange={(e) => setWord(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
                   placeholder="e.g. HELLO"
                   required
                 />
@@ -1215,7 +1253,7 @@ function GameModal({
                 <textarea
                   value={definition}
                   onChange={(e) => setDefinition(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40] resize-none"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust resize-none"
                   rows={2}
                   placeholder="Optional hint for the player"
                 />
@@ -1230,7 +1268,7 @@ function GameModal({
                   onChange={(e) => setMaxAttempts(Number(e.target.value))}
                   min={1}
                   max={10}
-                  className="w-24 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+                  className="w-24 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
                 />
               </div>
             </>
@@ -1248,7 +1286,7 @@ function GameModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 text-sm bg-[#c25e40] text-white rounded-lg hover:bg-[#a0492d] disabled:opacity-50 transition-colors font-medium"
+              className="px-4 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark disabled:opacity-50 transition-colors font-medium"
             >
               {saving
                 ? "Saving…"

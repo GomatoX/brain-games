@@ -1,162 +1,130 @@
-# 🧩 RustyCogs.io — Interactive Brain Games Platform
+# 🧩 RustyCogs.io – Brain Games Platform
 
-A B2B brain games platform with embeddable crosswords, word games, and sudoku. Publishers can register, manage games, and get embed codes for their websites.
+Interactive brain games (Crosswords, Word Guessing, Sudoku) as embeddable Web Components, with a publisher dashboard and white-label support.
 
 ## Architecture
 
-```
-brain-games/
-├── backend/      → Directus CMS (API + admin panel, SQLite)
-├── frontend/     → Game engines (Vite, builds Web Components for embedding)
-├── landing/      → Marketing site + Publisher Dashboard (Next.js 16)
-└── docker-compose.yml
-```
+| Service      | Stack             | Port    | Purpose                                                |
+| ------------ | ----------------- | ------- | ------------------------------------------------------ |
+| **backend**  | Directus (SQLite) | `:8055` | CMS API – game data, auth, branding                    |
+| **frontend** | Svelte + Vite     | `:5173` | Game engine – Web Components (crossword, word, sudoku) |
+| **landing**  | Next.js 15        | `:3000` | Dashboard + marketing landing page                     |
 
-### Why 3 separate services?
-
-| Service      | Purpose                                     | Why separate?                                                                                                                                                    |
-| ------------ | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **backend**  | Directus API, user auth, game data          | CMS is its own runtime                                                                                                                                           |
-| **frontend** | Game engines (crossword, word game, sudoku) | Builds to standalone `.js` bundles that publishers embed on _any_ website via `<script>` tags. Must be served independently with permissive CORS/framing headers |
-| **landing**  | Marketing website + Publisher Dashboard     | Next.js SSR app with auth, CRUD, API key management                                                                                                              |
-
-> The **frontend** builds distributable Web Components (IIFE bundles). Merging it into the landing would break the embedding model — publishers load `crossword-engine.iife.js` on their own domains.
-
----
-
-## Quick Start (Development)
+## Quick Start
 
 ```bash
-# 1. Start the backend (Directus)
-cd backend && yarn install && npx directus bootstrap && npx directus start
+cp .env.example .env
+# Edit .env with your values
 
-# 2. Start the game engines
-cd frontend && yarn install && yarn dev
-
-# 3. Start the landing/dashboard
-cd landing && yarn install && yarn dev
+docker compose up -d --build
 ```
 
-| Service           | URL                         |
-| ----------------- | --------------------------- |
-| Directus Admin    | http://localhost:8055/admin |
-| Game Engines      | http://localhost:5173       |
-| Landing/Dashboard | http://localhost:3000       |
+Open `http://localhost:3000` for the dashboard.
 
-Default admin: `admin@example.com` / `admin123`
+## Environment Variables
 
----
+See [`.env.example`](.env.example) for all variables. Key ones:
 
-## 🚀 Deploy with Coolify
+### Core
 
-### Option A: Docker Compose (Recommended)
+| Variable                   | Description                            | Default                 |
+| -------------------------- | -------------------------------------- | ----------------------- |
+| `SECRET`                   | Directus secret key                    | _required_              |
+| `KEY`                      | Directus key                           | _required_              |
+| `ADMIN_EMAIL`              | Directus admin email                   | `admin@rustycogs.io`    |
+| `ADMIN_PASSWORD`           | Directus admin password                | _required_              |
+| `NEXT_PUBLIC_API_URL`      | Directus API URL                       | `http://localhost:8055` |
+| `NEXT_PUBLIC_FRONTEND_URL` | Game engine URL                        | `http://localhost:5173` |
+| `GOOGLE_AI_API_KEY`        | Google AI key for crossword generation | –                       |
 
-1. **Create a new project** in Coolify
-2. **Add resource → Docker Compose** and point to your Git repo
-3. **Set environment variables** in Coolify's UI:
+### White-Label
 
-| Variable                   | Example Value                | Description                                        |
-| -------------------------- | ---------------------------- | -------------------------------------------------- |
-| `VITE_API_URL`             | `https://api.rustycogs.io`   | Public URL of Directus (used by game engines)      |
-| `NEXT_PUBLIC_API_URL`      | `https://api.rustycogs.io`   | Public URL of Directus (used by landing/dashboard) |
-| `NEXT_PUBLIC_FRONTEND_URL` | `https://games.rustycogs.io` | Public URL of game engines                         |
-| `DIRECTUS_ADMIN_TOKEN`     | `your-secret-admin-token`    | Admin static token (set on admin user in Directus) |
+| Variable                      | Description                                         | Default        |
+| ----------------------------- | --------------------------------------------------- | -------------- |
+| `NEXT_PUBLIC_MODE`            | `saas` (full site) or `whitelabel` (dashboard only) | `saas`         |
+| `NEXT_PUBLIC_PLATFORM_NAME`   | Custom name in sidebar & title                      | `Rustycogs.io` |
+| `NEXT_PUBLIC_PLATFORM_ACCENT` | Primary accent color (hex)                          | `#c25e40`      |
+| `NEXT_PUBLIC_PLATFORM_LOGO`   | Custom logo path/URL                                | –              |
+| `NEXT_PUBLIC_HIDE_LANDING`    | `true` → redirects `/` to `/dashboard`              | `false`        |
+| `NEXT_PUBLIC_HIDE_REGISTER`   | `true` → disables self-registration                 | `false`        |
 
-4. **Update `backend/.env`** for production:
+## Deploying White-Label (Dashboard + Games Only)
+
+To deploy without the marketing landing page:
 
 ```env
-SECRET="generate-a-random-64-char-string"
-KEY="generate-another-random-64-char-string"
-ADMIN_EMAIL="your-real-admin@email.com"
-ADMIN_PASSWORD="strong-password-here"
-CORS_ORIGIN="https://rustycogs.io,https://games.rustycogs.io"
-PUBLIC_URL="https://api.rustycogs.io"
+NEXT_PUBLIC_MODE=whitelabel
+NEXT_PUBLIC_HIDE_LANDING=true
+NEXT_PUBLIC_HIDE_REGISTER=true
+NEXT_PUBLIC_PLATFORM_NAME=Your Brand
+NEXT_PUBLIC_PLATFORM_ACCENT=#3b82f6
 ```
 
-5. **Configure domains** in Coolify:
-
-| Service    | Port        | Domain               |
-| ---------- | ----------- | -------------------- |
-| `backend`  | 8055        | `api.rustycogs.io`   |
-| `frontend` | 80 (→ 5173) | `games.rustycogs.io` |
-| `landing`  | 3000        | `rustycogs.io`       |
-
-6. **Deploy** — Coolify will build and start all 3 services
-
-### Option B: Separate Nixpacks/Dockerfile Services
-
-If you prefer deploying each service independently:
-
-1. **Backend**: Add resource → Dockerfile, set Build Path to `/backend`
-2. **Frontend**: Add resource → Dockerfile, set Build Path to `/frontend`, add build arg `VITE_API_URL`
-3. **Landing**: Add resource → Dockerfile, set Build Path to `/landing`, add build args `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_FRONTEND_URL`, add runtime env `DIRECTUS_ADMIN_TOKEN`
-
----
-
-## Post-Deploy Setup
-
-After the first deployment, seed the Publisher role:
+Then build and deploy:
 
 ```bash
-# SSH into the backend container or use Coolify's terminal
-node seed-publisher-role.js
+docker compose up -d --build
 ```
 
-Then set the admin static token for dashboard operations:
+> **Note:** `NEXT_PUBLIC_*` vars are baked in at **build time** by Next.js. If you change them, you must rebuild: `docker compose up -d --build landing`
+
+## Embedding Games
+
+After creating games in the dashboard, use the embed code from the **Keys** page:
+
+```html
+<!-- Crossword -->
+<script src="https://games.example.com/dist/crossword-engine.iife.js"></script>
+<crossword-game
+  puzzle-id="latest"
+  api-url="https://api.example.com"
+  token="YOUR_API_TOKEN"
+  lang="en"
+  theme="light"
+>
+</crossword-game>
+
+<!-- Word Game -->
+<script src="https://games.example.com/dist/word-game.iife.js"></script>
+<word-game
+  puzzle-id="latest"
+  api-url="https://api.example.com"
+  token="YOUR_API_TOKEN"
+  lang="en"
+  theme="light"
+>
+</word-game>
+```
+
+### Web Component Props
+
+| Prop        | Description           | Values           |
+| ----------- | --------------------- | ---------------- |
+| `puzzle-id` | Game ID or `"latest"` | string           |
+| `api-url`   | Backend API URL       | URL              |
+| `token`     | Publisher API token   | string           |
+| `theme`     | Color scheme          | `light` / `dark` |
+| `lang`      | Language              | `en` / `lt`      |
+
+## Local Development
 
 ```bash
-# Log in and set a static token on the admin user
-curl -X POST https://api.rustycogs.io/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"admin@email.com","password":"your-password"}'
+# Backend (Directus)
+cd backend && npm install && npx directus start
 
-# Use the returned access_token to set a static token
-curl -X PATCH https://api.rustycogs.io/users/me \
-  -H 'Authorization: Bearer ACCESS_TOKEN' \
-  -H 'Content-Type: application/json' \
-  -d '{"token":"your-directus-admin-token"}'
+# Frontend (game engine)
+cd frontend && npm install && npm run dev
+
+# Dashboard
+cd landing && npm install && npm run dev
 ```
 
-Set this token as `DIRECTUS_ADMIN_TOKEN` in the landing service env.
+## Features
 
----
-
-## Environment Variables Reference
-
-### Backend (`backend/.env`)
-
-| Variable                 | Required | Description                            |
-| ------------------------ | -------- | -------------------------------------- |
-| `DB_CLIENT`              | ✅       | `sqlite3`                              |
-| `DB_FILENAME`            | ✅       | `./data.db`                            |
-| `SECRET`                 | ✅       | Random secret for encryption           |
-| `KEY`                    | ✅       | Random key for hashing                 |
-| `ADMIN_EMAIL`            | ✅       | Admin account email                    |
-| `ADMIN_PASSWORD`         | ✅       | Admin account password                 |
-| `CORS_ORIGIN`            | ✅       | Comma-separated allowed origins        |
-| `PUBLIC_URL`             | ✅       | Public URL of Directus                 |
-| `USERS_REGISTER_ENABLED` | ✅       | `true` to allow publisher registration |
-| `USERS_REGISTER_ROLE`    | ✅       | Publisher role UUID                    |
-
-### Frontend (build args)
-
-| Variable       | Required | Description                |
-| -------------- | -------- | -------------------------- |
-| `VITE_API_URL` | ✅       | Public URL of Directus API |
-
-### Landing (build args + runtime)
-
-| Variable                   | Type      | Description                      |
-| -------------------------- | --------- | -------------------------------- |
-| `NEXT_PUBLIC_API_URL`      | Build arg | Public URL of Directus API       |
-| `NEXT_PUBLIC_FRONTEND_URL` | Build arg | Public URL of game engines       |
-| `DIRECTUS_ADMIN_TOKEN`     | Runtime   | Admin static token (server-only) |
-
----
-
-## Persistent Data
-
-The backend uses SQLite stored in a Docker volume (`directus_data`). Make sure your Coolify deployment persists this volume to avoid data loss on redeploy.
-
-In Coolify: **Service → Backend → Storage** → Map `/app/data` to a persistent volume.
-# brain-games
+- 🧩 **Crossword** – Auto-layout engine with AI word generation
+- 🔤 **Word Game** – Wordle-style guessing with hints
+- 🔢 **Sudoku** – Classic puzzle with difficulty levels
+- 🎨 **Branding** – Custom colors, fonts, logos per publisher
+- 🌐 **i18n** – English & Lithuanian
+- 📦 **Web Components** – Drop-in embeds for any website
+- 🏷️ **White-label** – Deploy as your own branded platform

@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from "svelte";
+  import { t } from "../i18n.js";
 
   export let allClues = [];
   export let currentClue = null;
@@ -18,7 +19,7 @@
 
 <div class="clues-section">
   <div class="clue-box">
-    <h4>Horizontaliai</h4>
+    <h4>{$t("crossword.across")}</h4>
     <ul>
       {#each allClues.filter((c) => c.direction === "across") as clue}
         <li
@@ -40,7 +41,7 @@
   </div>
 
   <div class="clue-box">
-    <h4>Vertikaliai</h4>
+    <h4>{$t("crossword.down")}</h4>
     <ul>
       {#each allClues.filter((c) => c.direction === "down") as clue}
         <li

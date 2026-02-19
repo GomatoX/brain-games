@@ -1,4 +1,5 @@
 <script>
+  import { t } from "../i18n.js";
   import { createEventDispatcher } from "svelte";
 
   export let elapsedTime = 0;
@@ -55,14 +56,14 @@
         d="M170.83,101.17a4,4,0,0,1,0,5.66l-56,56a4,4,0,0,1-5.66,0l-24-24a4,4,0,0,1,5.66-5.66L112,154.34l53.17-53.17A4,4,0,0,1,170.83,101.17ZM228,128A100,100,0,1,1,128,28,100.11,100.11,0,0,1,228,128Zm-8,0a92,92,0,1,0-92,92A92.1,92.1,0,0,0,220,128Z"
       ></path></svg
     >
-    <h2>Puiku!</h2>
+    <h2>{$t("crossword.congratulations")}</h2>
   </div>
 
-  <p>Sėkmingai išsprendėte kryžiažodį!</p>
+  <p>{$t("crossword.solvedMessage")}</p>
 
   <div class="celebration-actions">
     <div class="time-badge">
-      <span class="time-label">Jūsų laikas:</span>
+      <span class="time-label">{$t("crossword.yourTime")}</span>
       <span class="time-value">{formatTime(elapsedTime)}</span>
     </div>
 
@@ -77,7 +78,7 @@
           d="M237.66,117.66l-80,80A8,8,0,0,1,144,192V152.23c-57.1,3.24-96.25,40.27-107.24,52h0a12,12,0,0,1-20.68-9.58c3.71-32.26,21.38-63.29,49.76-87.37,23.57-20,52.22-32.69,78.16-34.91V32a8,8,0,0,1,13.66-5.66l80,80A8,8,0,0,1,237.66,117.66Z"
         ></path></svg
       >
-      Dalintis
+      {$t("crossword.share")}
     </button>
   </div>
 </div>
@@ -91,9 +92,9 @@
       aria-label="Share result"
     >
       <button class="modal-close" on:click={closeModal}>✕</button>
-      <h3 class="modal-title">Pasidalinkite rezultatu</h3>
+      <h3 class="modal-title">{$t("crossword.shareTitle")}</h3>
       <p class="modal-subtitle">
-        Nukopijuokite nuorodą ir pasidalinkite su draugais
+        {$t("crossword.shareSubtitle")}
       </p>
       <div class="url-row">
         <input
@@ -105,9 +106,9 @@
         />
         <button class="copy-btn" on:click={copyUrl}>
           {#if copied}
-            ✓ Nukopijuota
+            {$t("crossword.copied")}
           {:else}
-            Kopijuoti
+            {$t("crossword.copy")}
           {/if}
         </button>
       </div>

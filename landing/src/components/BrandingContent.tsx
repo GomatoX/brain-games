@@ -274,7 +274,7 @@ export default function BrandingContent({
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-[#c25e40] text-white rounded-lg hover:bg-[#a0492d] transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors"
         >
           <span className="material-symbols-outlined text-sm">add</span>
           New Preset
@@ -292,7 +292,7 @@ export default function BrandingContent({
           </p>
           <button
             onClick={openCreate}
-            className="px-4 py-2 text-sm font-medium bg-[#c25e40] text-white rounded-lg hover:bg-[#a0492d] transition-colors"
+            className="px-4 py-2 text-sm font-medium bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors"
           >
             Create First Preset
           </button>
@@ -398,7 +398,7 @@ export default function BrandingContent({
           <div className="bg-white rounded-xl w-full max-w-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#c25e40]">
+                <span className="material-symbols-outlined text-rust">
                   palette
                 </span>
                 <h2 className="text-lg font-semibold text-[#0f172a]">
@@ -427,7 +427,7 @@ export default function BrandingContent({
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   placeholder="e.g. LRT, Default, Dark theme"
-                  className="w-full px-3.5 py-2.5 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c25e40]/30 focus:border-[#c25e40]"
+                  className="w-full px-3.5 py-2.5 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
                 />
               </div>
 
@@ -495,7 +495,7 @@ export default function BrandingContent({
                                 ? setField(f.key, e.target.value)
                                 : clearField(f.key)
                             }
-                            className="w-full text-xs text-[#0f172a] bg-white border border-slate-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-[#c25e40]/30"
+                            className="w-full text-xs text-[#0f172a] bg-white border border-slate-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-rust/30"
                           >
                             <option value="">Default</option>
                             {f.options?.map((opt) => (
@@ -518,7 +518,7 @@ export default function BrandingContent({
                             value={formValues[f.key] || ""}
                             onChange={(e) => setField(f.key, e.target.value)}
                             placeholder="0.75rem"
-                            className="w-full text-xs text-[#0f172a] bg-white border border-slate-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-[#c25e40]/30"
+                            className="w-full text-xs text-[#0f172a] bg-white border border-slate-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-rust/30"
                           />
                         </div>
                       ),
@@ -544,7 +544,7 @@ export default function BrandingContent({
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 text-sm bg-[#c25e40] text-white rounded-lg hover:bg-[#a0492d] transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors disabled:opacity-50"
                 >
                   {saving
                     ? "Saving…"

@@ -1,0 +1,38 @@
+{
+  "crossword": {
+    "across": "Horizontaliai",
+    "down": "Vertikaliai",
+    "loading": "Kraunamas galvosūkis...",
+    "congratulations": "Puiku!",
+    "solvedMessage": "Sėkmingai išsprendėte kryžiažodį!",
+    "yourTime": "Jūsų laikas:",
+    "share": "Dalintis",
+    "shareTitle": "Pasidalinkite rezultatu",
+    "shareSubtitle": "Nukopijuokite nuorodą ir pasidalinkite su draugais",
+    "copy": "Kopijuoti",
+    "copied": "✓ Nukopijuota",
+    "selectCell": "Pasirinkite langelį",
+    "prevClue": "Ankstesnė užuomina",
+    "nextClue": "Kita užuomina",
+    "mainWordTitle": "Dienos kryžiažodžio frazė"
+  },
+  "wordgame": {
+    "loading": "Kraunama...",
+    "preview": "Peržiūra",
+    "enterLetters": "Įveskite {0} raides",
+    "guessedCorrectly": "🎉 Puiku! Atspėjote!",
+    "wordWas": "Žodis buvo: ",
+    "playAgain": "Žaisti iš naujo",
+    "howToPlayTitle": "Kaip žaisti",
+    "guessWord": "Atspėkite žodį per <strong>{0} bandymų</strong>.",
+    "eachGuessMustBe": "Kiekvienas spėjimas turi būti <strong>{0} raidžių</strong> žodis.",
+    "colorsShowHint": "Spalvos parodo, kaip arti buvo spėjimas.",
+    "correctLegend": "Teisinga",
+    "wrongPlaceLegend": "Ne ten",
+    "notInWordLegend": "Nėra",
+    "typeLetters": "Rašykite raides klaviatūra",
+    "pressEnter": "Spauskite <strong>Enter</strong>, kad pateiktumėte spėjimą",
+    "pressBackspace": "Spauskite <strong>Backspace</strong>, kad ištrintumėte raidę",
+    "gameNotFound": "Žaidimas nerastas. Nustatykite <code>game-id</code> atributą."
+  }
+}

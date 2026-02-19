@@ -7,9 +7,9 @@
   export let gameId = "";
   export let theme = "light";
   export let apiUrl = "";
-  export let showKeyboard = true;
   export let token = "";
   export let client = "";
+  export let lang = "lt";
 </script>
 
-<WordGame {gameId} {theme} {apiUrl} {showKeyboard} {token} {client} />
+<WordGame {gameId} {theme} {apiUrl} {token} {client} {lang} />

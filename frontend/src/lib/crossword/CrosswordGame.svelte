@@ -5,6 +5,7 @@
     generateLayoutOptimized,
   } from "../crosswordLayout.js";
   import { applyBrandingFromData } from "../clientThemes.js";
+  import { locale, t } from "../i18n.js";
   import CluesSidebar from "./CluesSidebar.svelte";
   import ClueBanner from "./ClueBanner.svelte";
   import CrosswordGrid from "./CrosswordGrid.svelte";
@@ -19,6 +20,9 @@
   export let token = "";
   export let client = "";
   export let resultId = "";
+  export let lang = "lt";
+
+  $: locale.set(lang);
 
   let containerEl;
 
@@ -708,7 +712,7 @@
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
-      <p>Loading puzzle...</p>
+      <p>{$t("crossword.loading")}</p>
     </div>
   {:else if error}
     <div class="error">

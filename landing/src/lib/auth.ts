@@ -171,11 +171,11 @@ export async function directusGetGames(accessToken: string) {
     ),
     fetchCollection(
       "wordgames",
-      "id,status,title,word,definition,max_attempts,user_created,date_created",
+      "id,status,title,word,definition,max_attempts,branding,user_created,date_created",
     ),
     fetchCollection(
       "sudoku",
-      "id,status,title,difficulty,user_created,date_created",
+      "id,status,title,difficulty,branding,user_created,date_created",
     ),
   ]);
 

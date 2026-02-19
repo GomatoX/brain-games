@@ -1,14 +1,24 @@
 <script>
   import { onMount } from "svelte";
   import { applyBrandingFromData } from "./clientThemes.js";
+  import { locale, t } from "./i18n.js";
 
   // Props
   export let gameId = "";
   export let apiUrl = "";
   export let theme = "light";
-  export let showKeyboard = true;
   export let token = "";
   export let client = "";
+  export let lang = "lt";
+
+  $: locale.set(lang);
+
+  /** Translation with positional params: tp('key', val1, val2) replaces {0}, {1}… */
+  function tp(key, ...args) {
+    let s = $t(key);
+    args.forEach((v, i) => (s = s.replace(`{${i}}`, v)));
+    return s;
+  }
 
   let containerEl;
 
@@ -21,21 +31,12 @@
   let gameState = "playing"; // 'playing' | 'won' | 'lost'
   let isPreviewMode = false;
   let feedback = null;
-  let showRules = false;
 
   // Derived
   $: wordLength = game?.word?.length || 5;
   $: maxAttempts = game?.max_attempts || 10;
   $: targetWord = game?.word?.toUpperCase() || "";
   $: themeClass = theme === "dark" ? "dark-theme" : "light-theme";
-
-  // Lithuanian keyboard layout
-  const keyboardRows = [
-    ["Ą", "Č", "Ę", "Ė", "Į", "Š", "Ų", "Ū", "Ž"],
-    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-    ["ENTER", "Z", "X", "C", "V", "B", "N", "M", "⌫"],
-  ];
 
   // Track used letters and their states
   let letterStates = {}; // { 'A': 'correct' | 'present' | 'absent' }
@@ -80,10 +81,6 @@
   }
 
   function handleKeydown(event) {
-    if (showRules) {
-      if (event.key === "Escape") showRules = false;
-      return;
-    }
     if (gameState !== "playing") return;
 
     const key = event.key.toUpperCase();
@@ -100,21 +97,9 @@
     }
   }
 
-  function handleKeyClick(key) {
-    if (gameState !== "playing") return;
-
-    if (key === "ENTER") {
-      submitGuess();
-    } else if (key === "⌫") {
-      currentGuess = currentGuess.slice(0, -1);
-    } else if (currentGuess.length < wordLength) {
-      currentGuess += key;
-    }
-  }
-
   function submitGuess() {
     if (currentGuess.length !== wordLength) {
-      showFeedback("Įveskite " + wordLength + " raides", "error");
+      showFeedback(tp("wordgame.enterLetters", wordLength), "error");
       return;
     }
 
@@ -142,10 +127,10 @@
     // Check win/lose
     if (guess === targetWord) {
       gameState = "won";
-      showFeedback("🎉 Puiku! Atspėjote!", "success");
+      showFeedback($t("wordgame.guessedCorrectly"), "success");
     } else if (guesses.length >= maxAttempts) {
       gameState = "lost";
-      showFeedback("Žodis buvo: " + targetWord, "error");
+      showFeedback($t("wordgame.wordWas") + targetWord, "error");
     }
   }
 
@@ -188,16 +173,13 @@
     letterStates = {};
     feedback = null;
   }
-
-  function getKeyState(key) {
-    return letterStates[key] || "";
-  }
 </script>
 
 <div class="word-game {themeClass}" bind:this={containerEl}>
   {#if loading}
     <div class="loading">
-      <p>Kraunama...</p>
+      <div class="spinner"></div>
+      <p>{$t("wordgame.loading")}</p>
     </div>
   {:else if error}
     <div class="error">
@@ -207,32 +189,18 @@
     <div class="game-container">
       <!-- Header -->
       <header class="game-header">
-        <button class="icon-button" title="Meniu">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-        <div class="header-center">
-          <h1 class="game-title">{game.title || "Word of the Day"}</h1>
-          <span class="edition-label">Professional Edition</span>
-          {#if isPreviewMode}
-            <span class="preview-badge">Peržiūra</span>
-          {/if}
-        </div>
-        <div class="header-actions">
-          <button
-            class="icon-button"
-            on:click={() => (showRules = true)}
-            title="Kaip žaisti"
-          >
-            <span class="material-symbols-outlined">help</span>
-          </button>
-          <button class="icon-button" title="Rezultatai">
-            <span class="material-symbols-outlined">leaderboard</span>
-          </button>
-          <button class="icon-button" title="Nustatymai">
-            <span class="material-symbols-outlined">settings</span>
-          </button>
-        </div>
+        <h1 class="game-title">{game.title || "Word Game"}</h1>
+        {#if isPreviewMode}
+          <span class="preview-badge">{$t("wordgame.preview")}</span>
+        {/if}
       </header>
+
+      {#if game.definition}
+        <div class="hint">
+          <span class="material-symbols-outlined hint-icon">lightbulb</span>
+          <p class="hint-text">{game.definition}</p>
+        </div>
+      {/if}
 
       <!-- Grid -->
       <div class="guess-grid" style="--word-length: {wordLength}">
@@ -269,33 +237,11 @@
         </div>
       {/if}
 
-      <!-- Keyboard -->
-      {#if showKeyboard}
-        <div class="keyboard">
-          {#each keyboardRows as row}
-            <div class="keyboard-row">
-              {#each row as key}
-                <button
-                  class="key"
-                  class:wide={key === "ENTER" || key === "⌫"}
-                  class:correct={getKeyState(key) === "correct"}
-                  class:present={getKeyState(key) === "present"}
-                  class:absent={getKeyState(key) === "absent"}
-                  on:click={() => handleKeyClick(key)}
-                >
-                  {key}
-                </button>
-              {/each}
-            </div>
-          {/each}
-        </div>
-      {/if}
-
       <!-- Game Over Actions -->
       {#if gameState !== "playing"}
         <div class="game-actions">
           <button class="reset-button" on:click={resetGame}>
-            Žaisti iš naujo
+            {$t("wordgame.playAgain")}
           </button>
         </div>
       {/if}
@@ -304,77 +250,45 @@
       <div class="how-to-play">
         <h2>
           <span class="material-symbols-outlined">info</span>
-          Kaip žaisti
+          {$t("wordgame.howToPlayTitle")}
         </h2>
         <ul>
-          <li>Atspėkite žodį per <strong>{maxAttempts} bandymų</strong>.</li>
+          <li>{@html tp("wordgame.guessWord", maxAttempts)}</li>
           <li>
-            Kiekvienas spėjimas turi būti <strong>{wordLength} raidžių</strong> žodis.
+            {@html tp("wordgame.eachGuessMustBe", wordLength)}
           </li>
-          <li>Spalvos parodo, kaip arti buvo spėjimas.</li>
+          <li>{$t("wordgame.colorsShowHint")}</li>
         </ul>
         <div class="legend">
           <div class="legend-item">
             <div class="legend-cell correct">A</div>
-            <span>Teisinga</span>
+            <span>{$t("wordgame.correctLegend")}</span>
           </div>
           <div class="legend-item">
             <div class="legend-cell present">B</div>
-            <span>Ne ten</span>
+            <span>{$t("wordgame.wrongPlaceLegend")}</span>
           </div>
           <div class="legend-item">
             <div class="legend-cell absent">C</div>
-            <span>Nėra</span>
+            <span>{$t("wordgame.notInWordLegend")}</span>
+          </div>
+        </div>
+        <div class="keyboard-hints">
+          <div class="hint-item">
+            <kbd>A-Z</kbd>
+            <span>{$t("wordgame.typeLetters")}</span>
+          </div>
+          <div class="hint-item">
+            <kbd>Enter</kbd>
+            <span>{@html $t("wordgame.pressEnter")}</span>
+          </div>
+          <div class="hint-item">
+            <kbd>⌫</kbd>
+            <span>{@html $t("wordgame.pressBackspace")}</span>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Rules Modal -->
-    {#if showRules}
-      <div
-        class="modal-overlay"
-        on:click={() => (showRules = false)}
-        on:keydown={(e) => e.key === "Escape" && (showRules = false)}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div class="modal-content" on:click|stopPropagation role="document">
-          <button class="modal-close" on:click={() => (showRules = false)}
-            >×</button
-          >
-          <h3>Kaip žaisti</h3>
-          <p>Atspėkite žodį per <strong>{maxAttempts}</strong> bandymų.</p>
-
-          <div class="rules-list">
-            <p>
-              • Įveskite <strong>{wordLength}</strong> raidžių žodį ir spauskite
-              ENTER
-            </p>
-            <p>• Po kiekvieno spėjimo langelių spalvos pasikeis:</p>
-          </div>
-
-          <div class="examples">
-            <div class="example">
-              <div class="example-cell correct">A</div>
-              <span>Raidė yra žodyje ir teisingoje vietoje</span>
-            </div>
-            <div class="example">
-              <div class="example-cell present">B</div>
-              <span>Raidė yra žodyje, bet neteisingoje vietoje</span>
-            </div>
-            <div class="example">
-              <div class="example-cell absent">C</div>
-              <span>Raidės nėra žodyje</span>
-            </div>
-          </div>
-
-          <button class="start-button" on:click={() => (showRules = false)}>
-            Pradėti
-          </button>
-        </div>
-      </div>
-    {/if}
 
     <!-- Powered By -->
     <div class="powered-by">
@@ -386,7 +300,7 @@
     </div>
   {:else}
     <div class="no-game">
-      <p>Žaidimas nerastas. Nustatykite <code>game-id</code> atributą.</p>
+      <p>{@html $t("wordgame.gameNotFound")}</p>
     </div>
   {/if}
 </div>
@@ -402,10 +316,9 @@
     --correct: #c25e40;
     --present: #dcb162;
     --absent: #94a3b8;
-    --key-bg: #e2e8f0;
 
     font-family:
-      "Inter",
+      var(--font-sans, "Inter"),
       -apple-system,
       BlinkMacSystemFont,
       "Segoe UI",
@@ -428,7 +341,6 @@
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --border-color: #334155;
-    --key-bg: #334155;
   }
 
   /* Loading & Error */
@@ -438,6 +350,22 @@
     text-align: center;
     padding: 40px 20px;
     color: var(--text-secondary);
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--correct);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* Game Container */
@@ -454,59 +382,20 @@
   .game-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 0;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 0;
     border-bottom: 1px solid var(--border-color);
   }
 
-  .header-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
   .game-title {
-    font-family: "Playfair Display", serif;
+    font-family: var(--font-serif, "Playfair Display"), serif;
     font-size: 1.5rem;
     font-weight: 700;
     margin: 0;
     color: var(--text-primary);
     letter-spacing: -0.01em;
     line-height: 1;
-  }
-
-  .edition-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--text-secondary);
-    font-weight: 500;
-    margin-top: 2px;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 2px;
-  }
-
-  .icon-button {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .icon-button:hover {
-    background: var(--bg-secondary);
-    color: var(--correct);
   }
 
   .preview-badge {
@@ -520,6 +409,33 @@
     letter-spacing: 0.05em;
   }
 
+  /* Hint */
+  .hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    border-left: 3px solid var(--correct);
+  }
+
+  .hint-icon {
+    color: var(--correct);
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .hint-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
   /* Grid */
   .guess-grid {
     display: flex;
@@ -528,7 +444,6 @@
     width: 100%;
     max-width: 350px;
     margin: 0 auto;
-    aspect-ratio: calc(var(--word-length) / 6);
   }
 
   .guess-row {
@@ -542,7 +457,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: "Playfair Display", serif;
+    font-family: var(--font-serif, "Playfair Display"), serif;
     font-size: 1.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -580,12 +495,6 @@
     color: white;
   }
 
-  @keyframes pop {
-    50% {
-      transform: scale(1.1);
-    }
-  }
-
   @keyframes subtle-pulse {
     0%,
     100% {
@@ -615,65 +524,6 @@
     color: #ef4444;
   }
 
-  /* Keyboard */
-  .keyboard {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-    max-width: 500px;
-    margin: 8px auto 0;
-  }
-
-  .keyboard-row {
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-  }
-
-  .key {
-    min-width: 32px;
-    height: 50px;
-    padding: 0 10px;
-    border: none;
-    border-radius: 4px;
-    background: var(--key-bg);
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.1s ease;
-  }
-
-  .key:hover {
-    filter: brightness(0.92);
-  }
-
-  .key:active {
-    transform: scale(0.95);
-  }
-
-  .key.wide {
-    min-width: 56px;
-    font-size: 0.7rem;
-    letter-spacing: 0.02em;
-  }
-
-  .key.correct {
-    background: var(--correct);
-    color: white;
-  }
-
-  .key.present {
-    background: var(--present);
-    color: white;
-  }
-
-  .key.absent {
-    background: var(--absent);
-    color: white;
-  }
-
   /* How to Play */
   .how-to-play {
     border-top: 1px solid var(--border-color);
@@ -682,7 +532,7 @@
   }
 
   .how-to-play h2 {
-    font-family: "Playfair Display", serif;
+    font-family: var(--font-serif, "Playfair Display"), serif;
     font-size: 1.1rem;
     font-weight: 700;
     margin: 0 0 12px;
@@ -722,6 +572,7 @@
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
+    margin-bottom: 16px;
   }
 
   .legend-item {
@@ -760,6 +611,41 @@
     color: var(--text-secondary);
   }
 
+  /* Keyboard Hints */
+  .keyboard-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .hint-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.825rem;
+    color: var(--text-secondary);
+  }
+
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 28px;
+    padding: 0 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+  }
+
   /* Game Actions */
   .game-actions {
     display: flex;
@@ -780,138 +666,9 @@
   }
 
   .reset-button:hover {
-    background: #a0492d;
+    filter: brightness(0.85);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(194, 94, 64, 0.3);
-  }
-
-  /* Modal */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 20px;
-  }
-
-  .modal-content {
-    background: var(--bg-primary);
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 400px;
-    width: 100%;
-    position: relative;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  }
-
-  .modal-close {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: none;
-    font-size: 1.5rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-
-  .modal-close:hover {
-    color: var(--text-primary);
-  }
-
-  .modal-content h3 {
-    font-family: "Playfair Display", serif;
-    margin: 0 0 16px;
-    font-size: 1.25rem;
-    font-weight: 700;
-  }
-
-  .modal-content p {
-    margin: 0 0 12px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-
-  .rules-list {
-    margin-bottom: 16px;
-  }
-
-  .rules-list p {
-    margin: 8px 0;
-    font-size: 0.9rem;
-  }
-
-  .examples {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  .example {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .example-cell {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: "Playfair Display", serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: white;
-    border-radius: 4px;
-    flex-shrink: 0;
-  }
-
-  .example-cell.correct {
-    background: var(--correct);
-  }
-
-  .example-cell.present {
-    background: var(--present);
-  }
-
-  .example-cell.absent {
-    background: var(--absent);
-  }
-
-  .example span {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-  }
-
-  .start-button {
-    width: 100%;
-    padding: 14px;
-    background: var(--correct);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .start-button:hover {
-    background: #a0492d;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(194, 94, 64, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   /* Powered By */
@@ -958,7 +715,7 @@
   }
 
   .powered-text {
-    font-family: "Playfair Display", serif;
+    font-family: var(--font-serif, "Playfair Display"), serif;
     font-size: 0.8rem;
     font-weight: 700;
   }

@@ -1,0 +1,38 @@
+{
+  "crossword": {
+    "across": "Across",
+    "down": "Down",
+    "loading": "Loading puzzle...",
+    "congratulations": "Excellent!",
+    "solvedMessage": "You solved the crossword!",
+    "yourTime": "Your time:",
+    "share": "Share",
+    "shareTitle": "Share your result",
+    "shareSubtitle": "Copy the link to share with friends",
+    "copy": "Copy",
+    "copied": "✓ Copied",
+    "selectCell": "Select a cell",
+    "prevClue": "Previous clue",
+    "nextClue": "Next clue",
+    "mainWordTitle": "Daily crossword phrase"
+  },
+  "wordgame": {
+    "loading": "Loading...",
+    "preview": "Preview",
+    "enterLetters": "Enter {0} letters",
+    "guessedCorrectly": "🎉 Excellent! You guessed it!",
+    "wordWas": "The word was: ",
+    "playAgain": "Play again",
+    "howToPlayTitle": "How to play",
+    "guessWord": "Guess the word in <strong>{0} attempts</strong>.",
+    "eachGuessMustBe": "Each guess must be a <strong>{0} letter</strong> word.",
+    "colorsShowHint": "Colors show how close your guess was.",
+    "correctLegend": "Correct",
+    "wrongPlaceLegend": "Wrong place",
+    "notInWordLegend": "Not in word",
+    "typeLetters": "Type letters using your keyboard",
+    "pressEnter": "Press <strong>Enter</strong> to submit your guess",
+    "pressBackspace": "Press <strong>Backspace</strong> to delete a letter",
+    "gameNotFound": "Game not found. Set the <code>game-id</code> attribute."
+  }
+}

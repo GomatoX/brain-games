@@ -9,6 +9,7 @@
   let isPreview = urlParams.get("preview") === "true";
   let theme = urlParams.get("theme") || "light";
   let resultId = urlParams.get("result") || "";
+  let lang = urlParams.get("lang") || "lt";
 
   // API URL: use env var > URL param > fallback
   const apiBase =
@@ -20,11 +21,11 @@
 {#if puzzleId}
   <!-- Clean embed mode - just the game -->
   {#if gameType === "word"}
-    <WordGame gameId={puzzleId} {theme} apiUrl={apiBase} />
+    <WordGame gameId={puzzleId} {theme} apiUrl={apiBase} {lang} />
   {:else if gameType === "sudoku"}
     <SudokuGame gameId={puzzleId} {theme} apiUrl={apiBase} />
   {:else}
-    <CrosswordGame {puzzleId} {theme} apiUrl={apiBase} {resultId} />
+    <CrosswordGame {puzzleId} {theme} apiUrl={apiBase} {resultId} {lang} />
   {/if}
 {:else}
   <!-- Landing page when no game loaded -->

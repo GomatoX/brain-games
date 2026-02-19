@@ -39,7 +39,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <span className="material-symbols-outlined text-[#c25e40] text-3xl">
+          <span className="material-symbols-outlined text-rust text-3xl">
             settings_suggest
           </span>
           <span className="text-xl font-bold font-serif text-[#0f172a]">
@@ -76,7 +76,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#c25e40] focus:ring-1 focus:ring-[#c25e40] placeholder-slate-400"
+                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
                 placeholder="you@company.com"
               />
             </div>
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#c25e40] focus:ring-1 focus:ring-[#c25e40] placeholder-slate-400"
+                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
                 placeholder="••••••••"
               />
             </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#c25e40] hover:bg-[#a0492d] disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm"
+              className="w-full bg-rust hover:bg-rust-dark disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm"
             >
               {loading ? "Signing in…" : "Sign In"}
             </button>
@@ -113,7 +113,7 @@ export default function LoginPage() {
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="text-[#c25e40] hover:text-[#a0492d] font-medium"
+            className="text-rust hover:text-rust-dark font-medium"
           >
             Create one free
           </Link>

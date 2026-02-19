@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from "svelte";
+  import { t } from "../i18n.js";
 
   export let currentClue = null;
 
@@ -14,7 +15,7 @@
   <button
     class="banner-arrow"
     on:click={() => navigate(-1)}
-    title="Ankstesnė užuomina"
+    title={$t("crossword.prevClue")}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -31,17 +32,19 @@
     {#if currentClue}
       <span class="clue-banner-direction">
         {currentClue.arrow}
-        {currentClue.direction === "across" ? "Horizontaliai" : "Vertikaliai"}
+        {currentClue.direction === "across"
+          ? $t("crossword.across")
+          : $t("crossword.down")}
       </span>
       <span class="clue-banner-text">{currentClue.clue}</span>
     {:else}
-      <span class="clue-banner-text">Pasirinkite langelį</span>
+      <span class="clue-banner-text">{$t("crossword.selectCell")}</span>
     {/if}
   </div>
   <button
     class="banner-arrow"
     on:click={() => navigate(1)}
-    title="Kita užuomina"
+    title={$t("crossword.nextClue")}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

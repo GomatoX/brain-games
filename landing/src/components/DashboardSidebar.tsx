@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { platformConfig, isWhiteLabel } from "@/lib/platform";
 
 interface User {
   id: string;
@@ -45,20 +46,26 @@ export default function DashboardSidebar({ user }: { user: User }) {
       icon: "key",
       active: pathname === "/dashboard/keys",
     },
+    {
+      href: "/dashboard/settings",
+      label: "Settings",
+      icon: "settings",
+      active: pathname === "/dashboard/settings",
+    },
   ];
 
   return (
     <aside className="w-64 bg-white border-r border-[#e2e8f0] flex flex-col fixed h-full">
       {/* Brand */}
       <Link
-        href="/"
+        href={isWhiteLabel() ? "/dashboard" : "/"}
         className="flex items-center gap-2 px-6 py-5 border-b border-[#e2e8f0]"
       >
-        <span className="material-symbols-outlined text-[#c25e40] text-2xl">
+        <span className="material-symbols-outlined text-rust text-2xl">
           settings_suggest
         </span>
         <span className="text-lg font-bold font-serif text-[#0f172a]">
-          Rustycogs.io
+          {platformConfig.name}
         </span>
       </Link>
 
@@ -70,7 +77,7 @@ export default function DashboardSidebar({ user }: { user: User }) {
             href={item.href}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               item.active
-                ? "bg-[#c25e40]/10 text-[#c25e40]"
+                ? "bg-rust/10 text-rust"
                 : "text-[#64748b] hover:bg-slate-50 hover:text-[#0f172a]"
             }`}
           >
@@ -85,7 +92,7 @@ export default function DashboardSidebar({ user }: { user: User }) {
       {/* User */}
       <div className="border-t border-[#e2e8f0] p-4">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 bg-[#c25e40]/10 rounded-full flex items-center justify-center text-[#c25e40] font-bold text-sm">
+          <div className="w-9 h-9 bg-rust/10 rounded-full flex items-center justify-center text-rust font-bold text-sm">
             {(user.first_name?.[0] || user.email?.[0] || "U").toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
