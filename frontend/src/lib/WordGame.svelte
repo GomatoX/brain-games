@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { applyBrandingFromData } from "./clientThemes.js";
 
   // Props
   export let gameId = "";
@@ -7,6 +8,9 @@
   export let theme = "light";
   export let showKeyboard = true;
   export let token = "";
+  export let client = "";
+
+  let containerEl;
 
   // State
   let game = null;
@@ -54,12 +58,20 @@
     try {
       loading = true;
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await fetch(`${apiUrl}/items/wordgames/${gameId}`, {
-        headers,
-      });
+      const response = await fetch(
+        `${apiUrl}/items/wordgames/${gameId}?fields=*,branding.*`,
+        {
+          headers,
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch game");
       const data = await response.json();
       game = data.data;
+
+      // Apply branding if assigned
+      if (game.branding && containerEl) {
+        applyBrandingFromData(containerEl, game.branding);
+      }
     } catch (err) {
       error = err.message;
     } finally {
@@ -182,7 +194,7 @@
   }
 </script>
 
-<div class="word-game {themeClass}">
+<div class="word-game {themeClass}" bind:this={containerEl}>
   {#if loading}
     <div class="loading">
       <p>Kraunama...</p>

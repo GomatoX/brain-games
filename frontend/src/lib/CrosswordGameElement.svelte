@@ -1,7 +1,7 @@
 <svelte:options customElement="crossword-game" />
 
 <script>
-  import CrosswordGame from "./CrosswordGame.svelte";
+  import CrosswordGame from "./crossword/CrosswordGame.svelte";
 
   // Re-export all props from the base component
   export let puzzleId = "";
@@ -9,6 +9,7 @@
   export let apiUrl = "";
   export let layoutSeed = 1;
   export let token = "";
+  export let client = "";
 </script>
 
-<CrosswordGame {puzzleId} {theme} {apiUrl} {layoutSeed} {token} />
+<CrosswordGame {puzzleId} {theme} {apiUrl} {layoutSeed} {token} {client} />

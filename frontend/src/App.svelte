@@ -1,5 +1,5 @@
 <script>
-  import CrosswordGame from "./lib/CrosswordGame.svelte";
+  import CrosswordGame from "./lib/crossword/CrosswordGame.svelte";
   import WordGame from "./lib/WordGame.svelte";
   import SudokuGame from "./lib/SudokuGame.svelte";
 
@@ -8,6 +8,7 @@
   let gameType = urlParams.get("type") || "crossword"; // 'crossword' | 'word' | 'sudoku'
   let isPreview = urlParams.get("preview") === "true";
   let theme = urlParams.get("theme") || "light";
+  let resultId = urlParams.get("result") || "";
 
   // API URL: use env var > URL param > fallback
   const apiBase =
@@ -23,7 +24,7 @@
   {:else if gameType === "sudoku"}
     <SudokuGame gameId={puzzleId} {theme} apiUrl={apiBase} />
   {:else}
-    <CrosswordGame {puzzleId} {theme} apiUrl={apiBase} />
+    <CrosswordGame {puzzleId} {theme} apiUrl={apiBase} {resultId} />
   {/if}
 {:else}
   <!-- Landing page when no game loaded -->

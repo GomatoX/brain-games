@@ -167,7 +167,7 @@ export async function directusGetGames(accessToken: string) {
   const [crosswords, wordgames, sudoku] = await Promise.all([
     fetchCollection(
       "crosswords",
-      "id,status,title,difficulty,words,user_created,date_created",
+      "id,status,title,difficulty,words,main_word,branding,user_created,date_created",
     ),
     fetchCollection(
       "wordgames",
@@ -244,4 +244,20 @@ export async function directusDeleteGame(
   if (!res.ok) {
     throw new Error("Failed to delete game");
   }
+}
+
+export async function directusGetBranding(accessToken: string) {
+  const res = await fetch(
+    `${API_URL}/items/branding?fields=*&sort=-date_created`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (!res.ok) {
+    console.error(
+      "Failed to fetch branding:",
+      await res.text().catch(() => res.statusText),
+    );
+    return [];
+  }
+  const json = await res.json();
+  return json.data || [];
 }

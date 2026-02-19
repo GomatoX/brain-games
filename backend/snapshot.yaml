@@ -2,6 +2,30 @@ version: 1
 directus: 11.14.1
 vendor: sqlite
 collections:
+  - collection: branding
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: branding
+      color: "#6366F1"
+      display_template: "{{name}}"
+      group: null
+      hidden: false
+      icon: palette
+      item_duplication_fields: null
+      note: Reusable visual branding presets for games
+      preview_url: null
+      singleton: false
+      sort: 4
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: branding
   - collection: crosswords
     meta:
       accountability: all
@@ -11,13 +35,13 @@ collections:
       collapse: open
       collection: crosswords
       color: null
-      display_template: '{{title}}'
+      display_template: "{{title}}"
       group: null
       hidden: false
       icon: grid_on
       item_duplication_fields: null
       note: Crossword games with auto-layout
-      preview_url: '{{FRONTEND_URL}}/?id={{id}}&preview=true'
+      preview_url: "{{FRONTEND_URL}}/?id={{id}}&preview=true"
       singleton: false
       sort: 1
       sort_field: null
@@ -35,13 +59,13 @@ collections:
       collapse: open
       collection: sudoku
       color: null
-      display_template: '{{title}}'
+      display_template: "{{title}}"
       group: null
       hidden: false
       icon: tag
       item_duplication_fields: null
       note: Sudoku puzzles with varying difficulty
-      preview_url: '{{FRONTEND_URL}}/?id={{id}}&type=sudoku&preview=true'
+      preview_url: "{{FRONTEND_URL}}/?id={{id}}&type=sudoku&preview=true"
       singleton: false
       sort: 3
       sort_field: null
@@ -59,13 +83,13 @@ collections:
       collapse: open
       collection: wordgames
       color: null
-      display_template: '{{word}} - {{title}}'
+      display_template: "{{word}} - {{title}}"
       group: null
       hidden: false
       icon: spellcheck
       item_duplication_fields: null
       note: Word of the Day guessing games
-      preview_url: '{{FRONTEND_URL}}/?id={{id}}&type=word&preview=true'
+      preview_url: "{{FRONTEND_URL}}/?id={{id}}&type=word&preview=true"
       singleton: false
       sort: 2
       sort_field: null
@@ -75,6 +99,851 @@ collections:
     schema:
       name: wordgames
 fields:
+  - collection: branding
+    field: id
+    type: uuid
+    meta:
+      collection: branding
+      conditions: null
+      display: raw
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      searchable: true
+      sort: 1
+      special:
+        - uuid
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: branding
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_indexed: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: name
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: raw
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: input
+      note: Preset name (e.g. LRT, Default)
+      options:
+        placeholder: Enter branding name
+      readonly: false
+      required: true
+      searchable: true
+      sort: 2
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: name
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: accent_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: accent_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Primary accent color
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: accent_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: accent_hover_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: accent_hover_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Accent hover state
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: accent_hover_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: accent_light_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: accent_light_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Light accent background
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 5
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: accent_light_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: selection_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: selection_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Selected cell background
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: selection_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: selection_ring_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: selection_ring_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Selection border color
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: selection_ring_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: highlight_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: highlight_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Highlighted cell background
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: highlight_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: correct_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: correct_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Correct/success color
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: correct_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: present_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: present_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Present color (word game)
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: present_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: bg_primary_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: bg_primary_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Container/card background
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: bg_primary_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: bg_secondary_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: bg_secondary_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Page/outer background
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 12
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: bg_secondary_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: text_primary_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: text_primary_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Main text color
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: text_primary_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: text_secondary_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: text_secondary_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Muted/secondary text color
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 14
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: text_secondary_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: border_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: border_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Border color for UI elements
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 15
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: border_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: cell_bg_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: cell_bg_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Default cell background
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 16
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: cell_bg_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: cell_blocked_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: cell_blocked_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Black/blocked cell color
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 17
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: cell_blocked_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: grid_border_color
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: color
+      display_options: null
+      field: grid_border_color
+      group: null
+      hidden: false
+      interface: select-color
+      note: Grid line color
+      options: null
+      readonly: false
+      required: false
+      searchable: false
+      sort: 18
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: grid_border_color
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: font_sans
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: raw
+      display_options: null
+      field: font_sans
+      group: null
+      hidden: false
+      interface: input
+      note: "Sans-serif font override (e.g. Inter, Roboto)"
+      options:
+        placeholder: "Inter, -apple-system, sans-serif"
+      readonly: false
+      required: false
+      searchable: false
+      sort: 19
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: font_sans
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: font_serif
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: raw
+      display_options: null
+      field: font_serif
+      group: null
+      hidden: false
+      interface: input
+      note: "Serif font override (e.g. Georgia, Playfair Display)"
+      options:
+        placeholder: "Playfair Display, serif"
+      readonly: false
+      required: false
+      searchable: false
+      sort: 20
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: font_serif
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: branding
+    field: border_radius
+    type: string
+    meta:
+      collection: branding
+      conditions: null
+      display: raw
+      display_options: null
+      field: border_radius
+      group: null
+      hidden: false
+      interface: input
+      note: "Border radius override (e.g. 12px, 0.75rem)"
+      options:
+        placeholder: "0.75rem"
+      readonly: false
+      required: false
+      searchable: false
+      sort: 21
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: border_radius
+      table: branding
+      data_type: varchar
+      default_value: null
+      max_length: 50
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: crosswords
     field: id
     type: uuid
@@ -125,16 +994,16 @@ fields:
       display: labels
       display_options:
         choices:
-          - background: '#D3DAE4'
-            foreground: '#18222F'
+          - background: "#D3DAE4"
+            foreground: "#18222F"
             text: Draft
             value: draft
-          - background: '#B2DFDB'
-            foreground: '#18222F'
+          - background: "#B2DFDB"
+            foreground: "#18222F"
             text: Published
             value: published
-          - background: '#F5F5F5'
-            foreground: '#18222F'
+          - background: "#F5F5F5"
+            foreground: "#18222F"
             text: Archived
             value: archived
         showAsDot: true
@@ -227,16 +1096,16 @@ fields:
       display: labels
       display_options:
         choices:
-          - background: '#4CAF50'
-            foreground: '#FFFFFF'
+          - background: "#4CAF50"
+            foreground: "#FFFFFF"
             text: Easy
             value: easy
-          - background: '#FF9800'
-            foreground: '#FFFFFF'
+          - background: "#FF9800"
+            foreground: "#FFFFFF"
             text: Medium
             value: medium
-          - background: '#c25e40'
-            foreground: '#FFFFFF'
+          - background: "#c25e40"
+            foreground: "#FFFFFF"
             text: Hard
             value: hard
         showAsDot: false
@@ -353,7 +1222,7 @@ fields:
               width: full
             name: Clue
             type: string
-        template: '{{word}}'
+        template: "{{word}}"
       readonly: false
       required: false
       searchable: true
@@ -481,7 +1350,7 @@ fields:
       interface: select-dropdown-m2o
       note: null
       options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
       readonly: true
       required: false
       searchable: true
@@ -549,6 +1418,49 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: crosswords
+    field: branding
+    type: uuid
+    meta:
+      collection: crosswords
+      conditions: null
+      display: related-values
+      display_options:
+        template: "{{name}}"
+      field: branding
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Visual branding preset
+      options:
+        template: "{{name}}"
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: branding
+      table: crosswords
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: branding
+      foreign_key_column: id
   - collection: sudoku
     field: id
     type: uuid
@@ -599,16 +1511,16 @@ fields:
       display: labels
       display_options:
         choices:
-          - background: '#D3DAE4'
-            foreground: '#18222F'
+          - background: "#D3DAE4"
+            foreground: "#18222F"
             text: Draft
             value: draft
-          - background: '#B2DFDB'
-            foreground: '#18222F'
+          - background: "#B2DFDB"
+            foreground: "#18222F"
             text: Published
             value: published
-          - background: '#F5F5F5'
-            foreground: '#18222F'
+          - background: "#F5F5F5"
+            foreground: "#18222F"
             text: Archived
             value: archived
         showAsDot: true
@@ -665,7 +1577,7 @@ fields:
       interface: input
       note: Title for this puzzle
       options:
-        placeholder: 'Sudoku #42'
+        placeholder: "Sudoku #42"
       readonly: false
       required: true
       searchable: true
@@ -701,20 +1613,20 @@ fields:
       display: labels
       display_options:
         choices:
-          - background: '#4CAF50'
-            foreground: '#FFFFFF'
+          - background: "#4CAF50"
+            foreground: "#FFFFFF"
             text: Easy
             value: easy
-          - background: '#FF9800'
-            foreground: '#FFFFFF'
+          - background: "#FF9800"
+            foreground: "#FFFFFF"
             text: Medium
             value: medium
-          - background: '#c25e40'
-            foreground: '#FFFFFF'
+          - background: "#c25e40"
+            foreground: "#FFFFFF"
             text: Hard
             value: hard
-          - background: '#7B1FA2'
-            foreground: '#FFFFFF'
+          - background: "#7B1FA2"
+            foreground: "#FFFFFF"
             text: Expert
             value: expert
         showAsDot: false
@@ -986,7 +1898,7 @@ fields:
       interface: select-dropdown-m2o
       note: null
       options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
       readonly: true
       required: false
       searchable: true
@@ -1014,6 +1926,49 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: sudoku
+    field: branding
+    type: uuid
+    meta:
+      collection: sudoku
+      conditions: null
+      display: related-values
+      display_options:
+        template: "{{name}}"
+      field: branding
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Visual branding preset
+      options:
+        template: "{{name}}"
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: branding
+      table: sudoku
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: branding
+      foreign_key_column: id
   - collection: wordgames
     field: id
     type: uuid
@@ -1064,16 +2019,16 @@ fields:
       display: labels
       display_options:
         choices:
-          - background: '#D3DAE4'
-            foreground: '#18222F'
+          - background: "#D3DAE4"
+            foreground: "#18222F"
             text: Draft
             value: draft
-          - background: '#B2DFDB'
-            foreground: '#18222F'
+          - background: "#B2DFDB"
+            foreground: "#18222F"
             text: Published
             value: published
-          - background: '#F5F5F5'
-            foreground: '#18222F'
+          - background: "#F5F5F5"
+            foreground: "#18222F"
             text: Archived
             value: archived
         showAsDot: true
@@ -1422,7 +2377,7 @@ fields:
       interface: select-dropdown-m2o
       note: null
       options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+        template: "{{avatar.$thumbnail}} {{first_name}} {{last_name}}"
       readonly: true
       required: false
       searchable: true
@@ -1450,5 +2405,108 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: wordgames
+    field: branding
+    type: uuid
+    meta:
+      collection: wordgames
+      conditions: null
+      display: related-values
+      display_options:
+        template: "{{name}}"
+      field: branding
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: Visual branding preset
+      options:
+        template: "{{name}}"
+      readonly: false
+      required: false
+      searchable: true
+      sort: 11
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: branding
+      table: wordgames
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: branding
+      foreign_key_column: id
 systemFields: []
-relations: []
+relations:
+  - collection: crosswords
+    field: branding
+    related_collection: branding
+    meta:
+      junction_field: null
+      many_collection: crosswords
+      many_field: branding
+      one_allowed_collections: null
+      one_collection: branding
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: crosswords
+      column: branding
+      foreign_key_table: branding
+      foreign_key_column: id
+      on_update: NO ACTION
+      on_delete: SET NULL
+  - collection: sudoku
+    field: branding
+    related_collection: branding
+    meta:
+      junction_field: null
+      many_collection: sudoku
+      many_field: branding
+      one_allowed_collections: null
+      one_collection: branding
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: sudoku
+      column: branding
+      foreign_key_table: branding
+      foreign_key_column: id
+      on_update: NO ACTION
+      on_delete: SET NULL
+  - collection: wordgames
+    field: branding
+    related_collection: branding
+    meta:
+      junction_field: null
+      many_collection: wordgames
+      many_field: branding
+      one_allowed_collections: null
+      one_collection: branding
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: wordgames
+      column: branding
+      foreign_key_table: branding
+      foreign_key_column: id
+      on_update: NO ACTION
+      on_delete: SET NULL

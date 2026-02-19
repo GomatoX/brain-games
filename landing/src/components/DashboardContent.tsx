@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Game {
   id: string | number;
@@ -13,6 +13,7 @@ interface Game {
   difficulty?: string;
   words?: { word: string; clue: string; main_word_index?: number }[];
   main_word?: string;
+  branding?: string | number | null;
 }
 
 interface Games {
@@ -570,6 +571,24 @@ function GameModal({
     difficulty === "easy" ? 5 : difficulty === "hard" ? 12 : 8,
   );
   const [aiLanguage, setAiLanguage] = useState<"lt" | "en">("lt");
+  // Branding
+  const [brandingPresets, setBrandingPresets] = useState<
+    { id: string | number; name: string }[]
+  >([]);
+  const [selectedBranding, setSelectedBranding] = useState<string>(
+    game?.branding ? String(game.branding) : "",
+  );
+
+  useEffect(() => {
+    fetch("/api/branding")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setBrandingPresets(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function generateWithAI() {
     if (!mainWord.trim()) return;
@@ -705,6 +724,7 @@ function GameModal({
         if (mainWord.trim()) {
           baseData.main_word = mainWord.trim().toUpperCase();
         }
+        baseData.branding = selectedBranding || null;
         if (wordsList.length > 0) {
           baseData.words = wordsList.map((w) => {
             const entry: Record<string, unknown> = {
@@ -925,6 +945,28 @@ function GameModal({
                   className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
                   placeholder="e.g. BRAIN"
                 />
+              </div>
+
+              {/* Branding Preset */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Branding Preset{" "}
+                  <span className="text-xs text-[#64748b] font-normal">
+                    (optional)
+                  </span>
+                </label>
+                <select
+                  value={selectedBranding}
+                  onChange={(e) => setSelectedBranding(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c25e40]/20 focus:border-[#c25e40]"
+                >
+                  <option value="">Default (no branding)</option>
+                  {brandingPresets.map((p) => (
+                    <option key={String(p.id)} value={String(p.id)}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* AI Generation */}

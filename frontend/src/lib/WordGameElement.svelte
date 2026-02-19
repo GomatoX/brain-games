@@ -9,6 +9,7 @@
   export let apiUrl = "";
   export let showKeyboard = true;
   export let token = "";
+  export let client = "";
 </script>
 
-<WordGame {gameId} {theme} {apiUrl} {showKeyboard} {token} />
+<WordGame {gameId} {theme} {apiUrl} {showKeyboard} {token} {client} />

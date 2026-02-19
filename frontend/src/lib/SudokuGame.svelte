@@ -1,11 +1,15 @@
 <script>
   import { onMount, onDestroy } from "svelte";
+  import { applyBrandingFromData } from "./clientThemes.js";
 
   // Props
   export let gameId = "";
   export let apiUrl = "";
   export let theme = "light";
   export let token = "";
+  export let client = "";
+
+  let containerEl;
 
   // State
   let game = null;
@@ -73,12 +77,20 @@
     try {
       loading = true;
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await fetch(`${apiUrl}/items/sudoku/${gameId}`, {
-        headers,
-      });
+      const response = await fetch(
+        `${apiUrl}/items/sudoku/${gameId}?fields=*,branding.*`,
+        {
+          headers,
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch puzzle");
       const data = await response.json();
       game = data.data;
+
+      // Apply branding if assigned
+      if (game.branding && containerEl) {
+        applyBrandingFromData(containerEl, game.branding);
+      }
 
       // Parse puzzle and solution
       if (game.puzzle) {
@@ -299,7 +311,7 @@
   }
 </script>
 
-<div class="sudoku-game {themeClass}">
+<div class="sudoku-game {themeClass}" bind:this={containerEl}>
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
