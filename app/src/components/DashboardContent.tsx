@@ -11,7 +11,14 @@ interface Game {
   definition?: string;
   max_attempts?: number;
   difficulty?: string;
-  words?: { word: string; clue: string; main_word_index?: number }[];
+  words?: {
+    word: string;
+    clue: string;
+    main_word_index?: number;
+    x?: number;
+    y?: number;
+    direction?: string;
+  }[];
   main_word?: string;
   branding?: string | number | null;
 }
@@ -588,11 +595,20 @@ function GameModal({
   const [clueInput, setClueInput] = useState("");
   const [mainWord, setMainWord] = useState(game?.main_word || "");
   const [wordsList, setWordsList] = useState<
-    { word: string; clue: string; main_word_index?: number }[]
+    {
+      word: string;
+      clue: string;
+      main_word_index?: number;
+      x?: number;
+      y?: number;
+      direction?: string;
+    }[]
   >(game?.words || []);
   // AI generation state
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [layoutLoading, setLayoutLoading] = useState(false);
+  const [layoutError, setLayoutError] = useState("");
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
   const [aiWordCount, setAiWordCount] = useState(
     difficulty === "easy" ? 5 : difficulty === "hard" ? 12 : 8,
@@ -685,6 +701,38 @@ function GameModal({
       setAiError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setAiLoading(false);
+    }
+  }
+
+  async function generateLayoutWithAI() {
+    if (wordsList.length < 2) return;
+    setLayoutLoading(true);
+    setLayoutError("");
+    try {
+      const res = await fetch("/api/ai/layout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words: wordsList }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Layout generation failed");
+      }
+      const data = await res.json();
+      if (data.words) {
+        setWordsList(data.words);
+      }
+      if (data.stats) {
+        setLayoutError(
+          `✓ ${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words, balance ${data.stats.balance}`,
+        );
+      }
+    } catch (err) {
+      setLayoutError(
+        err instanceof Error ? err.message : "Layout generation failed",
+      );
+    } finally {
+      setLayoutLoading(false);
     }
   }
 
@@ -1217,15 +1265,49 @@ function GameModal({
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-[#64748b]">
-                  {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
-                  added
-                  {mode === "create" && wordsList.length < 2 && (
-                    <span className="text-amber-600 ml-1">
-                      (min 2 required)
-                    </span>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-[#64748b]">
+                    {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
+                    added
+                    {mode === "create" && wordsList.length < 2 && (
+                      <span className="text-amber-600 ml-1">
+                        (min 2 required)
+                      </span>
+                    )}
+                    {wordsList.some(
+                      (w) => w.x !== undefined && w.y !== undefined,
+                    ) && (
+                      <span className="text-green-600 ml-1">
+                        ✓ Layout ready
+                      </span>
+                    )}
+                  </p>
+                  {wordsList.length >= 2 && (
+                    <button
+                      type="button"
+                      onClick={generateLayoutWithAI}
+                      disabled={layoutLoading}
+                      className="px-3 py-1.5 bg-[#0f172a] text-white rounded-lg text-xs font-medium hover:bg-[#1e293b] transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      {layoutLoading ? (
+                        <>
+                          <span className="animate-spin">⟳</span>
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-sm">
+                            grid_on
+                          </span>
+                          Generate Layout
+                        </>
+                      )}
+                    </button>
                   )}
-                </p>
+                </div>
+                {layoutError && (
+                  <p className="text-xs text-amber-600 mt-1">{layoutError}</p>
+                )}
               </div>
             </>
           )}

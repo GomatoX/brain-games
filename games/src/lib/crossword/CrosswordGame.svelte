@@ -228,8 +228,6 @@
           lw.main_word_index = wordIndexMap[key];
         }
       }
-
-      console.log("Auto-layout generated:", layout);
     }
 
     gridSize = Math.max(cols, rows);
