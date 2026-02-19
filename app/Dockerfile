@@ -48,9 +48,6 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 
-# Copy drizzle migrations for runtime migration
-COPY --from=build /app/drizzle ./drizzle
-
 # Create data directory (will be mounted as a volume)
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
