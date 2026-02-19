@@ -46,6 +46,18 @@
   let resultData = null;
   let shareUrl = "";
 
+  function formatTime(seconds) {
+    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  }
+
+  $: puzzleSolveUrl = (() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("result");
+    return url.toString();
+  })();
+
   // Timer state
   let elapsedTime = 0;
   let timerRunning = false;
@@ -246,7 +258,7 @@
       );
 
     let wordNumber = 1;
-    const numberedCells = new Set();
+    const numberedCells = new Map();
 
     const sortedWords = [...layoutWords].sort((a, b) => {
       const posA = a.y * cols + a.x;
@@ -261,11 +273,14 @@
       const cellKey = `${x},${y}`;
 
       if (!numberedCells.has(cellKey)) {
-        numberedCells.add(cellKey);
+        const num = wordNumber++;
+        numberedCells.set(cellKey, num);
         if (grid[y] && grid[y][x]) {
-          grid[y][x].number = wordNumber++;
+          grid[y][x].number = num;
         }
       }
+
+      word._number = numberedCells.get(cellKey);
 
       for (let i = 0; i < answer.length; i++) {
         const cellX = direction === "across" ? x + i : x;
@@ -473,9 +488,8 @@
     const words = puzzle?._layoutWords || puzzle?.words || [];
     return words
       .map((word, index) => {
-        const cell = grid[word.y]?.[word.x];
         return {
-          number: cell?.number || "?",
+          number: word._number || "?",
           clue: word.clue,
           direction: word.direction,
           arrow: word.direction === "across" ? "→" : "↓",
@@ -506,8 +520,7 @@
         }
       }
       if (allCorrect) {
-        const cell = grid[word.y]?.[word.x];
-        const num = cell?.number || "?";
+        const num = word._number || "?";
         solved.add(`${num}-${word.direction}`);
       }
     }
@@ -538,9 +551,8 @@
         const cellX = word.x + j * dx;
         const cellY = word.y + j * dy;
         if (cellX === col && cellY === row) {
-          const cellAtStart = grid[word.y]?.[word.x];
           return {
-            number: cellAtStart?.number || "?",
+            number: word._number || "?",
             clue: word.clue,
             direction: word.direction,
             arrow: word.direction === "across" ? "→" : "↓",
@@ -560,9 +572,8 @@
         const cellX = word.x + j * dx;
         const cellY = word.y + j * dy;
         if (cellX === col && cellY === row) {
-          const cellAtStart = grid[word.y]?.[word.x];
           return {
-            number: cellAtStart?.number || "?",
+            number: word._number || "?",
             clue: word.clue,
             direction: word.direction,
             arrow: word.direction === "across" ? "→" : "↓",
@@ -641,7 +652,8 @@
         row,
         col,
         expectedLetter: word.word[idx].toUpperCase(),
-        number: grid[word.y]?.[word.x]?.number,
+        number: word._number,
+        parentWord: word,
       });
     }
 
@@ -663,13 +675,29 @@
     return sorted;
   }
 
+  function isWordFullyCorrect(word, inputs) {
+    const dx = word.direction === "across" ? 1 : 0;
+    const dy = word.direction === "down" ? 1 : 0;
+    for (let i = 0; i < word.word.length; i++) {
+      const cx = word.x + i * dx;
+      const cy = word.y + i * dy;
+      const input = (inputs[`${cy},${cx}`] || "").toUpperCase();
+      if (input !== word.word[i].toUpperCase()) return false;
+    }
+    return true;
+  }
+
   function computeMainWordProgress(data, inputs) {
     return data.map((d) => {
       const key = `${d.row},${d.col}`;
       const typed = inputs[key] || "";
+      const letterMatches = typed.toUpperCase() === d.expectedLetter;
+      const wordCorrect = d.parentWord
+        ? isWordFullyCorrect(d.parentWord, inputs)
+        : letterMatches;
       return {
         ...d,
-        filled: typed.toUpperCase() === d.expectedLetter,
+        filled: letterMatches && wordCorrect,
         typedLetter: typed.toUpperCase(),
       };
     });
@@ -728,17 +756,30 @@
       <div class="grid-section">
         <ClueBanner {currentClue} on:navigate={navigateClue} />
 
-        <CrosswordGrid
-          {grid}
-          {selectedCell}
-          {selectedWordCells}
-          {cellInputs}
-          {mainWordCellSet}
-          blurred={resultMode}
-          on:cellClick={handleCellClick}
-          on:cellInput={handleCellInput}
-          on:keyDown={handleKeyDown}
-        />
+        <div class="grid-area">
+          <div class:blurred-grid={resultMode}>
+            <CrosswordGrid
+              {grid}
+              {selectedCell}
+              {selectedWordCells}
+              {cellInputs}
+              {mainWordCellSet}
+              {currentClue}
+              blurred={resultMode}
+              on:cellClick={handleCellClick}
+              on:cellInput={handleCellInput}
+              on:keyDown={handleKeyDown}
+            />
+          </div>
+
+          {#if resultMode}
+            <div class="shared-overlay">
+              <a class="shared-cta" href={puzzleSolveUrl}>
+                {$t("crossword.startSolving")}
+              </a>
+            </div>
+          {/if}
+        </div>
 
         {#if isPreviewMode}
           <div class="action-row preview-actions">
@@ -759,11 +800,13 @@
           </div>
         {/if}
 
-        <MainWordSection
-          {mainWordProgress}
-          {elapsedTime}
-          mainWord={puzzle.main_word}
-        />
+        {#if !resultMode}
+          <MainWordSection
+            {mainWordProgress}
+            {elapsedTime}
+            mainWord={puzzle.main_word}
+          />
+        {/if}
 
         {#if mainWordComplete}
           <CelebrationOverlay {elapsedTime} {shareUrl} on:share={shareResult} />
@@ -866,6 +909,14 @@
     align-items: flex-start;
   }
 
+  .grid-section {
+    flex: 1 1 65%;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   @media (max-width: 1024px) {
     .game-layout {
       flex-direction: column;
@@ -875,15 +926,10 @@
     .grid-section {
       max-width: 100%;
       order: -1;
+      flex: 1;
+      flex-grow: 1;
+      width: 100%;
     }
-  }
-
-  .grid-section {
-    flex: 1 1 65%;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    overflow: hidden;
   }
 
   /* Action Buttons */
@@ -970,5 +1016,121 @@
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.85em;
+  }
+
+  /* Grid area container for overlay positioning */
+  .grid-area {
+    position: relative;
+  }
+
+  .blurred-grid {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* Shared result overlay */
+  .shared-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    filter: none;
+    pointer-events: auto;
+  }
+
+  .shared-result-card {
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    background: var(--correct-light, #e2f3ea);
+    border: 1px solid var(--correct, #007a3c);
+    border-radius: 12px;
+    padding: 48px 32px;
+    animation: celebrationPop 0.4s ease;
+  }
+
+  @keyframes celebrationPop {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .shared-check-icon {
+    color: var(--correct, #007a3c);
+    margin-bottom: 12px;
+  }
+
+  .shared-result-card h2 {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    color: var(--correct, #007a3c);
+    margin: 0 0 8px;
+  }
+
+  .shared-result-card p {
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    margin: 0 0 24px;
+    font-size: 1rem;
+  }
+
+  .shared-time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--correct, #007a3c);
+    color: #ffffff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+  }
+
+  .shared-time-label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 12px;
+  }
+
+  .shared-time-value {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 17px;
+  }
+
+  .shared-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--accent, #c25e40);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .shared-cta:hover {
+    background: var(--accent-hover, #a14d34);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 </style>

@@ -14,7 +14,10 @@
     "selectCell": "Select a cell",
     "prevClue": "Previous clue",
     "nextClue": "Next clue",
-    "mainWordTitle": "Daily crossword phrase"
+    "mainWordTitle": "Daily crossword phrase",
+    "sharedSolvedMessage": "Your friend solved this crossword!",
+    "theirTime": "Their time:",
+    "startSolving": "Start solving"
   },
   "wordgame": {
     "loading": "Loading...",

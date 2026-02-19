@@ -821,6 +821,9 @@ function GameModal({
             if (w.main_word_index !== undefined) {
               entry.main_word_index = w.main_word_index;
             }
+            if (w.x !== undefined) entry.x = w.x;
+            if (w.y !== undefined) entry.y = w.y;
+            if (w.direction) entry.direction = w.direction;
             return entry;
           });
         }
@@ -1205,14 +1208,35 @@ function GameModal({
                 {wordsList.length > 0 && (
                   <div className="border border-[#e2e8f0] rounded-lg divide-y divide-[#e2e8f0] mb-2">
                     {wordsList.map((entry, idx) => (
-                      <div key={entry.word} className="px-3 py-2">
+                      <div key={idx} className="px-3 py-2">
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono font-bold text-[#0f172a] w-20 shrink-0">
-                            {entry.word}
-                          </span>
-                          <span className="text-xs text-[#64748b] flex-1 truncate">
-                            {entry.clue}
-                          </span>
+                          <input
+                            type="text"
+                            value={entry.word}
+                            onChange={(e) => {
+                              const updated = [...wordsList];
+                              updated[idx] = {
+                                ...updated[idx],
+                                word: e.target.value.toUpperCase(),
+                              };
+                              setWordsList(updated);
+                            }}
+                            className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 px-1.5 py-1 border border-transparent hover:border-[#e2e8f0] focus:border-rust focus:outline-none rounded bg-transparent uppercase"
+                          />
+                          <input
+                            type="text"
+                            value={entry.clue}
+                            onChange={(e) => {
+                              const updated = [...wordsList];
+                              updated[idx] = {
+                                ...updated[idx],
+                                clue: e.target.value,
+                              };
+                              setWordsList(updated);
+                            }}
+                            className="text-xs text-[#64748b] flex-1 px-1.5 py-1 border border-transparent hover:border-[#e2e8f0] focus:border-rust focus:outline-none rounded bg-transparent"
+                            placeholder="Clue"
+                          />
                           <button
                             type="button"
                             onClick={() => removeWord(entry.word)}
@@ -1307,6 +1331,145 @@ function GameModal({
                 </div>
                 {layoutError && (
                   <p className="text-xs text-amber-600 mt-1">{layoutError}</p>
+                )}
+                {/* Mini Map Preview */}
+                {wordsList.some(
+                  (w) => w.x !== undefined && w.y !== undefined,
+                ) && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-[#64748b]">
+                        Layout Preview
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWordsList(
+                            wordsList.map((w) => ({
+                              ...w,
+                              x: undefined,
+                              y: undefined,
+                              direction: undefined,
+                            })),
+                          );
+                          setLayoutError("");
+                        }}
+                        className="text-[10px] text-red-500 hover:text-red-700 transition-colors flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-xs">
+                          close
+                        </span>
+                        Discard Layout
+                      </button>
+                    </div>
+                    {(() => {
+                      const positioned = wordsList.filter(
+                        (w) =>
+                          w.x !== undefined && w.y !== undefined && w.direction,
+                      );
+                      if (!positioned.length) return null;
+
+                      // Build grid
+                      const grid: Record<
+                        string,
+                        { letter: string; number?: number }
+                      > = {};
+                      let minX = Infinity,
+                        minY = Infinity,
+                        maxX = -Infinity,
+                        maxY = -Infinity;
+
+                      positioned.forEach((w, idx) => {
+                        const dx = w.direction === "across" ? 1 : 0;
+                        const dy = w.direction === "down" ? 1 : 0;
+                        for (let i = 0; i < w.word.length; i++) {
+                          const cx = w.x! + i * dx;
+                          const cy = w.y! + i * dy;
+                          const key = `${cx},${cy}`;
+                          if (!grid[key]) {
+                            grid[key] = { letter: w.word[i] };
+                          }
+                          if (i === 0) {
+                            grid[key].number = idx + 1;
+                          }
+                          minX = Math.min(minX, cx);
+                          minY = Math.min(minY, cy);
+                          maxX = Math.max(maxX, cx);
+                          maxY = Math.max(maxY, cy);
+                        }
+                      });
+
+                      const cols = maxX - minX + 1;
+                      const rows = maxY - minY + 1;
+                      const cellSize = Math.min(
+                        20,
+                        Math.floor(280 / Math.max(cols, rows)),
+                      );
+
+                      return (
+                        <div
+                          className="border border-[#e2e8f0] rounded-lg p-2 bg-[#f8fafc] overflow-auto"
+                          style={{ maxHeight: "220px" }}
+                        >
+                          <div
+                            className="mx-auto"
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
+                              gap: "1px",
+                              width: "fit-content",
+                            }}
+                          >
+                            {Array.from({ length: rows }, (_, row) =>
+                              Array.from({ length: cols }, (_, col) => {
+                                const key = `${col + minX},${row + minY}`;
+                                const cell = grid[key];
+                                return (
+                                  <div
+                                    key={key}
+                                    style={{
+                                      width: cellSize,
+                                      height: cellSize,
+                                    }}
+                                    className={`flex items-center justify-center relative ${
+                                      cell
+                                        ? "bg-white border border-[#cbd5e1]"
+                                        : "bg-transparent"
+                                    }`}
+                                  >
+                                    {cell && (
+                                      <>
+                                        {cell.number && (
+                                          <span
+                                            className="absolute text-[#94a3b8] font-bold leading-none"
+                                            style={{
+                                              fontSize: `${Math.max(5, cellSize * 0.3)}px`,
+                                              top: 0,
+                                              left: 1,
+                                            }}
+                                          >
+                                            {cell.number}
+                                          </span>
+                                        )}
+                                        <span
+                                          className="font-mono font-bold text-[#0f172a]"
+                                          style={{
+                                            fontSize: `${Math.max(6, cellSize * 0.45)}px`,
+                                          }}
+                                        >
+                                          {cell.letter}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              }),
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 )}
               </div>
             </>

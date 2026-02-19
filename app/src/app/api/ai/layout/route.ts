@@ -116,6 +116,12 @@ function checkPlacement(
 
     if (cell) {
       if (cell === word[i]) {
+        // Reject parallel overlap: neighbor along same axis also matching = overlap
+        const prevKey = `${x - dx},${y - dy}`;
+        const nextKey = `${x + dx},${y + dy}`;
+        if (i > 0 && grid[prevKey] === word[i - 1]) return -1;
+        if (i < word.length - 1 && grid[nextKey] === word[i + 1]) return -1;
+
         intersections++;
       } else {
         return -1; // letter conflict

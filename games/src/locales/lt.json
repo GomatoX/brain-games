@@ -14,7 +14,10 @@
     "selectCell": "Pasirinkite langelį",
     "prevClue": "Ankstesnė užuomina",
     "nextClue": "Kita užuomina",
-    "mainWordTitle": "Dienos kryžiažodžio frazė"
+    "mainWordTitle": "Dienos kryžiažodžio frazė",
+    "sharedSolvedMessage": "Jūsų draugas išsprendė šį kryžiažodį!",
+    "theirTime": "Jo laikas:",
+    "startSolving": "Spręsti kryžiažodį"
   },
   "wordgame": {
     "loading": "Kraunama...",

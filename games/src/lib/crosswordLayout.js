@@ -112,6 +112,14 @@ function checkPlacement(grid, word, sx, sy, dir) {
 
     if (existing) {
       if (existing !== word[i]) return -1;
+
+      // Reject parallel overlap: if the neighbor ALONG the placement direction
+      // is also filled, this is a same-direction overlap, not a crossing.
+      const prevKey = `${x - dx},${y - dy}`;
+      const nextKey = `${x + dx},${y + dy}`;
+      if (i > 0 && grid[prevKey] === word[i - 1]) return -1;
+      if (i < word.length - 1 && grid[nextKey] === word[i + 1]) return -1;
+
       intersections++;
     }
   }

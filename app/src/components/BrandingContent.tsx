@@ -33,6 +33,7 @@ interface FieldDef {
   label: string;
   type: "color" | "text" | "select";
   options?: { value: string; label: string }[];
+  defaultValue?: string;
 }
 
 const SANS_FONT_OPTIONS = [
@@ -68,52 +69,138 @@ const FIELD_GROUPS: { title: string; icon: string; fields: FieldDef[] }[] = [
     title: "Accent Colors",
     icon: "palette",
     fields: [
-      { key: "accent_color", label: "Accent", type: "color" },
-      { key: "accent_hover_color", label: "Accent Hover", type: "color" },
-      { key: "accent_light_color", label: "Accent Light", type: "color" },
+      {
+        key: "accent_color",
+        label: "Accent",
+        type: "color",
+        defaultValue: "#c25e40",
+      },
+      {
+        key: "accent_hover_color",
+        label: "Accent Hover",
+        type: "color",
+        defaultValue: "#a0492d",
+      },
+      {
+        key: "accent_light_color",
+        label: "Accent Light",
+        type: "color",
+        defaultValue: "#fcece8",
+      },
     ],
   },
   {
     title: "Backgrounds",
     icon: "format_paint",
     fields: [
-      { key: "bg_primary_color", label: "Primary BG", type: "color" },
-      { key: "bg_secondary_color", label: "Secondary BG", type: "color" },
+      {
+        key: "bg_primary_color",
+        label: "Primary BG",
+        type: "color",
+        defaultValue: "#ffffff",
+      },
+      {
+        key: "bg_secondary_color",
+        label: "Secondary BG",
+        type: "color",
+        defaultValue: "#f3f4f6",
+      },
     ],
   },
   {
     title: "Text",
     icon: "title",
     fields: [
-      { key: "text_primary_color", label: "Primary Text", type: "color" },
-      { key: "text_secondary_color", label: "Secondary Text", type: "color" },
+      {
+        key: "text_primary_color",
+        label: "Primary Text",
+        type: "color",
+        defaultValue: "#0f172a",
+      },
+      {
+        key: "text_secondary_color",
+        label: "Secondary Text",
+        type: "color",
+        defaultValue: "#64748b",
+      },
     ],
   },
   {
     title: "Grid & Cells",
     icon: "grid_on",
     fields: [
-      { key: "cell_bg_color", label: "Cell BG", type: "color" },
-      { key: "cell_blocked_color", label: "Blocked Cell", type: "color" },
-      { key: "selection_color", label: "Selection", type: "color" },
-      { key: "selection_ring_color", label: "Selection Ring", type: "color" },
-      { key: "highlight_color", label: "Highlight", type: "color" },
-      { key: "grid_border_color", label: "Grid Lines", type: "color" },
-      { key: "sidebar_active_color", label: "Sidebar Active", type: "color" },
+      {
+        key: "cell_bg_color",
+        label: "Cell BG",
+        type: "color",
+        defaultValue: "#ffffff",
+      },
+      {
+        key: "cell_blocked_color",
+        label: "Blocked Cell",
+        type: "color",
+        defaultValue: "#1a1a1a",
+      },
+      {
+        key: "selection_color",
+        label: "Selection",
+        type: "color",
+        defaultValue: "#fcece8",
+      },
+      {
+        key: "selection_ring_color",
+        label: "Selection Ring",
+        type: "color",
+        defaultValue: "#c25e40",
+      },
+      {
+        key: "highlight_color",
+        label: "Highlight",
+        type: "color",
+        defaultValue: "#fcece8",
+      },
+      {
+        key: "grid_border_color",
+        label: "Grid Lines",
+        type: "color",
+        defaultValue: "#e2e8f0",
+      },
+      {
+        key: "sidebar_active_color",
+        label: "Sidebar Active",
+        type: "color",
+        defaultValue: "#c25e40",
+      },
       {
         key: "sidebar_active_bg_color",
         label: "Sidebar Active BG",
         type: "color",
+        defaultValue: "#fcece8",
       },
-      { key: "border_color", label: "Border", type: "color" },
+      {
+        key: "border_color",
+        label: "Border",
+        type: "color",
+        defaultValue: "#e2e8f0",
+      },
     ],
   },
   {
     title: "Feedback",
     icon: "check_circle",
     fields: [
-      { key: "correct_color", label: "Correct", type: "color" },
-      { key: "present_color", label: "Present", type: "color" },
+      {
+        key: "correct_color",
+        label: "Correct",
+        type: "color",
+        defaultValue: "#007a3c",
+      },
+      {
+        key: "present_color",
+        label: "Present",
+        type: "color",
+        defaultValue: "#b59f3b",
+      },
     ],
   },
   {
@@ -125,14 +212,21 @@ const FIELD_GROUPS: { title: string; icon: string; fields: FieldDef[] }[] = [
         label: "Sans Font",
         type: "select",
         options: SANS_FONT_OPTIONS,
+        defaultValue: "Inter, sans-serif",
       },
       {
         key: "font_serif",
         label: "Serif Font",
         type: "select",
         options: SERIF_FONT_OPTIONS,
+        defaultValue: "Playfair Display, serif",
       },
-      { key: "border_radius", label: "Border Radius", type: "text" },
+      {
+        key: "border_radius",
+        label: "Border Radius",
+        type: "text",
+        defaultValue: "0.75rem",
+      },
     ],
   },
 ];
@@ -450,7 +544,9 @@ export default function BrandingContent({
                         >
                           <input
                             type="color"
-                            value={formValues[f.key] || "#000000"}
+                            value={
+                              formValues[f.key] || f.defaultValue || "#000000"
+                            }
                             onChange={(e) => setField(f.key, e.target.value)}
                             className="w-8 h-8 rounded cursor-pointer border border-slate-200 p-0.5"
                           />
@@ -462,7 +558,7 @@ export default function BrandingContent({
                               type="text"
                               value={formValues[f.key] || ""}
                               onChange={(e) => setField(f.key, e.target.value)}
-                              placeholder="#000000"
+                              placeholder={f.defaultValue || "#000000"}
                               className="text-[10px] text-[#64748b] bg-transparent w-full outline-none"
                             />
                           </div>
