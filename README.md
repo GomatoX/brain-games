@@ -4,18 +4,24 @@ Interactive brain games (Crosswords, Word Guessing, Sudoku) as embeddable Web Co
 
 ## Architecture
 
-| Service      | Stack             | Port    | Purpose                                                |
-| ------------ | ----------------- | ------- | ------------------------------------------------------ |
-| **backend**  | Directus (SQLite) | `:8055` | CMS API – game data, auth, branding                    |
-| **frontend** | Svelte + Vite     | `:5173` | Game engine – Web Components (crossword, word, sudoku) |
-| **landing**  | Next.js 15        | `:3000` | Dashboard + marketing landing page                     |
+| Service   | Stack         | Port    | Purpose                                                |
+| --------- | ------------- | ------- | ------------------------------------------------------ |
+| **app**   | Next.js 16    | `:3000` | Dashboard, API, auth, SQLite database                  |
+| **games** | Svelte + Vite | `:5173` | Game engine – Web Components (crossword, word, sudoku) |
 
 ## Quick Start
 
 ```bash
 cp .env.example .env
-# Edit .env with your values
+# Edit .env — set AUTH_SECRET at minimum
 
+# Push DB schema & seed admin user
+cd app
+yarn install
+yarn db:push
+yarn db:seed admin@rustycogs.io yourpassword
+
+# Start
 docker compose up -d --build
 ```
 
@@ -29,11 +35,9 @@ See [`.env.example`](.env.example) for all variables. Key ones:
 
 | Variable                   | Description                            | Default                 |
 | -------------------------- | -------------------------------------- | ----------------------- |
-| `SECRET`                   | Directus secret key                    | _required_              |
-| `KEY`                      | Directus key                           | _required_              |
-| `ADMIN_EMAIL`              | Directus admin email                   | `admin@rustycogs.io`    |
-| `ADMIN_PASSWORD`           | Directus admin password                | _required_              |
-| `NEXT_PUBLIC_API_URL`      | Directus API URL                       | `http://localhost:8055` |
+| `AUTH_SECRET`              | NextAuth secret key                    | _required_              |
+| `AUTH_URL`                 | App URL                                | `http://localhost:3000` |
+| `DATABASE_PATH`            | SQLite database path                   | `./data/brain.db`       |
 | `NEXT_PUBLIC_FRONTEND_URL` | Game engine URL                        | `http://localhost:5173` |
 | `GOOGLE_AI_API_KEY`        | Google AI key for crossword generation | –                       |
 
@@ -66,7 +70,7 @@ Then build and deploy:
 docker compose up -d --build
 ```
 
-> **Note:** `NEXT_PUBLIC_*` vars are baked in at **build time** by Next.js. If you change them, you must rebuild: `docker compose up -d --build landing`
+> **Note:** `NEXT_PUBLIC_*` vars are baked in at **build time** by Next.js. If you change them, you must rebuild: `docker compose up -d --build app`
 
 ## Embedding Games
 
@@ -77,7 +81,7 @@ After creating games in the dashboard, use the embed code from the **Keys** page
 <script src="https://games.example.com/dist/crossword-engine.iife.js"></script>
 <crossword-game
   puzzle-id="latest"
-  api-url="https://api.example.com"
+  api-url="https://app.example.com"
   token="YOUR_API_TOKEN"
   lang="en"
   theme="light"
@@ -88,7 +92,7 @@ After creating games in the dashboard, use the embed code from the **Keys** page
 <script src="https://games.example.com/dist/word-game.iife.js"></script>
 <word-game
   puzzle-id="latest"
-  api-url="https://api.example.com"
+  api-url="https://app.example.com"
   token="YOUR_API_TOKEN"
   lang="en"
   theme="light"
@@ -101,7 +105,7 @@ After creating games in the dashboard, use the embed code from the **Keys** page
 | Prop        | Description           | Values           |
 | ----------- | --------------------- | ---------------- |
 | `puzzle-id` | Game ID or `"latest"` | string           |
-| `api-url`   | Backend API URL       | URL              |
+| `api-url`   | App API URL           | URL              |
 | `token`     | Publisher API token   | string           |
 | `theme`     | Color scheme          | `light` / `dark` |
 | `lang`      | Language              | `en` / `lt`      |
@@ -109,14 +113,24 @@ After creating games in the dashboard, use the embed code from the **Keys** page
 ## Local Development
 
 ```bash
-# Backend (Directus)
-cd backend && npm install && npx directus start
+# App (dashboard + API)
+cd app && yarn install && yarn dev
 
-# Frontend (game engine)
-cd frontend && npm install && npm run dev
+# Games (game engine)
+cd games && npm install && npm run dev
+```
 
-# Dashboard
-cd landing && npm install && npm run dev
+## Database
+
+The app uses SQLite via Drizzle ORM. Common commands:
+
+```bash
+cd app
+yarn db:push      # Push schema to database
+yarn db:seed      # Create admin user
+yarn db:generate  # Generate migration SQL
+yarn db:migrate   # Run migrations
+yarn db:studio    # Open Drizzle Studio
 ```
 
 ## Features

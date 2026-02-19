@@ -1,16 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { platformConfig } from "@/lib/platform";
 
-const hideLanding = process.env.NEXT_PUBLIC_HIDE_LANDING === "true";
-const hideRegister = process.env.NEXT_PUBLIC_HIDE_REGISTER === "true";
+const hideLanding = platformConfig.hideLanding;
+const hideRegister = platformConfig.hideRegister;
 
 export function middleware(request: NextRequest) {
-  const accessToken = request.cookies.get("access_token")?.value;
-  const refreshToken = request.cookies.get("refresh_token")?.value;
   const { pathname } = request.nextUrl;
 
   // White-label: redirect landing page to dashboard/login
   if (hideLanding && pathname === "/") {
-    const target = accessToken || refreshToken ? "/dashboard" : "/login";
+    // Check for NextAuth session token
+    const sessionToken =
+      request.cookies.get("authjs.session-token")?.value ||
+      request.cookies.get("__Secure-authjs.session-token")?.value;
+
+    const target = sessionToken ? "/dashboard" : "/login";
     return NextResponse.redirect(new URL(target, request.url));
   }
 
@@ -21,14 +26,22 @@ export function middleware(request: NextRequest) {
 
   // Protect dashboard routes
   if (pathname.startsWith("/dashboard")) {
-    if (!accessToken && !refreshToken) {
+    const sessionToken =
+      request.cookies.get("authjs.session-token")?.value ||
+      request.cookies.get("__Secure-authjs.session-token")?.value;
+
+    if (!sessionToken) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
   // Redirect logged-in users away from login/register
   if (pathname === "/login" || pathname === "/register") {
-    if (accessToken) {
+    const sessionToken =
+      request.cookies.get("authjs.session-token")?.value ||
+      request.cookies.get("__Secure-authjs.session-token")?.value;
+
+    if (sessionToken) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

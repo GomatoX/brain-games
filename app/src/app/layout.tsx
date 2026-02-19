@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     "word game",
     "embeddable",
     "CMS",
-    "Directus",
+    "API",
   ],
   openGraph: {
     title: "RustyCogs.io | Interactive Brain Games Platform",

@@ -78,7 +78,7 @@
       loading = true;
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const response = await fetch(
-        `${apiUrl}/items/sudoku/${gameId}?fields=*,branding.*`,
+        `${apiUrl}/api/public/games?type=sudoku&id=${gameId}`,
         {
           headers,
         },

@@ -34,7 +34,7 @@ interface ModalState {
 const FRONTEND_URL =
   process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:5173";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8055";
+const API_URL = typeof window !== "undefined" ? window.location.origin : "";
 
 export default function DashboardContent({
   initialGames,

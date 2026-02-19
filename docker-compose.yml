@@ -1,63 +1,36 @@
 services:
-  backend:
+  games:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8055:8055"
-    environment:
-      - DB_CLIENT=${DB_CLIENT:-sqlite3}
-      - DB_FILENAME=${DB_FILENAME:-/app/data/data.db}
-      - SECRET=${SECRET}
-      - KEY=${KEY}
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@rustycogs.io}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - HOST=${HOST:-0.0.0.0}
-      - PORT=${PORT:-8055}
-      - CORS_ENABLED=${CORS_ENABLED:-true}
-      - CORS_ORIGIN=${CORS_ORIGIN}
-      - PUBLIC_URL=${PUBLIC_URL}
-      - CONTENT_SECURITY_POLICY_DIRECTIVES__FRAME_SRC=${CONTENT_SECURITY_POLICY_DIRECTIVES__FRAME_SRC:-}
-      - CONTENT_SECURITY_POLICY_DIRECTIVES__CHILD_SRC=${CONTENT_SECURITY_POLICY_DIRECTIVES__CHILD_SRC:-}
-    volumes:
-      - directus_data:/app/data
-      - directus_uploads:/app/uploads
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
+      context: ./games
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8055}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
     ports:
       - "5173:80"
     restart: unless-stopped
 
-  landing:
+  app:
     build:
-      context: ./landing
+      context: ./app
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8055}
         NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL:-http://localhost:5173}
         NEXT_PUBLIC_MODE: ${NEXT_PUBLIC_MODE:-saas}
-        NEXT_PUBLIC_PLATFORM_NAME: ${NEXT_PUBLIC_PLATFORM_NAME:-Rustycogs.io}
+        NEXT_PUBLIC_PLATFORM_NAME: ${NEXT_PUBLIC_PLATFORM_NAME:-}
+        NEXT_PUBLIC_PLATFORM_ACCENT: ${NEXT_PUBLIC_PLATFORM_ACCENT:-}
         NEXT_PUBLIC_PLATFORM_LOGO: ${NEXT_PUBLIC_PLATFORM_LOGO:-}
-        NEXT_PUBLIC_PLATFORM_ACCENT: ${NEXT_PUBLIC_PLATFORM_ACCENT:-#c25e40}
         NEXT_PUBLIC_HIDE_LANDING: ${NEXT_PUBLIC_HIDE_LANDING:-false}
         NEXT_PUBLIC_HIDE_REGISTER: ${NEXT_PUBLIC_HIDE_REGISTER:-false}
     ports:
       - "3000:3000"
     environment:
-      - PORT=3000
-      - HOSTNAME=0.0.0.0
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8055}
-      - NEXT_PUBLIC_FRONTEND_URL=${NEXT_PUBLIC_FRONTEND_URL:-http://localhost:5173}
-      - DIRECTUS_ADMIN_TOKEN=${DIRECTUS_ADMIN_TOKEN:-}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
+      - DATABASE_PATH=/app/data/brain.db
       - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
+    volumes:
+      - app_data:/app/data
     restart: unless-stopped
 
 volumes:
-  directus_data:
-  directus_uploads:
+  app_data:

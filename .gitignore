@@ -11,9 +11,8 @@ dist
 .next
 .svelte-kit
 
-# Directus data
-backend/data.db
-backend/uploads
+# SQLite data
+app/data/
 
 # IDE
 .vscode

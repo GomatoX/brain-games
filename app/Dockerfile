@@ -3,8 +3,8 @@ FROM node:20-alpine AS deps
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
 # Stage 2: Build
 FROM node:20-alpine AS build
@@ -15,7 +15,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Accept public env vars at build time
-ARG NEXT_PUBLIC_API_URL=""
 ARG NEXT_PUBLIC_FRONTEND_URL=""
 ARG NEXT_PUBLIC_MODE="saas"
 ARG NEXT_PUBLIC_PLATFORM_NAME="Rustycogs.io"
@@ -23,7 +22,6 @@ ARG NEXT_PUBLIC_PLATFORM_LOGO=""
 ARG NEXT_PUBLIC_PLATFORM_ACCENT="#c25e40"
 ARG NEXT_PUBLIC_HIDE_LANDING="false"
 ARG NEXT_PUBLIC_HIDE_REGISTER="false"
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_FRONTEND_URL=${NEXT_PUBLIC_FRONTEND_URL}
 ENV NEXT_PUBLIC_MODE=${NEXT_PUBLIC_MODE}
 ENV NEXT_PUBLIC_PLATFORM_NAME=${NEXT_PUBLIC_PLATFORM_NAME}
@@ -32,7 +30,7 @@ ENV NEXT_PUBLIC_PLATFORM_ACCENT=${NEXT_PUBLIC_PLATFORM_ACCENT}
 ENV NEXT_PUBLIC_HIDE_LANDING=${NEXT_PUBLIC_HIDE_LANDING}
 ENV NEXT_PUBLIC_HIDE_REGISTER=${NEXT_PUBLIC_HIDE_REGISTER}
 
-RUN npm run build
+RUN yarn build
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner
@@ -49,6 +47,12 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
+
+# Copy drizzle migrations for runtime migration
+COPY --from=build /app/drizzle ./drizzle
+
+# Create data directory (will be mounted as a volume)
+RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
 USER nextjs
 
