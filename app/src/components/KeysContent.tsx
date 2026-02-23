@@ -19,7 +19,7 @@ export default function KeysContent({
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const res = await fetch("/api/auth", {
+      const res = await fetch("/api/auth-actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "generate-token" }),
@@ -37,7 +37,7 @@ export default function KeysContent({
 
   async function handleRevoke() {
     try {
-      await fetch("/api/auth", {
+      await fetch("/api/auth-actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "revoke-token" }),
