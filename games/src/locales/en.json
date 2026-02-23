@@ -17,7 +17,9 @@
     "mainWordTitle": "Daily crossword phrase",
     "sharedSolvedMessage": "Your friend solved this crossword!",
     "theirTime": "Their time:",
-    "startSolving": "Start solving"
+    "startSolving": "Start solving",
+    "older": "Older",
+    "newer": "Newer"
   },
   "wordgame": {
     "loading": "Loading...",

@@ -5,27 +5,38 @@
 
   const urlParams = new URLSearchParams(window.location.search);
   let puzzleId = urlParams.get("id") || "";
+  let userId = urlParams.get("user") || "";
   let gameType = urlParams.get("type") || "crossword"; // 'crossword' | 'word' | 'sudoku'
   let isPreview = urlParams.get("preview") === "true";
   let theme = urlParams.get("theme") || "light";
   let resultId = urlParams.get("result") || "";
   let lang = urlParams.get("lang") || "lt";
 
-  // API URL: use env var > URL param > fallback
+  // API URL: in production = same origin, in dev = env var or localhost
   const apiBase =
     import.meta.env.VITE_API_URL ||
     urlParams.get("api") ||
     (import.meta.env.DEV ? "http://localhost:3000" : window.location.origin);
+
+  // Either a specific puzzle ID or a user ID for "latest" mode
+  const hasGame = puzzleId || userId;
 </script>
 
-{#if puzzleId}
+{#if hasGame}
   <!-- Clean embed mode - just the game -->
   {#if gameType === "word"}
-    <WordGame gameId={puzzleId} {theme} apiUrl={apiBase} {lang} />
+    <WordGame gameId={puzzleId} {theme} apiUrl={apiBase} {lang} {userId} />
   {:else if gameType === "sudoku"}
-    <SudokuGame gameId={puzzleId} {theme} apiUrl={apiBase} />
+    <SudokuGame gameId={puzzleId} {theme} apiUrl={apiBase} {userId} />
   {:else}
-    <CrosswordGame {puzzleId} {theme} apiUrl={apiBase} {resultId} {lang} />
+    <CrosswordGame
+      {puzzleId}
+      {theme}
+      apiUrl={apiBase}
+      {resultId}
+      {lang}
+      {userId}
+    />
   {/if}
 {:else}
   <!-- Landing page when no game loaded -->

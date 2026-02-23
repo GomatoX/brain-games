@@ -1,33 +1,23 @@
 services:
-  games:
-    build:
-      context: ./games
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
-    ports:
-      - "5173:80"
-    restart: unless-stopped
-
   app:
     build:
-      context: ./app
+      context: .
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_FRONTEND_URL: ${NEXT_PUBLIC_FRONTEND_URL:-http://localhost:5173}
-        NEXT_PUBLIC_MODE: ${NEXT_PUBLIC_MODE:-saas}
-        NEXT_PUBLIC_PLATFORM_NAME: ${NEXT_PUBLIC_PLATFORM_NAME:-}
-        NEXT_PUBLIC_PLATFORM_ACCENT: ${NEXT_PUBLIC_PLATFORM_ACCENT:-}
-        NEXT_PUBLIC_PLATFORM_LOGO: ${NEXT_PUBLIC_PLATFORM_LOGO:-}
-        NEXT_PUBLIC_HIDE_LANDING: ${NEXT_PUBLIC_HIDE_LANDING:-false}
-        NEXT_PUBLIC_HIDE_REGISTER: ${NEXT_PUBLIC_HIDE_REGISTER:-false}
     ports:
       - "3000:3000"
     environment:
+      # ─── Core ────────────────────────────────────────
       - AUTH_SECRET=${AUTH_SECRET}
       - AUTH_URL=${AUTH_URL:-http://localhost:3000}
       - DATABASE_PATH=/app/data/brain.db
       - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
+      # ─── Branding (runtime) ─────────────────────────
+      - PLATFORM_MODE=${PLATFORM_MODE:-saas}
+      - PLATFORM_NAME=${PLATFORM_NAME:-Rustycogs.io}
+      - PLATFORM_ACCENT=${PLATFORM_ACCENT:-#c25e40}
+      - PLATFORM_LOGO=${PLATFORM_LOGO:-}
+      - HIDE_LANDING=${HIDE_LANDING:-false}
+      - HIDE_REGISTER=${HIDE_REGISTER:-false}
     volumes:
       - app_data:/app/data
     restart: unless-stopped

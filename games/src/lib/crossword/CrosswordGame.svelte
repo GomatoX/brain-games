@@ -14,6 +14,7 @@
 
   // Props (attributes)
   export let puzzleId = "";
+  export let userId = "";
   export let theme = "light";
   export let apiUrl = "";
   export let layoutSeed = 1;
@@ -36,6 +37,11 @@
   let selectedCell = null;
   let selectedDirection = "across";
   let isPreviewMode = false;
+
+  // Latest/history mode
+  let latestMode = !puzzleId && !!userId;
+  let historyOffset = 0;
+  let historyMeta = null; // { current, total, hasNewer, hasOlder }
   let loading = true;
   let error = null;
   let feedback = null;
@@ -133,6 +139,9 @@
           resultMode = false;
         }
       });
+    } else if (latestMode) {
+      fetchLatest();
+      startTimer();
     } else if (puzzleId) {
       fetchPuzzle();
       startTimer();
@@ -184,6 +193,54 @@
       error = err.message;
     } finally {
       loading = false;
+    }
+  }
+
+  async function fetchLatest(offset = 0) {
+    try {
+      loading = true;
+      error = null;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await fetch(
+        `${apiUrl}/api/public/games/latest?type=crosswords&user=${userId}&offset=${offset}`,
+        { headers },
+      );
+      if (!response.ok) throw new Error("No published games found");
+      const data = await response.json();
+      puzzle = data.data;
+      historyMeta = data.meta;
+      historyOffset = offset;
+
+      // Reset game state for new puzzle
+      cellInputs = {};
+      selectedCell = null;
+      selectedDirection = "across";
+      solvedClues = new Set();
+      mainWordComplete = false;
+      elapsedTime = 0;
+      feedback = null;
+
+      if (puzzle.branding && containerEl) {
+        applyBrandingFromData(containerEl, puzzle.branding);
+      }
+
+      if (puzzle.layout_seed !== undefined && puzzle.layout_seed !== null) {
+        currentSeed = puzzle.layout_seed;
+      }
+    } catch (err) {
+      error = err.message;
+    } finally {
+      loading = false;
+    }
+  }
+
+  function navigateHistory(direction) {
+    if (direction === "older" && historyMeta?.hasOlder) {
+      stopTimer();
+      fetchLatest(historyOffset + 1).then(() => startTimer());
+    } else if (direction === "newer" && historyMeta?.hasNewer) {
+      stopTimer();
+      fetchLatest(historyOffset - 1).then(() => startTimer());
     }
   }
 
@@ -811,11 +868,35 @@
         {#if mainWordComplete}
           <CelebrationOverlay {elapsedTime} {shareUrl} on:share={shareResult} />
         {/if}
+
+        {#if latestMode && historyMeta}
+          <div class="history-nav">
+            <button
+              class="history-btn"
+              disabled={!historyMeta.hasOlder}
+              on:click={() => navigateHistory("older")}
+            >
+              ← {$t("crossword.older")}
+            </button>
+            <span class="history-count">
+              {historyMeta.current + 1} / {historyMeta.total}
+            </span>
+            <button
+              class="history-btn"
+              disabled={!historyMeta.hasNewer}
+              on:click={() => navigateHistory("newer")}
+            >
+              {$t("crossword.newer")} →
+            </button>
+          </div>
+        {/if}
       </div>
     </div>
   {:else}
     <div class="no-puzzle">
-      <p>No puzzle loaded. Set the <code>puzzle-id</code> attribute.</p>
+      <p>
+        No puzzle loaded. Set the <code>puzzle-id</code> or <code>user</code> attribute.
+      </p>
     </div>
   {/if}
 </div>
@@ -1041,75 +1122,6 @@
     pointer-events: auto;
   }
 
-  .shared-result-card {
-    text-align: center;
-    max-width: 400px;
-    width: 100%;
-    background: var(--correct-light, #e2f3ea);
-    border: 1px solid var(--correct, #007a3c);
-    border-radius: 12px;
-    padding: 48px 32px;
-    animation: celebrationPop 0.4s ease;
-  }
-
-  @keyframes celebrationPop {
-    0% {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    50% {
-      transform: scale(1.05);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  .shared-check-icon {
-    color: var(--correct, #007a3c);
-    margin-bottom: 12px;
-  }
-
-  .shared-result-card h2 {
-    font-family: var(--font-serif);
-    font-size: 1.75rem;
-    color: var(--correct, #007a3c);
-    margin: 0 0 8px;
-  }
-
-  .shared-result-card p {
-    font-family: var(--font-sans);
-    color: var(--text-primary);
-    margin: 0 0 24px;
-    font-size: 1rem;
-  }
-
-  .shared-time-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--correct, #007a3c);
-    color: #ffffff;
-    padding: 10px 16px;
-    border-radius: 6px;
-    margin-bottom: 24px;
-  }
-
-  .shared-time-label {
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 12px;
-  }
-
-  .shared-time-value {
-    font-family: var(--font-sans);
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 17px;
-  }
-
   .shared-cta {
     display: inline-flex;
     align-items: center;
@@ -1132,5 +1144,49 @@
     background: var(--accent-hover, #a14d34);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* History navigation */
+  .history-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-light, #e2e8f0);
+    margin-top: 8px;
+  }
+
+  .history-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border-light, #e2e8f0);
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-main, #0f172a);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .history-btn:hover:not(:disabled) {
+    border-color: var(--accent, #c25e40);
+    color: var(--accent, #c25e40);
+  }
+
+  .history-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .history-count {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted, #64748b);
   }
 </style>

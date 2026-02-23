@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { platformConfig, isWhiteLabel } from "@/lib/platform";
 
 interface User {
   id: string;
@@ -13,7 +12,17 @@ interface User {
   email: string;
 }
 
-export default function DashboardSidebar({ user }: { user: User }) {
+interface SidebarProps {
+  user: User;
+  platformName: string;
+  isWhiteLabel: boolean;
+}
+
+export default function DashboardSidebar({
+  user,
+  platformName,
+  isWhiteLabel,
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -55,14 +64,14 @@ export default function DashboardSidebar({ user }: { user: User }) {
     <aside className="w-64 bg-white border-r border-[#e2e8f0] flex flex-col fixed h-full">
       {/* Brand */}
       <Link
-        href={isWhiteLabel() ? "/dashboard" : "/"}
+        href={isWhiteLabel ? "/dashboard" : "/"}
         className="flex items-center gap-2 px-6 py-5 border-b border-[#e2e8f0]"
       >
         <span className="material-symbols-outlined text-rust text-2xl">
           settings_suggest
         </span>
         <span className="text-lg font-bold font-serif text-[#0f172a]">
-          {platformConfig.name}
+          {platformName}
         </span>
       </Link>
 

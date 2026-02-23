@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 
 const API_URL = typeof window !== "undefined" ? window.location.origin : "";
-const FRONTEND_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:5173";
+const PLAY_BASE =
+  typeof window !== "undefined" ? `${window.location.origin}/play` : "/play";
 
 export default function KeysContent({
   initialToken,
@@ -62,7 +62,7 @@ export default function KeysContent({
   }, []);
 
   const crosswordEmbed = `<!-- Load the game engine -->
-<script src="${FRONTEND_URL}/dist/crossword-engine.iife.js"><\/script>
+<script src="${PLAY_BASE}/dist/crossword-engine.iife.js"><\/script>
 
 <!-- Drop in the Web Component -->
 <crossword-game
@@ -73,7 +73,7 @@ export default function KeysContent({
   theme="light"></crossword-game>`;
 
   const wordGameEmbed = `<!-- Load the game engine -->
-<script src="${FRONTEND_URL}/dist/word-game.iife.js"><\/script>
+<script src="${PLAY_BASE}/dist/word-game.iife.js"><\/script>
 
 <!-- Drop in the Web Component -->
 <word-game

@@ -4,6 +4,7 @@
 
   // Props
   export let gameId = "";
+  export let userId = "";
   export let apiUrl = "";
   export let theme = "light";
   export let token = "";

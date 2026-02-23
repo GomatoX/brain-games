@@ -17,7 +17,9 @@
     "mainWordTitle": "Dienos kryžiažodžio frazė",
     "sharedSolvedMessage": "Jūsų draugas išsprendė šį kryžiažodį!",
     "theirTime": "Jo laikas:",
-    "startSolving": "Spręsti kryžiažodį"
+    "startSolving": "Spręsti kryžiažodį",
+    "older": "Ankstesnis",
+    "newer": "Naujausias"
   },
   "wordgame": {
     "loading": "Kraunama...",

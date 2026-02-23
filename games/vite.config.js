@@ -22,6 +22,7 @@ export default defineConfig(({ command, mode }) => {
   const gameConfig = gameConfigs[mode] || gameConfigs.lib;
 
   return {
+    base: isLibBuild ? "/" : "/play/",
     plugins: [
       svelte({
         compilerOptions: {
@@ -44,7 +45,7 @@ export default defineConfig(({ command, mode }) => {
             },
           },
         }
-      : {},
+      : { outDir: "dist/play" },
     server: {
       cors: true,
       headers: {

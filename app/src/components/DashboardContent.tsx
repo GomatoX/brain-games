@@ -38,8 +38,8 @@ interface ModalState {
   game?: Game;
 }
 
-const FRONTEND_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:5173";
+const PLAY_BASE =
+  typeof window !== "undefined" ? `${window.location.origin}/play` : "/play";
 
 const API_URL = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -69,15 +69,15 @@ export default function DashboardContent({
     const tagMap: Record<GameType, { tag: string; script: string }> = {
       crosswords: {
         tag: "crossword-game",
-        script: `${FRONTEND_URL}/dist/crossword-engine.iife.js`,
+        script: `${PLAY_BASE}/dist/crossword-engine.iife.js`,
       },
       wordgames: {
         tag: "word-game",
-        script: `${FRONTEND_URL}/dist/word-game.iife.js`,
+        script: `${PLAY_BASE}/dist/word-game.iife.js`,
       },
       sudoku: {
         tag: "sudoku-game",
-        script: `${FRONTEND_URL}/dist/sudoku-engine.iife.js`,
+        script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
       },
     };
     const { tag, script } = tagMap[gameType];
@@ -523,7 +523,7 @@ function GameSection({
                   </span>
                 </button>
                 <a
-                  href={`${FRONTEND_URL}/?id=${game.id}${type !== "crosswords" ? `&type=${type === "wordgames" ? "word" : "sudoku"}` : ""}&lang=${lang}`}
+                  href={`${PLAY_BASE}/?id=${game.id}${type !== "crosswords" ? `&type=${type === "wordgames" ? "word" : "sudoku"}` : ""}&lang=${lang}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 text-[#64748b] hover:text-blue-600 transition-colors rounded-lg hover:bg-slate-100"
@@ -760,15 +760,15 @@ function GameModal({
     const tagMap: Record<GameType, { tag: string; script: string }> = {
       crosswords: {
         tag: "crossword-game",
-        script: `${FRONTEND_URL}/dist/crossword-engine.iife.js`,
+        script: `${PLAY_BASE}/dist/crossword-engine.iife.js`,
       },
       wordgames: {
         tag: "word-game",
-        script: `${FRONTEND_URL}/dist/word-game.iife.js`,
+        script: `${PLAY_BASE}/dist/word-game.iife.js`,
       },
       sudoku: {
         tag: "sudoku-game",
-        script: `${FRONTEND_URL}/dist/sudoku-engine.iife.js`,
+        script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
       },
     };
     const { tag, script } = tagMap[type];

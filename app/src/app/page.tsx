@@ -1,7 +1,6 @@
 import Script from "next/script";
 
-const FRONTEND_URL =
-  process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:5173";
+const PLAY_BASE = "/play";
 
 export default function Home() {
   return (
@@ -77,8 +76,7 @@ export default function Home() {
                 </div>
                 <h1 className="text-[#0f172a] text-5xl md:text-6xl lg:text-7xl font-serif font-medium leading-[1.1] tracking-tight">
                   Engage Your Audience with{" "}
-                  <span className="text-rust italic">Premium</span> Brain
-                  Games
+                  <span className="text-rust italic">Premium</span> Brain Games
                 </h1>
                 <p className="text-[#64748b] text-lg font-light leading-relaxed max-w-lg">
                   Increase time-on-site and user retention by embedding
@@ -236,7 +234,7 @@ export default function Home() {
                     </svg>
                   </div>
                   <a
-                    href={`${FRONTEND_URL}/?id=1`}
+                    href={`${PLAY_BASE}/?id=1`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="relative z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-rust group-hover:text-rust transition-colors"
@@ -286,7 +284,7 @@ export default function Home() {
                     </div>
                   </div>
                   <a
-                    href={`${FRONTEND_URL}/?id=1&type=word`}
+                    href={`${PLAY_BASE}/?id=1&type=word`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="absolute z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-rust group-hover:text-rust transition-colors top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
