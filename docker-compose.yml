@@ -18,6 +18,9 @@ services:
       - PLATFORM_LOGO=${PLATFORM_LOGO:-}
       - HIDE_LANDING=${HIDE_LANDING:-false}
       - HIDE_REGISTER=${HIDE_REGISTER:-false}
+      # ─── Default User ──────────────────────────
+      - DEFAULT_USER_EMAIL=${DEFAULT_USER_EMAIL:-}
+      - DEFAULT_USER_PASSWORD=${DEFAULT_USER_PASSWORD:-}
     volumes:
       - app_data:/app/data
     restart: unless-stopped
