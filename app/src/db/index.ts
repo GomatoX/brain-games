@@ -1,10 +1,12 @@
 import path from "path";
 import fs from "fs";
+import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import type * as SqliteSchema from "./schema.sqlite";
 
 const isPostgres = !!process.env.DATABASE_URL;
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-let db: any;
+let db: BetterSQLite3Database<typeof SqliteSchema>;
 
 if (isPostgres) {
   // ─── PostgreSQL ──────────────────────────────────────
