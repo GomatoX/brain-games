@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --mode lib",
+    "build:wordgame": "vite build --mode wordgame",
     "build:app": "vite build",
+    "build:all": "vite build && vite build --mode wordgame && vite build --mode lib",
     "preview": "vite preview"
   },
   "devDependencies": {

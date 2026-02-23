@@ -33,6 +33,7 @@ export default defineConfig(({ command, mode }) => {
     ],
     build: isLibBuild
       ? {
+          emptyOutDir: false,
           lib: {
             entry: gameConfig.entry,
             name: gameConfig.name,

@@ -9,8 +9,8 @@ RUN yarn install --frozen-lockfile
 
 COPY games/ .
 
-# Build the SPA (served at /play/) and IIFE bundles
-RUN yarn build:app && yarn build
+# Build the SPA (served at /play/) and all IIFE bundles
+RUN yarn build:app && yarn build && yarn build:wordgame
 
 # ─── Stage 2: Build dashboard (Next.js) ──────────────────
 FROM node:20-alpine AS app-deps
