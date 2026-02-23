@@ -11,9 +11,7 @@ export function middleware(request: NextRequest) {
   // White-label: redirect landing page to dashboard/login
   if (hideLanding && pathname === "/") {
     // Check for NextAuth session token
-    const sessionToken =
-      request.cookies.get("authjs.session-token")?.value ||
-      request.cookies.get("__Secure-authjs.session-token")?.value;
+    const sessionToken = request.cookies.get("authjs.session-token")?.value;
 
     const target = sessionToken ? "/dashboard" : "/login";
     return NextResponse.redirect(new URL(target, request.url));
@@ -26,9 +24,7 @@ export function middleware(request: NextRequest) {
 
   // Protect dashboard routes
   if (pathname.startsWith("/dashboard")) {
-    const sessionToken =
-      request.cookies.get("authjs.session-token")?.value ||
-      request.cookies.get("__Secure-authjs.session-token")?.value;
+    const sessionToken = request.cookies.get("authjs.session-token")?.value;
 
     if (!sessionToken) {
       return NextResponse.redirect(new URL("/login", request.url));
@@ -37,9 +33,7 @@ export function middleware(request: NextRequest) {
 
   // Redirect logged-in users away from login/register
   if (pathname === "/login" || pathname === "/register") {
-    const sessionToken =
-      request.cookies.get("authjs.session-token")?.value ||
-      request.cookies.get("__Secure-authjs.session-token")?.value;
+    const sessionToken = request.cookies.get("authjs.session-token")?.value;
 
     if (sessionToken) {
       return NextResponse.redirect(new URL("/dashboard", request.url));

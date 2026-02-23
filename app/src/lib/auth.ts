@@ -11,8 +11,7 @@ import bcrypt from "bcryptjs";
  * HTTPS from AUTH_URL and uses __Secure- cookie prefixes, which
  * fail on internal HTTP. We explicitly disable the prefix.
  */
-const useSecureCookies = process.env.AUTH_URL?.startsWith("https://") ?? false;
-const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+const useSecureCookies = false; // Behind ALB: no __Secure- prefix needed
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -51,12 +50,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   cookies: {
     sessionToken: {
-      name: `${cookiePrefix}authjs.session-token`,
+      name: "authjs.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: useSecureCookies,
+        secure: false,
       },
     },
     csrfToken: {
@@ -73,7 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       options: {
         sameSite: "lax",
         path: "/",
-        secure: useSecureCookies,
+        secure: false,
       },
     },
   },
