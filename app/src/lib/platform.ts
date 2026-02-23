@@ -40,5 +40,6 @@ export function getClientConfig() {
     platformAccent: platformConfig.accent,
     platformLogo: platformConfig.logo,
     isWhiteLabel: isWhiteLabel(),
+    hideRegister: platformConfig.hideRegister || isWhiteLabel(),
   };
 }

@@ -16,26 +16,27 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "RustyCogs.io | Interactive Brain Games Platform",
-  description:
-    "Create beautiful, embeddable brain games for publishers, educators, and content creators. Crosswords, word games, and more with seamless CMS integration.",
-  keywords: [
-    "crossword",
-    "puzzle",
-    "brain games",
-    "word game",
-    "embeddable",
-    "CMS",
-    "API",
-  ],
-  openGraph: {
-    title: "RustyCogs.io | Interactive Brain Games Platform",
-    description: "Create beautiful, embeddable brain games with auto-layout.",
-    type: "website",
-    url: "https://rustycogs.io",
-  },
-};
+export function generateMetadata(): Metadata {
+  return {
+    title: `${platformConfig.name} | Interactive Brain Games Platform`,
+    description:
+      "Create beautiful, embeddable brain games for publishers, educators, and content creators. Crosswords, word games, and more with seamless CMS integration.",
+    keywords: [
+      "crossword",
+      "puzzle",
+      "brain games",
+      "word game",
+      "embeddable",
+      "CMS",
+      "API",
+    ],
+    openGraph: {
+      title: `${platformConfig.name} | Interactive Brain Games Platform`,
+      description: "Create beautiful, embeddable brain games with auto-layout.",
+      type: "website",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

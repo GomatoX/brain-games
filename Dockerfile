@@ -22,6 +22,8 @@ RUN yarn install --frozen-lockfile
 
 FROM node:20-alpine AS app-build
 
+ARG APP_VERSION=dev
+
 WORKDIR /app
 
 COPY --from=app-deps /app/node_modules ./node_modules
@@ -32,6 +34,7 @@ COPY --from=games-build /games/dist/play ./public/play/
 COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/play/dist/crossword-engine.iife.js
 COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/play/dist/word-game-engine.iife.js
 
+ENV NEXT_PUBLIC_APP_VERSION=${APP_VERSION}
 RUN yarn build
 
 # ─── Stage 3: Production runner ──────────────────────────

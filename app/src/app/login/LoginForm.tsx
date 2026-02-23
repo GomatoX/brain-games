@@ -8,11 +8,13 @@ import Link from "next/link";
 interface LoginFormProps {
   platformName: string;
   isWhiteLabel: boolean;
+  hideRegister: boolean;
 }
 
 export default function LoginForm({
   platformName,
   isWhiteLabel,
+  hideRegister,
 }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -64,10 +66,10 @@ export default function LoginForm({
         {/* Card */}
         <div className="bg-white rounded-xl shadow-lg border border-[#e2e8f0] p-8">
           <h1 className="text-2xl font-serif font-medium text-[#0f172a] text-center mb-2">
-            Publisher Login
+            Sign In
           </h1>
           <p className="text-[#64748b] text-sm text-center mb-8">
-            Sign in to manage your games and API keys
+            Sign in to manage your games
           </p>
 
           {error && (
@@ -123,7 +125,7 @@ export default function LoginForm({
           </form>
         </div>
 
-        {!isWhiteLabel && (
+        {!hideRegister && (
           <p className="text-center text-sm text-[#64748b] mt-6">
             Don&apos;t have an account?{" "}
             <Link
