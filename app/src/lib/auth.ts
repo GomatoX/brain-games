@@ -5,6 +5,15 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
+/**
+ * When behind a reverse proxy (ALB, nginx, k8s ingress) that
+ * terminates TLS, the pod only sees HTTP.  NextAuth auto-detects
+ * HTTPS from AUTH_URL and uses __Secure- cookie prefixes, which
+ * fail on internal HTTP. We explicitly disable the prefix.
+ */
+const useSecureCookies = process.env.AUTH_URL?.startsWith("https://") ?? false;
+const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -40,6 +49,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: { strategy: "jwt" },
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: `${cookiePrefix}authjs.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: useSecureCookies,
+      },
+    },
+    csrfToken: {
+      name: "authjs.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: false,
+      },
+    },
+    callbackUrl: {
+      name: "authjs.callback-url",
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: useSecureCookies,
+      },
+    },
+  },
   pages: {
     signIn: "/login",
   },

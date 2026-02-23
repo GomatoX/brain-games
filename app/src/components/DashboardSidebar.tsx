@@ -119,7 +119,7 @@ export default function DashboardSidebar({
           {loggingOut ? "Signing out…" : "Sign Out"}
         </button>
         <p className="text-[10px] text-[#94a3b8] text-center mt-2">
-          v{(process.env.NEXT_PUBLIC_APP_VERSION || "dev").slice(0, 7)}
+          v{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
         </p>
       </div>
     </aside>
