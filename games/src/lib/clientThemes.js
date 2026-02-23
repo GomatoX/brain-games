@@ -1,12 +1,12 @@
 /**
  * Client Branding Configuration
  *
- * Maps branding data from the Directus API to CSS custom properties
+ * Maps branding data from the API to CSS custom properties
  * and applies them to game container elements.
  */
 
 /**
- * Mapping from Directus branding field names to CSS custom property names.
+ * Mapping from branding field names to CSS custom property names.
  * Each entry maps a branding API field → one or more CSS variables.
  */
 const BRANDING_FIELD_MAP = {
