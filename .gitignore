@@ -26,4 +26,5 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
-./mocks/*
+mocks/*
+clients
