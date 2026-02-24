@@ -736,6 +736,39 @@ function GameModal({
     }
   }
 
+  async function generateLayoutWithGemini() {
+    if (wordsList.length < 2) return;
+    setLayoutLoading(true);
+    setLayoutError("");
+    try {
+      const res = await fetch("/api/ai/layout-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words: wordsList }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "AI layout generation failed");
+      }
+      const data = await res.json();
+      if (data.words) {
+        setWordsList(data.words);
+      }
+      const validLabel = data.valid ? "✓ Valid" : "⚠ Has conflicts";
+      if (data.stats) {
+        setLayoutError(
+          `${validLabel} | AI Layout: ${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words`,
+        );
+      }
+    } catch (err) {
+      setLayoutError(
+        err instanceof Error ? err.message : "AI layout generation failed",
+      );
+    } finally {
+      setLayoutLoading(false);
+    }
+  }
+
   function addWord() {
     const w = wordsInput.trim().toUpperCase();
     if (w && !wordsList.some((entry) => entry.word === w)) {
@@ -1307,26 +1340,48 @@ function GameModal({
                     )}
                   </p>
                   {wordsList.length >= 2 && (
-                    <button
-                      type="button"
-                      onClick={generateLayoutWithAI}
-                      disabled={layoutLoading}
-                      className="px-3 py-1.5 bg-[#0f172a] text-white rounded-lg text-xs font-medium hover:bg-[#1e293b] transition-colors disabled:opacity-50 flex items-center gap-1.5"
-                    >
-                      {layoutLoading ? (
-                        <>
-                          <span className="animate-spin">⟳</span>
-                          Generating…
-                        </>
-                      ) : (
-                        <>
-                          <span className="material-symbols-outlined text-sm">
-                            grid_on
-                          </span>
-                          Generate Layout
-                        </>
-                      )}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={generateLayoutWithAI}
+                        disabled={layoutLoading}
+                        className="px-3 py-1.5 bg-[#0f172a] text-white rounded-lg text-xs font-medium hover:bg-[#1e293b] transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {layoutLoading ? (
+                          <>
+                            <span className="animate-spin">⟳</span>
+                            Generating…
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-sm">
+                              grid_on
+                            </span>
+                            Layout
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={generateLayoutWithGemini}
+                        disabled={layoutLoading}
+                        className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-xs font-medium hover:from-blue-700 hover:to-purple-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {layoutLoading ? (
+                          <>
+                            <span className="animate-spin">⟳</span>
+                            AI…
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-sm">
+                              auto_awesome
+                            </span>
+                            AI Layout
+                          </>
+                        )}
+                      </button>
+                    </div>
                   )}
                 </div>
                 {layoutError && (
