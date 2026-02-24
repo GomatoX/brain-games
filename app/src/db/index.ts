@@ -235,6 +235,7 @@ if (defaultEmail && defaultPassword) {
         .limit(1);
 
       if (!existing) {
+        // Create the default user
         const passwordHash = await bcrypt.hash(defaultPassword, 12);
         await db.insert(schema.users).values({
           email: defaultEmail,
@@ -244,9 +245,25 @@ if (defaultEmail && defaultPassword) {
           role: "admin",
         });
         console.log(`[seed] Created default user: ${defaultEmail}`);
+      } else {
+        // Sync password if it changed (prevents login failures after redeploy)
+        const passwordMatch = await bcrypt.compare(
+          defaultPassword,
+          existing.passwordHash,
+        );
+        if (!passwordMatch) {
+          const newHash = await bcrypt.hash(defaultPassword, 12);
+          await db
+            .update(schema.users)
+            .set({ passwordHash: newHash })
+            .where(eq(schema.users.id, existing.id));
+          console.log(
+            `[seed] Updated password for default user: ${defaultEmail}`,
+          );
+        }
       }
     } catch (err) {
-      console.error("[seed] Failed to create default user:", err);
+      console.error("[seed] Failed to sync default user:", err);
     }
   })();
 }
