@@ -53,6 +53,14 @@ COPY --from=app-build /app/.next/standalone ./
 COPY --from=app-build /app/.next/static ./.next/static
 COPY --from=app-build /app/public ./public
 
+# Ensure game SPA is present (direct from games-build, bypasses any cache issues)
+COPY --from=games-build /games/dist/play ./public/play/
+COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/play/dist/crossword-engine.iife.js
+COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/play/dist/word-game-engine.iife.js
+
+# Verify game SPA exists (fail build if missing)
+RUN ls -la public/play/index.html
+
 # Create data directory (will be mounted as a volume)
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
