@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { auth } from "@/lib/auth";
-
-const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY || "";
+import { isAIConfigured, generateJSON } from "@/lib/ai-provider";
 
 interface GenerateRequest {
   mainWord: string;
@@ -42,7 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!GEMINI_API_KEY) {
+  if (!isAIConfigured()) {
     return NextResponse.json(
       { error: "AI generation is not configured" },
       { status: 503 },
@@ -66,34 +64,25 @@ export async function POST(request: NextRequest) {
       language: body.language || "lt",
     });
 
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: SchemaType.ARRAY,
-          items: {
-            type: SchemaType.OBJECT,
-            properties: {
-              word: { type: SchemaType.STRING },
-              clue: { type: SchemaType.STRING },
-            },
-            required: ["word", "clue"],
-          },
+    const schema = {
+      type: "ARRAY" as const,
+      items: {
+        type: "OBJECT" as const,
+        properties: {
+          word: { type: "STRING" as const },
+          clue: { type: "STRING" as const },
         },
-        temperature: 0.8,
+        required: ["word", "clue"],
       },
-    });
+    };
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = await generateJSON(prompt, schema, 0.8);
 
     let words: { word: string; clue: string }[];
     try {
       words = JSON.parse(text);
     } catch {
-      console.error("Failed to parse Gemini response:", text);
+      console.error("Failed to parse AI response:", text);
       return NextResponse.json(
         { error: "Failed to parse AI response" },
         { status: 502 },

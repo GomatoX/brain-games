@@ -26,6 +26,13 @@
     ? fetch(`${apiBase}/api/public/games/list`).then((r) => r.json())
     : Promise.resolve({ data: [] });
 
+  // Fetch platform config (name, accent) for landing branding
+  let configPromise = !hasGame
+    ? fetch(`${apiBase}/api/public/config`)
+        .then((r) => r.json())
+        .catch(() => ({ name: "Brain Games", accent: "" }))
+    : Promise.resolve({ name: "Brain Games", accent: "" });
+
   const typeIcons = {
     crossword: "grid_on",
     word: "spellcheck",
@@ -57,79 +64,86 @@
   {/if}
 {:else}
   <!-- Landing page: published games gallery -->
-  <div class="landing">
-    <header class="header">
-      <div class="header-content">
-        <div class="logo">
-          <span class="material-symbols-outlined logo-icon"
-            >settings_suggest</span
-          >
-          <h1 class="logo-text">Brain Games</h1>
-        </div>
-      </div>
-    </header>
-
-    <main class="main">
-      <section class="hero">
-        <h2 class="hero-title">Published Games</h2>
-        <p class="hero-subtitle">Select a game to play</p>
-      </section>
-
-      {#await gamesPromise}
-        <div class="loading">
-          <span class="material-symbols-outlined spinning"
-            >progress_activity</span
-          >
-          Loading games…
-        </div>
-      {:then result}
-        {#if result.data && result.data.length > 0}
-          <section class="games-grid">
-            {#each result.data as game}
-              <a href="?type={game.type}&id={game.id}" class="game-card">
-                <div class="card-header">
-                  <h3 class="card-title">{game.title}</h3>
-                  <div class="card-icon {game.type}">
-                    <span class="material-symbols-outlined">
-                      {typeIcons[game.type] || "sports_esports"}
-                    </span>
-                  </div>
-                </div>
-                <p class="card-description">
-                  {typeLabels[game.type] || "Game"}
-                </p>
-                <div class="card-action">
-                  <span class="material-symbols-outlined">play_circle</span>
-                  Play
-                </div>
-              </a>
-            {/each}
-          </section>
-        {:else}
-          <div class="empty-state">
-            <span class="material-symbols-outlined empty-icon"
-              >sports_esports</span
+  {#await configPromise then config}
+    <div
+      class="landing"
+      style={config.accent
+        ? `--primary: ${config.accent}; --primary-dark: ${config.accent}`
+        : ""}
+    >
+      <header class="header">
+        <div class="header-content">
+          <div class="logo">
+            <span class="material-symbols-outlined logo-icon"
+              >settings_suggest</span
             >
-            <p>No published games yet.</p>
+            <h1 class="logo-text">{config.name || "Brain Games"}</h1>
           </div>
-        {/if}
-      {:catch}
-        <div class="empty-state">
-          <span class="material-symbols-outlined empty-icon">error</span>
-          <p>Failed to load games.</p>
         </div>
-      {/await}
-    </main>
+      </header>
 
-    <footer class="footer">
-      <div class="footer-content">
-        <div class="powered-by">
-          <span class="material-symbols-outlined">settings_suggest</span>
-          <span>Brain Games Platform</span>
+      <main class="main">
+        <section class="hero">
+          <h2 class="hero-title">Published Games</h2>
+          <p class="hero-subtitle">Select a game to play</p>
+        </section>
+
+        {#await gamesPromise}
+          <div class="loading">
+            <span class="material-symbols-outlined spinning"
+              >progress_activity</span
+            >
+            Loading games…
+          </div>
+        {:then result}
+          {#if result.data && result.data.length > 0}
+            <section class="games-grid">
+              {#each result.data as game}
+                <a href="?type={game.type}&id={game.id}" class="game-card">
+                  <div class="card-header">
+                    <h3 class="card-title">{game.title}</h3>
+                    <div class="card-icon {game.type}">
+                      <span class="material-symbols-outlined">
+                        {typeIcons[game.type] || "sports_esports"}
+                      </span>
+                    </div>
+                  </div>
+                  <p class="card-description">
+                    {typeLabels[game.type] || "Game"}
+                  </p>
+                  <div class="card-action">
+                    <span class="material-symbols-outlined">play_circle</span>
+                    Play
+                  </div>
+                </a>
+              {/each}
+            </section>
+          {:else}
+            <div class="empty-state">
+              <span class="material-symbols-outlined empty-icon"
+                >sports_esports</span
+              >
+              <p>No published games yet.</p>
+            </div>
+          {/if}
+        {:catch}
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">error</span>
+            <p>Failed to load games.</p>
+          </div>
+        {/await}
+      </main>
+
+      <footer class="footer">
+        <div class="footer-content">
+          <div class="powered-by">
+            <span class="material-symbols-outlined">settings_suggest</span>
+            <span>{config.name || "Brain Games"}</span>
+          </div>
         </div>
-      </div>
-    </footer>
-  </div>
+      </footer>
+    </div>
+  {/await}
 {/if}
 
 <style>
