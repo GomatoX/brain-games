@@ -20,6 +20,7 @@ export async function GET() {
   return NextResponse.json(
     {
       name: platformConfig.name,
+      url: platformConfig.url,
       accent: platformConfig.accent,
       logo: platformConfig.logo,
     },

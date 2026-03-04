@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { platformConfig } from "@/lib/platform";
 
 const PLAY_BASE = "/play";
 
@@ -17,7 +18,7 @@ export default function Home() {
                   </span>
                 </div>
                 <h2 className="text-[#0f172a] text-xl font-bold font-serif tracking-tight">
-                  Rustycogs.io
+                  {platformConfig.name}
                 </h2>
               </div>
               <div className="hidden md:flex flex-1 justify-end gap-8 items-center">
@@ -440,7 +441,8 @@ export default function Home() {
                       <span className="text-purple-400">&lt;script</span>{" "}
                       <span className="text-blue-400">src</span>=
                       <span className="text-green-400">
-                        &quot;https://cdn.rustycogs.io/crossword-engine.iife.js&quot;
+                        &quot;{platformConfig.url}
+                        /crossword-engine.iife.js&quot;
                       </span>
                       <span className="text-purple-400">
                         &gt;&lt;/script&gt;
@@ -459,7 +461,8 @@ export default function Home() {
                       {`\n  `}
                       <span className="text-blue-400">api-url</span>=
                       <span className="text-green-400">
-                        &quot;https://api.rustycogs.io&quot;
+                        &quot;{platformConfig.url.replace("://", "://api.")}
+                        &quot;
                       </span>
                       {`\n  `}
                       <span className="text-blue-400">theme</span>=
@@ -515,7 +518,9 @@ export default function Home() {
                 <span className="material-symbols-outlined text-rust text-2xl">
                   settings_suggest
                 </span>
-                <h3 className="text-lg font-bold font-serif">Rustycogs.io</h3>
+                <h3 className="text-lg font-bold font-serif">
+                  {platformConfig.name}
+                </h3>
               </div>
               <p className="text-[#64748b] text-sm leading-relaxed">
                 White-label brain games and puzzles for digital publishers.
@@ -578,7 +583,7 @@ export default function Home() {
           </div>
           <div className="border-t border-slate-200 pt-8 flex justify-center">
             <p className="text-[#64748b] text-sm">
-              © 2026 Rustycogs.io. All rights reserved.
+              © 2026 {platformConfig.name}. All rights reserved.
             </p>
           </div>
         </div>

@@ -12,6 +12,10 @@
   export let client = "";
   export let lang = "lt";
 
+  // Platform branding (fetched from API)
+  let platformName = "";
+  let platformUrl = "";
+
   $: locale.set(lang);
 
   /** Translation with positional params: tp('key', val1, val2) replaces {0}, {1}… */
@@ -49,6 +53,17 @@
 
     if (gameId) {
       fetchGame();
+    }
+
+    // Fetch platform config for "Powered by" branding
+    if (apiUrl) {
+      fetch(`${apiUrl}/api/public/config`)
+        .then((r) => r.json())
+        .then((cfg) => {
+          platformName = cfg.name || "";
+          platformUrl = cfg.url || "";
+        })
+        .catch(() => {});
     }
 
     // Listen for keyboard input
@@ -292,13 +307,15 @@
     </div>
 
     <!-- Powered By -->
-    <div class="powered-by">
-      <span class="powered-label">Powered by</span>
-      <a href="https://rustycogs.io" class="powered-link" target="_blank">
-        <span class="material-symbols-outlined">settings_suggest</span>
-        <span class="powered-text">rustycogs.io</span>
-      </a>
-    </div>
+    {#if platformName}
+      <div class="powered-by">
+        <span class="powered-label">Powered by</span>
+        <a href={platformUrl} class="powered-link" target="_blank">
+          <span class="material-symbols-outlined">settings_suggest</span>
+          <span class="powered-text">{platformName}</span>
+        </a>
+      </div>
+    {/if}
   {:else}
     <div class="no-game">
       <p>{@html $t("wordgame.gameNotFound")}</p>

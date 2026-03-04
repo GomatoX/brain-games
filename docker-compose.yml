@@ -15,6 +15,7 @@ services:
       - PLATFORM_MODE=${PLATFORM_MODE:-saas}
       - PLATFORM_NAME=${PLATFORM_NAME:-Rustycogs.io}
       - PLATFORM_ACCENT=${PLATFORM_ACCENT:-#c25e40}
+      - PLATFORM_URL=${PLATFORM_URL:-https://rustycogs.io}
       - PLATFORM_LOGO=${PLATFORM_LOGO:-}
       - HIDE_LANDING=${HIDE_LANDING:-false}
       - HIDE_REGISTER=${HIDE_REGISTER:-false}

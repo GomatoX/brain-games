@@ -23,7 +23,7 @@ sqlite.pragma("foreign_keys = ON");
 const db = drizzle(sqlite);
 
 async function seed() {
-  const email = process.argv[2] || "admin@rustycogs.io";
+  const email = process.argv[2] || "admin@example.com";
   const password = process.argv[3] || "admin123";
 
   // Check if user exists

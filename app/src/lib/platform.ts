@@ -12,6 +12,9 @@ export const platformConfig = {
   /** Platform display name (sidebar, login, title) */
   name: process.env.PLATFORM_NAME || "Rustycogs.io",
 
+  /** Platform URL (used in "Powered by" links, landing page examples, etc.) */
+  url: process.env.PLATFORM_URL || "https://rustycogs.io",
+
   /** Optional custom logo path */
   logo: process.env.PLATFORM_LOGO || "",
 
@@ -37,6 +40,7 @@ export function isWhiteLabel() {
 export function getClientConfig() {
   return {
     platformName: platformConfig.name,
+    platformUrl: platformConfig.url,
     platformAccent: platformConfig.accent,
     platformLogo: platformConfig.logo,
     isWhiteLabel: isWhiteLabel(),
