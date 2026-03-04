@@ -10,7 +10,7 @@ export default async function BrandingPage() {
   const presets = await db
     .select()
     .from(branding)
-    .where(eq(branding.userId, user.id))
+    .where(eq(branding.orgId, user.orgId))
     .orderBy(desc(branding.createdAt));
 
   // Map to frontend-compatible shape
