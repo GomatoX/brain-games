@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku, branding, users } from "@/db/schema";
+import { crosswords, wordgames, sudoku, branding } from "@/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 
 type GameType = "crosswords" | "wordgames" | "sudoku";
@@ -20,21 +20,23 @@ export async function OPTIONS() {
 /**
  * Public API to fetch the latest published game with pagination.
  *
- * GET /api/public/games/latest?type=crosswords&user=USER_ID
- * GET /api/public/games/latest?type=crosswords&user=USER_ID&offset=1
+ * GET /api/public/games/latest?type=crosswords&org=ORG_ID
+ * GET /api/public/games/latest?type=crosswords&org=ORG_ID&offset=1
  *
- * Returns the latest published game (ordered by scheduledDate desc, then createdAt desc),
+ * Also supports legacy `user=USER_ID` param (falls back to org lookup).
+ *
+ * Returns the latest published game (ordered by createdAt desc),
  * plus navigation metadata for history browsing.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") as GameType | null;
-  const userId = searchParams.get("user");
+  const orgId = searchParams.get("org") || searchParams.get("user");
   const offset = Math.max(0, parseInt(searchParams.get("offset") || "0", 10));
 
-  if (!type || !userId || !(type in tables)) {
+  if (!type || !orgId || !(type in tables)) {
     return NextResponse.json(
-      { error: "type and user are required" },
+      { error: "type and org are required" },
       { status: 400, headers: corsHeaders },
     );
   }
@@ -42,11 +44,11 @@ export async function GET(request: NextRequest) {
   try {
     const table = tables[type];
 
-    // Count total published games for this user
+    // Count total published games for this org
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(table)
-      .where(and(eq(table.userId, userId), eq(table.status, "published")));
+      .where(and(eq(table.orgId, orgId), eq(table.status, "published")));
 
     const total = countResult?.count || 0;
 
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest) {
     const [game] = await db
       .select()
       .from(table)
-      .where(and(eq(table.userId, userId), eq(table.status, "published")))
+      .where(and(eq(table.orgId, orgId), eq(table.status, "published")))
       .orderBy(desc(table.createdAt))
       .limit(1)
       .offset(offset);

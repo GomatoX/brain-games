@@ -42,6 +42,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name:
             [user.firstName, user.lastName].filter(Boolean).join(" ") || null,
+          orgId: user.orgId,
+          orgRole: user.orgRole,
         };
       },
     }),
@@ -83,12 +85,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        token.orgId = (user as any).orgId;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        token.orgRole = (user as any).orgRole;
       }
       return token;
     },
     session({ session, token }) {
       if (token.id) {
         session.user.id = token.id as string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).orgId = token.orgId;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).orgRole = token.orgRole;
       }
       return session;
     },

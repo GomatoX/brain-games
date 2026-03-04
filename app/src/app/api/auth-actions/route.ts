@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signIn, signOut, auth } from "@/lib/auth";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { AuthError } from "next-auth";
 
@@ -116,11 +116,21 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Get user's org
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const orgId = (session.user as any).orgId as string;
+        if (!orgId) {
+          return NextResponse.json(
+            { error: "No organization" },
+            { status: 400 },
+          );
+        }
+
         const token = crypto.randomUUID();
         await db
-          .update(users)
+          .update(organizations)
           .set({ apiToken: token })
-          .where(eq(users.id, session.user.id));
+          .where(eq(organizations.id, orgId));
 
         return NextResponse.json({ token });
       }
@@ -134,10 +144,19 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const orgId = (session.user as any).orgId as string;
+        if (!orgId) {
+          return NextResponse.json(
+            { error: "No organization" },
+            { status: 400 },
+          );
+        }
+
         await db
-          .update(users)
+          .update(organizations)
           .set({ apiToken: null })
-          .where(eq(users.id, session.user.id));
+          .where(eq(organizations.id, orgId));
 
         return NextResponse.json({ success: true });
       }
@@ -169,6 +188,13 @@ export async function GET() {
       return NextResponse.json({ user: null }, { status: 401 });
     }
 
+    // Get org data
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, user.orgId))
+      .limit(1);
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -176,7 +202,10 @@ export async function GET() {
         first_name: user.firstName,
         last_name: user.lastName,
         role: user.role,
-        token: user.apiToken,
+        org_id: user.orgId,
+        org_role: user.orgRole,
+        org_name: org?.name || null,
+        token: org?.apiToken || null,
       },
     });
   } catch {

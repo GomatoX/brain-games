@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku, branding } from "@/db/schema";
+import { crosswords, wordgames, sudoku, branding, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireAuth } from "@/lib/api-auth";
 
@@ -11,28 +11,78 @@ const collections = { crosswords, wordgames, sudoku } as const;
 export async function GET() {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { userId, orgId } = result;
 
   try {
     const [cw, wg, sd] = await Promise.all([
       db
-        .select()
+        .select({
+          id: crosswords.id,
+          status: crosswords.status,
+          title: crosswords.title,
+          difficulty: crosswords.difficulty,
+          words: crosswords.words,
+          mainWord: crosswords.mainWord,
+          scheduledDate: crosswords.scheduledDate,
+          brandingId: crosswords.brandingId,
+          userId: crosswords.userId,
+          orgId: crosswords.orgId,
+          createdAt: crosswords.createdAt,
+          updatedAt: crosswords.updatedAt,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
         .from(crosswords)
-        .where(eq(crosswords.userId, userId))
+        .innerJoin(users, eq(users.id, crosswords.userId))
+        .where(eq(crosswords.orgId, orgId))
         .orderBy(desc(crosswords.createdAt)),
       db
-        .select()
+        .select({
+          id: wordgames.id,
+          status: wordgames.status,
+          title: wordgames.title,
+          word: wordgames.word,
+          definition: wordgames.definition,
+          maxAttempts: wordgames.maxAttempts,
+          scheduledDate: wordgames.scheduledDate,
+          brandingId: wordgames.brandingId,
+          userId: wordgames.userId,
+          orgId: wordgames.orgId,
+          createdAt: wordgames.createdAt,
+          updatedAt: wordgames.updatedAt,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
         .from(wordgames)
-        .where(eq(wordgames.userId, userId))
+        .innerJoin(users, eq(users.id, wordgames.userId))
+        .where(eq(wordgames.orgId, orgId))
         .orderBy(desc(wordgames.createdAt)),
       db
-        .select()
+        .select({
+          id: sudoku.id,
+          status: sudoku.status,
+          title: sudoku.title,
+          difficulty: sudoku.difficulty,
+          puzzle: sudoku.puzzle,
+          solution: sudoku.solution,
+          scheduledDate: sudoku.scheduledDate,
+          brandingId: sudoku.brandingId,
+          userId: sudoku.userId,
+          orgId: sudoku.orgId,
+          createdAt: sudoku.createdAt,
+          updatedAt: sudoku.updatedAt,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
         .from(sudoku)
-        .where(eq(sudoku.userId, userId))
+        .innerJoin(users, eq(users.id, sudoku.userId))
+        .where(eq(sudoku.orgId, orgId))
         .orderBy(desc(sudoku.createdAt)),
     ]);
 
-    // Map to Directus-compatible shape (camelCase → snake_case for frontend)
     return NextResponse.json({
       crosswords: cw.map(mapGame),
       wordgames: wg.map(mapGame),
@@ -49,7 +99,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { userId, orgId } = result;
 
   try {
     const body = await request.json();
@@ -63,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     const table = collections[collection as Collection];
-    const insertData = mapToDb(data, userId);
+    const insertData = mapToDb(data, userId, orgId);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [created] = await db
@@ -80,7 +130,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { userId, orgId } = result;
 
   try {
     const body = await request.json();
@@ -96,10 +146,11 @@ export async function PATCH(request: NextRequest) {
     const table = collections[collection as Collection];
     const updateData = mapToDb(data);
 
+    // Any org member can edit games
     const [updated] = await db
       .update(table)
       .set({ ...updateData, updatedAt: new Date().toISOString() })
-      .where(and(eq(table.id, id), eq(table.userId, userId)))
+      .where(and(eq(table.id, id), eq(table.orgId, orgId)))
       .returning();
 
     if (!updated) {
@@ -116,7 +167,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { userId, orgId } = result;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -131,9 +182,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     const table = collections[collection];
+    // Any org member can delete games
     const deleted = await db
       .delete(table)
-      .where(and(eq(table.id, id), eq(table.userId, userId)))
+      .where(and(eq(table.id, id), eq(table.orgId, orgId)))
       .returning();
 
     if (deleted.length === 0) {
@@ -152,6 +204,11 @@ export async function DELETE(request: NextRequest) {
 /** Map DB row (camelCase) → API response (snake_case, Directus-compatible) */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapGame(row: any) {
+  const creatorName =
+    [row.creatorFirstName, row.creatorLastName].filter(Boolean).join(" ") ||
+    row.creatorEmail ||
+    null;
+
   return {
     id: row.id,
     status: row.status,
@@ -167,6 +224,8 @@ function mapGame(row: any) {
     scheduled_date: row.scheduledDate,
     branding: row.brandingId,
     user_created: row.userId,
+    created_by: creatorName,
+    org_id: row.orgId,
     date_created: row.createdAt,
     date_updated: row.updatedAt,
   };
@@ -174,11 +233,12 @@ function mapGame(row: any) {
 
 /** Map API input (snake_case) → DB columns (camelCase) */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapToDb(data: Record<string, any>, userId?: string) {
+function mapToDb(data: Record<string, any>, userId?: string, orgId?: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapped: Record<string, any> = {};
 
   if (userId) mapped.userId = userId;
+  if (orgId) mapped.orgId = orgId;
   if (data.status !== undefined) mapped.status = data.status;
   if (data.title !== undefined) mapped.title = data.title;
   if (data.difficulty !== undefined) mapped.difficulty = data.difficulty;

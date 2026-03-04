@@ -16,6 +16,7 @@ const activeSchema: typeof SqliteSchema = isPostgres
   ? require("./schema.pg")
   : require("./schema.sqlite");
 
+export const organizations = activeSchema.organizations;
 export const users = activeSchema.users;
 export const branding = activeSchema.branding;
 export const crosswords = activeSchema.crosswords;

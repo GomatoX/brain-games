@@ -21,6 +21,7 @@ interface Game {
   }[];
   main_word?: string;
   branding?: string | number | null;
+  created_by?: string | null;
 }
 
 interface Games {
@@ -498,6 +499,7 @@ function GameSection({
                 </p>
                 <p className="text-xs text-[#64748b]">
                   {new Date(game.date_created).toLocaleDateString()}
+                  {game.created_by && ` · by ${game.created_by}`}
                   {game.word && ` · "${game.word}"`}
                 </p>
               </div>

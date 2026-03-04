@@ -20,6 +20,15 @@ if (isPostgres) {
 
   // Auto-create tables
   pool.query(`
+    CREATE TABLE IF NOT EXISTS organizations (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      api_token TEXT UNIQUE,
+      default_language TEXT DEFAULT 'lt',
+      default_branding TEXT,
+      created_at TEXT NOT NULL DEFAULT now()
+    );
+
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
@@ -27,15 +36,14 @@ if (isPostgres) {
       first_name TEXT,
       last_name TEXT,
       role TEXT NOT NULL DEFAULT 'publisher',
-      api_token TEXT UNIQUE,
-      default_language TEXT DEFAULT 'lt',
-      default_branding TEXT,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      org_role TEXT NOT NULL DEFAULT 'member',
       created_at TEXT NOT NULL DEFAULT now()
     );
 
     CREATE TABLE IF NOT EXISTS branding (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       accent_color TEXT,
       accent_hover_color TEXT,
@@ -63,6 +71,7 @@ if (isPostgres) {
 
     CREATE TABLE IF NOT EXISTS crosswords (
       id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       status TEXT NOT NULL DEFAULT 'draft',
       title TEXT NOT NULL,
@@ -77,6 +86,7 @@ if (isPostgres) {
 
     CREATE TABLE IF NOT EXISTS wordgames (
       id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       status TEXT NOT NULL DEFAULT 'draft',
       title TEXT NOT NULL,
@@ -91,6 +101,7 @@ if (isPostgres) {
 
     CREATE TABLE IF NOT EXISTS sudoku (
       id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       status TEXT NOT NULL DEFAULT 'draft',
       title TEXT NOT NULL,
@@ -103,6 +114,8 @@ if (isPostgres) {
       updated_at TEXT NOT NULL DEFAULT now()
     );
   `);
+
+  // TODO: PG auto-migration for orgs (similar to SQLite below)
 
   db = drizzle(pool, { schema });
 } else {
@@ -121,8 +134,17 @@ if (isPostgres) {
   sqlite.pragma("journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
 
-  // Auto-create tables
+  // ─── Auto-create tables (for fresh databases) ─────────
   sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS organizations (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      api_token TEXT UNIQUE,
+      default_language TEXT DEFAULT 'lt',
+      default_branding TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
@@ -130,15 +152,14 @@ if (isPostgres) {
       first_name TEXT,
       last_name TEXT,
       role TEXT NOT NULL DEFAULT 'publisher',
-      api_token TEXT UNIQUE,
-      default_language TEXT DEFAULT 'lt',
-      default_branding TEXT,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      org_role TEXT NOT NULL DEFAULT 'member',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS branding (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       accent_color TEXT,
       accent_hover_color TEXT,
@@ -166,6 +187,7 @@ if (isPostgres) {
 
     CREATE TABLE IF NOT EXISTS crosswords (
       id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       status TEXT NOT NULL DEFAULT 'draft',
       title TEXT NOT NULL,
@@ -180,6 +202,7 @@ if (isPostgres) {
 
     CREATE TABLE IF NOT EXISTS wordgames (
       id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       status TEXT NOT NULL DEFAULT 'draft',
       title TEXT NOT NULL,
@@ -194,6 +217,7 @@ if (isPostgres) {
 
     CREATE TABLE IF NOT EXISTS sudoku (
       id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       status TEXT NOT NULL DEFAULT 'draft',
       title TEXT NOT NULL,
@@ -207,15 +231,126 @@ if (isPostgres) {
     );
   `);
 
+  // ─── Auto-migrate: old schema → org-scoped ────────────
+  // Detects if users table exists but lacks org_id column,
+  // which means this is a pre-orgs database that needs migration.
+  const cols = sqlite
+    .pragma("table_info(users)")
+    .map((c: { name: string }) => c.name);
+
+  if (cols.includes("email") && !cols.includes("org_id")) {
+    console.log(
+      "[migrate] Detected pre-orgs database, running auto-migration...",
+    );
+    sqlite.pragma("foreign_keys = OFF");
+
+    try {
+      sqlite.exec("BEGIN TRANSACTION");
+
+      // 1. Create organizations table (already exists from IF NOT EXISTS above)
+
+      // 2. Create one org per existing user, copy their api_token/settings
+      interface OldUser {
+        id: string;
+        email: string;
+        first_name: string | null;
+        api_token: string | null;
+        default_language: string | null;
+        default_branding: string | null;
+      }
+
+      const existingUsers = sqlite
+        .prepare(
+          "SELECT id, email, first_name, api_token, default_language, default_branding FROM users",
+        )
+        .all() as OldUser[];
+
+      const insertOrg = sqlite.prepare(
+        "INSERT INTO organizations (id, name, api_token, default_language, default_branding, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))",
+      );
+
+      const userOrgMap = new Map<string, string>();
+
+      for (const user of existingUsers) {
+        const orgId = crypto.randomUUID();
+        const orgName = user.first_name?.trim()
+          ? `${user.first_name}'s Organization`
+          : `${user.email.split("@")[0]}'s Organization`;
+
+        insertOrg.run(
+          orgId,
+          orgName,
+          user.api_token || null,
+          user.default_language || "lt",
+          user.default_branding || null,
+        );
+
+        userOrgMap.set(user.id, orgId);
+        console.log(`[migrate]   → Org "${orgName}" for ${user.email}`);
+      }
+
+      // 3. Add org_id + org_role to users
+      sqlite.exec("ALTER TABLE users ADD COLUMN org_id TEXT;");
+      sqlite.exec(
+        "ALTER TABLE users ADD COLUMN org_role TEXT NOT NULL DEFAULT 'owner';",
+      );
+
+      const updateUser = sqlite.prepare(
+        "UPDATE users SET org_id = ? WHERE id = ?",
+      );
+      for (const [userId, orgId] of userOrgMap) {
+        updateUser.run(orgId, userId);
+      }
+
+      // 4. Add org_id to branding (if it has user_id)
+      const brandingCols = sqlite
+        .pragma("table_info(branding)")
+        .map((c: { name: string }) => c.name);
+      if (
+        brandingCols.includes("user_id") &&
+        !brandingCols.includes("org_id")
+      ) {
+        sqlite.exec("ALTER TABLE branding ADD COLUMN org_id TEXT;");
+        sqlite.exec(
+          "UPDATE branding SET org_id = (SELECT org_id FROM users WHERE users.id = branding.user_id) WHERE org_id IS NULL;",
+        );
+      }
+
+      // 5. Add org_id to game tables
+      for (const table of ["crosswords", "wordgames", "sudoku"]) {
+        const gameCols = sqlite
+          .pragma(`table_info(${table})`)
+          .map((c: { name: string }) => c.name);
+        if (gameCols.length > 0 && !gameCols.includes("org_id")) {
+          sqlite.exec(`ALTER TABLE ${table} ADD COLUMN org_id TEXT;`);
+          sqlite.exec(
+            `UPDATE ${table} SET org_id = (SELECT org_id FROM users WHERE users.id = ${table}.user_id) WHERE org_id IS NULL;`,
+          );
+          console.log(`[migrate]   → Added org_id to ${table}`);
+        }
+      }
+
+      sqlite.exec("COMMIT");
+      console.log(
+        `[migrate] ✅ Migration complete — ${userOrgMap.size} org(s) created`,
+      );
+    } catch (err) {
+      sqlite.exec("ROLLBACK");
+      console.error("[migrate] ❌ Migration failed, rolled back:", err);
+    }
+
+    sqlite.pragma("foreign_keys = ON");
+  }
+
   db = drizzleSqlite(sqlite, { schema });
 }
 
 export { db };
 export type DB = typeof db;
 
-// ─── Auto-seed default user ──────────────────────────────
+// ─── Auto-seed default user + organization ───────────────
 // Set DEFAULT_USER_EMAIL + DEFAULT_USER_PASSWORD to auto-create
-// a publisher account on first startup (useful for whitelabel).
+// an owner account with its own organization on first startup.
 const defaultEmail = process.env.DEFAULT_USER_EMAIL;
 const defaultPassword = process.env.DEFAULT_USER_PASSWORD;
 
@@ -235,7 +370,14 @@ if (defaultEmail && defaultPassword) {
         .limit(1);
 
       if (!existing) {
-        // Create the default user
+        // Create default organization first
+        const orgId = crypto.randomUUID();
+        await db.insert(schema.organizations).values({
+          id: orgId,
+          name: process.env.PLATFORM_NAME || "My Organization",
+        });
+
+        // Create the default user linked to the org
         const passwordHash = await bcrypt.hash(defaultPassword, 12);
         await db.insert(schema.users).values({
           email: defaultEmail,
@@ -243,10 +385,12 @@ if (defaultEmail && defaultPassword) {
           firstName: "Admin",
           lastName: "User",
           role: "admin",
+          orgId,
+          orgRole: "owner",
         });
-        console.log(`[seed] Created default user: ${defaultEmail}`);
+        console.log(`[seed] Created default org + user: ${defaultEmail}`);
       } else {
-        // Sync password if it changed (prevents login failures after redeploy)
+        // Sync password if it changed
         const passwordMatch = await bcrypt.compare(
           defaultPassword,
           existing.passwordHash,

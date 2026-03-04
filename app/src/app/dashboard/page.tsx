@@ -1,6 +1,6 @@
 import { getAuthenticatedUser } from "@/lib/auth-server";
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku } from "@/db/schema";
+import { crosswords, wordgames, sudoku, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import DashboardContent from "@/components/DashboardContent";
 
@@ -9,19 +9,70 @@ export default async function DashboardPage() {
 
   const [cw, wg, sd] = await Promise.all([
     db
-      .select()
+      .select({
+        id: crosswords.id,
+        status: crosswords.status,
+        title: crosswords.title,
+        difficulty: crosswords.difficulty,
+        words: crosswords.words,
+        mainWord: crosswords.mainWord,
+        scheduledDate: crosswords.scheduledDate,
+        brandingId: crosswords.brandingId,
+        userId: crosswords.userId,
+        orgId: crosswords.orgId,
+        createdAt: crosswords.createdAt,
+        updatedAt: crosswords.updatedAt,
+        creatorFirstName: users.firstName,
+        creatorLastName: users.lastName,
+        creatorEmail: users.email,
+      })
       .from(crosswords)
-      .where(eq(crosswords.userId, user.id))
+      .innerJoin(users, eq(users.id, crosswords.userId))
+      .where(eq(crosswords.orgId, user.orgId))
       .orderBy(desc(crosswords.createdAt)),
     db
-      .select()
+      .select({
+        id: wordgames.id,
+        status: wordgames.status,
+        title: wordgames.title,
+        word: wordgames.word,
+        definition: wordgames.definition,
+        maxAttempts: wordgames.maxAttempts,
+        scheduledDate: wordgames.scheduledDate,
+        brandingId: wordgames.brandingId,
+        userId: wordgames.userId,
+        orgId: wordgames.orgId,
+        createdAt: wordgames.createdAt,
+        updatedAt: wordgames.updatedAt,
+        creatorFirstName: users.firstName,
+        creatorLastName: users.lastName,
+        creatorEmail: users.email,
+      })
       .from(wordgames)
-      .where(eq(wordgames.userId, user.id))
+      .innerJoin(users, eq(users.id, wordgames.userId))
+      .where(eq(wordgames.orgId, user.orgId))
       .orderBy(desc(wordgames.createdAt)),
     db
-      .select()
+      .select({
+        id: sudoku.id,
+        status: sudoku.status,
+        title: sudoku.title,
+        difficulty: sudoku.difficulty,
+        puzzle: sudoku.puzzle,
+        solution: sudoku.solution,
+        scheduledDate: sudoku.scheduledDate,
+        brandingId: sudoku.brandingId,
+        userId: sudoku.userId,
+        orgId: sudoku.orgId,
+        createdAt: sudoku.createdAt,
+        updatedAt: sudoku.updatedAt,
+        creatorFirstName: users.firstName,
+        creatorLastName: users.lastName,
+        creatorEmail: users.email,
+      })
       .from(sudoku)
-      .where(eq(sudoku.userId, user.id))
+      .innerJoin(users, eq(users.id, sudoku.userId))
+      .where(eq(sudoku.orgId, user.orgId))
       .orderBy(desc(sudoku.createdAt)),
   ]);
 
@@ -37,6 +88,11 @@ export default async function DashboardPage() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapGame(row: any) {
+  const creatorName =
+    [row.creatorFirstName, row.creatorLastName].filter(Boolean).join(" ") ||
+    row.creatorEmail ||
+    null;
+
   return {
     id: row.id,
     status: row.status,
@@ -52,6 +108,8 @@ function mapGame(row: any) {
     scheduled_date: row.scheduledDate,
     branding: row.brandingId,
     user_created: row.userId,
+    created_by: creatorName,
+    org_id: row.orgId,
     date_created: row.createdAt,
     date_updated: row.updatedAt,
   };

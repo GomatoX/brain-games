@@ -8,6 +8,7 @@ interface BrandingOption {
 }
 
 export default function SettingsContent() {
+  const [orgName, setOrgName] = useState("");
   const [language, setLanguage] = useState("lt");
   const [defaultBranding, setDefaultBranding] = useState("");
   const [brandingOptions, setBrandingOptions] = useState<BrandingOption[]>([]);
@@ -27,6 +28,7 @@ export default function SettingsContent() {
         const data = await res.json();
         setLanguage(data.language || "lt");
         setDefaultBranding(data.default_branding || "");
+        setOrgName(data.org_name || "");
       }
     } catch {
       // Defaults are fine
@@ -64,6 +66,7 @@ export default function SettingsContent() {
         body: JSON.stringify({
           language,
           default_branding: defaultBranding || null,
+          org_name: orgName || null,
         }),
       });
 
@@ -93,11 +96,37 @@ export default function SettingsContent() {
           Settings
         </h1>
         <p className="text-[#64748b] mt-1 text-sm">
-          Configure your account preferences
+          Configure your organization settings
         </p>
       </div>
 
       <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+        {/* Organization Name */}
+        <div className="p-6 border-b border-[#e2e8f0]">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-9 w-9 rounded-lg bg-amber-50 flex items-center justify-center">
+              <span className="material-symbols-outlined text-lg text-amber-600">
+                apartment
+              </span>
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[#0f172a]">
+                Organization Name
+              </h2>
+              <p className="text-xs text-[#94a3b8]">
+                Visible to all team members
+              </p>
+            </div>
+          </div>
+          <input
+            type="text"
+            value={orgName}
+            onChange={(e) => setOrgName(e.target.value)}
+            className="w-full max-w-xs px-3 py-2.5 rounded-lg border border-[#e2e8f0] text-sm text-[#0f172a] bg-white focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust/20 transition-all"
+            placeholder="My Organization"
+          />
+        </div>
+
         {/* Language */}
         <div className="p-6 border-b border-[#e2e8f0]">
           <div className="flex items-center gap-3 mb-4">

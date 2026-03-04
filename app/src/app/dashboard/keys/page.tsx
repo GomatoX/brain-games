@@ -2,7 +2,7 @@ import { getAuthenticatedUserWithToken } from "@/lib/auth-server";
 import KeysContent from "@/components/KeysContent";
 
 export default async function KeysPage() {
-  const { token } = await getAuthenticatedUserWithToken();
+  const { user, token } = await getAuthenticatedUserWithToken();
 
-  return <KeysContent initialToken={token} />;
+  return <KeysContent initialToken={token} orgId={user.orgId} />;
 }

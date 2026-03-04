@@ -1,6 +1,20 @@
 import { pgTable, text, integer, jsonb } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
+// ─── Organizations ──────────────────────────────────────
+export const organizations = pgTable("organizations", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  apiToken: text("api_token").unique(),
+  defaultLanguage: text("default_language").default("lt"),
+  defaultBranding: text("default_branding"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`now()`),
+});
+
 // ─── Users ──────────────────────────────────────────────
 export const users = pgTable("users", {
   id: text("id")
@@ -11,23 +25,23 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   role: text("role").notNull().default("publisher"),
-  apiToken: text("api_token").unique(),
-  // Settings
-  defaultLanguage: text("default_language").default("lt"),
-  defaultBranding: text("default_branding"),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  orgRole: text("org_role").notNull().default("member"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),
 });
 
-// ─── Branding (user-scoped) ─────────────────────────────
+// ─── Branding (org-scoped) ──────────────────────────────
 export const branding = pgTable("branding", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id")
+  orgId: text("org_id")
     .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+    .references(() => organizations.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   // Colors
   accentColor: text("accent_color"),
@@ -62,6 +76,9 @@ export const crosswords = pgTable("crosswords", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -90,6 +107,9 @@ export const wordgames = pgTable("wordgames", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -115,6 +135,9 @@ export const sudoku = pgTable("sudoku", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

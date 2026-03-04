@@ -8,8 +8,10 @@ const PLAY_BASE =
 
 export default function KeysContent({
   initialToken,
+  orgId,
 }: {
   initialToken: string | null;
+  orgId: string;
 }) {
   const [token, setToken] = useState<string | null>(initialToken);
   const [generating, setGenerating] = useState(false);
@@ -69,6 +71,7 @@ export default function KeysContent({
   puzzle-id="latest"
   api-url="${API_URL}"
   ${token ? `token="${token}"` : 'token="YOUR_API_TOKEN"'}
+  org="${orgId}"
   lang="${lang}"
   theme="light"></crossword-game>`;
 
@@ -80,6 +83,7 @@ export default function KeysContent({
   puzzle-id="latest"
   api-url="${API_URL}"
   ${token ? `token="${token}"` : 'token="YOUR_API_TOKEN"'}
+  org="${orgId}"
   lang="${lang}"
   theme="light"></word-game>`;
 
@@ -123,7 +127,8 @@ export default function KeysContent({
               </div>
               <div className="flex items-center gap-3">
                 <p className="text-xs text-[#64748b] flex-1">
-                  Use this token to authenticate API requests. Keep it secret.
+                  Shared across your organization. Use this token to
+                  authenticate API requests.
                 </p>
                 <button
                   onClick={handleRevoke}

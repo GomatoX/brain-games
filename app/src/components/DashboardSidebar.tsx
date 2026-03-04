@@ -47,6 +47,12 @@ export default function DashboardSidebar({
       active: pathname === "/dashboard/branding",
     },
     {
+      href: "/dashboard/team",
+      label: "Team",
+      icon: "group",
+      active: pathname === "/dashboard/team",
+    },
+    {
       href: "/dashboard/keys",
       label: "API Keys & Embeds",
       icon: "key",

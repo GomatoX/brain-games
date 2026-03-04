@@ -1,12 +1,12 @@
 /**
- * Seed the database with an initial admin user.
+ * Seed the database with an initial organization + admin user.
  *
  * Usage: npx tsx src/db/seed.ts
  * Or:    yarn db:seed
  */
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { users } from "./schema";
+import { organizations, users } from "./schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import path from "path";
@@ -25,6 +25,7 @@ const db = drizzle(sqlite);
 async function seed() {
   const email = process.argv[2] || "admin@example.com";
   const password = process.argv[3] || "admin123";
+  const orgName = process.argv[4] || "My Organization";
 
   // Check if user exists
   const [existing] = await db
@@ -38,6 +39,15 @@ async function seed() {
     process.exit(0);
   }
 
+  // Create organization first
+  const orgId = crypto.randomUUID();
+  await db.insert(organizations).values({
+    id: orgId,
+    name: orgName,
+  });
+  console.log(`Created organization: ${orgName} (id: ${orgId})`);
+
+  // Create admin user linked to the org
   const passwordHash = await bcrypt.hash(password, 12);
 
   const [user] = await db
@@ -48,6 +58,8 @@ async function seed() {
       firstName: "Admin",
       lastName: "User",
       role: "admin",
+      orgId,
+      orgRole: "owner",
     })
     .returning();
 

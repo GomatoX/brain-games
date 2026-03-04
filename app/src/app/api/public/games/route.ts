@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku, branding, users } from "@/db/schema";
+import {
+  crosswords,
+  wordgames,
+  sudoku,
+  branding,
+  organizations,
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 type GameType = "crosswords" | "wordgames" | "sudoku";
@@ -24,9 +30,9 @@ export async function OPTIONS() {
  * Public API for game embeds.
  * GET /api/public/games?type=crosswords&id=xxx
  *
- * Auth: optional Bearer token (static API token from user settings)
+ * Auth: optional Bearer token (org-level API token)
  * If the game is "published", it's accessible without auth.
- * If "draft", requires the owner's API token.
+ * If "draft", requires the org's API token.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -55,7 +61,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // If draft, check token auth
+    // If draft, check token auth against the org
     if (game.status !== "published") {
       const authHeader = request.headers.get("authorization");
       const token = authHeader?.replace("Bearer ", "");
@@ -67,14 +73,14 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Verify token belongs to the game owner
-      const [owner] = await db
-        .select({ apiToken: users.apiToken })
-        .from(users)
-        .where(eq(users.id, game.userId))
+      // Verify token belongs to the game's organization
+      const [org] = await db
+        .select({ apiToken: organizations.apiToken })
+        .from(organizations)
+        .where(eq(organizations.id, game.orgId))
         .limit(1);
 
-      if (!owner || owner.apiToken !== token) {
+      if (!org || org.apiToken !== token) {
         return NextResponse.json(
           { error: "Not found" },
           { status: 404, headers: corsHeaders },

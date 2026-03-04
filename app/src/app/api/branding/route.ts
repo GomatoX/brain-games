@@ -7,13 +7,13 @@ import { requireAuth } from "@/lib/api-auth";
 export async function GET() {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { orgId } = result;
 
   try {
     const presets = await db
       .select()
       .from(branding)
-      .where(eq(branding.userId, userId))
+      .where(eq(branding.orgId, orgId))
       .orderBy(desc(branding.createdAt));
 
     return NextResponse.json(
@@ -54,7 +54,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { orgId } = result;
 
   try {
     const body = await request.json();
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const [preset] = await db
       .insert(branding)
       .values({
-        userId,
+        orgId,
         name: body.name || "Untitled",
         accentColor: body.accent_color || null,
         accentHoverColor: body.accent_hover_color || null,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { orgId } = result;
 
   try {
     const body = await request.json();
@@ -135,7 +135,7 @@ export async function PATCH(request: NextRequest) {
         fontSerif: body.font_serif || null,
         borderRadius: body.border_radius || null,
       })
-      .where(and(eq(branding.id, body.id), eq(branding.userId, userId)));
+      .where(and(eq(branding.id, body.id), eq(branding.orgId, orgId)));
 
     return NextResponse.json({ success: true });
   } catch {
@@ -149,7 +149,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId } = result;
+  const { orgId } = result;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -161,7 +161,7 @@ export async function DELETE(request: NextRequest) {
   try {
     await db
       .delete(branding)
-      .where(and(eq(branding.id, id), eq(branding.userId, userId)));
+      .where(and(eq(branding.id, id), eq(branding.orgId, orgId)));
 
     return NextResponse.json({ success: true });
   } catch {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, organizations } from "@/db/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
@@ -29,6 +29,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create a new organization for this user
+    const orgId = crypto.randomUUID();
+    await db.insert(organizations).values({
+      id: orgId,
+      name: `${firstName || email.split("@")[0]}'s Organization`,
+    });
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     await db.insert(users).values({
@@ -36,6 +43,8 @@ export async function POST(request: NextRequest) {
       passwordHash,
       firstName: firstName || null,
       lastName: lastName || null,
+      orgId,
+      orgRole: "owner",
     });
 
     return NextResponse.json({ success: true }, { status: 201 });
