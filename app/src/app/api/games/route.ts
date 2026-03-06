@@ -252,9 +252,12 @@ function mapToDb(data: Record<string, any>, userId?: string, orgId?: string) {
   if (data.scheduled_date !== undefined)
     mapped.scheduledDate = data.scheduled_date;
   if (data.branding !== undefined) {
-    // branding can be an object { id: "..." } or a string ID
-    mapped.brandingId =
-      typeof data.branding === "object" ? data.branding?.id : data.branding;
+    if (!data.branding) {
+      mapped.brandingId = null;
+    } else {
+      mapped.brandingId =
+        typeof data.branding === "object" ? data.branding?.id : data.branding;
+    }
   }
 
   return mapped;
