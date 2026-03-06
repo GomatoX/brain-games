@@ -415,6 +415,7 @@
 
   function handleCellInput(event) {
     const { event: inputEvent, row: rowIndex, col: colIndex } = event.detail;
+    if (lockedCells.has(`${rowIndex},${colIndex}`)) return;
     const value = inputEvent.target.value.toUpperCase().slice(-1);
     const key = `${rowIndex},${colIndex}`;
 
@@ -427,22 +428,28 @@
   function handleKeyDown(event) {
     const { event: keyEvent, row: rowIndex, col: colIndex } = event.detail;
     const key = keyEvent.key;
+    const cellLocked = lockedCells.has(`${rowIndex},${colIndex}`);
 
     if (key.length === 1 && key.match(/[a-zA-Z\u0100-\u017F]/)) {
       keyEvent.preventDefault();
-      const cellKey = `${rowIndex},${colIndex}`;
-      const newValue = key.toUpperCase();
-      cellInputs[cellKey] = newValue;
-      cellInputs = cellInputs;
+      if (!cellLocked) {
+        const cellKey = `${rowIndex},${colIndex}`;
+        const newValue = key.toUpperCase();
+        cellInputs[cellKey] = newValue;
+        cellInputs = cellInputs;
+      }
       moveToNextCell(rowIndex, colIndex);
     } else if (key === "Backspace") {
-      const cellKey = `${rowIndex},${colIndex}`;
-      if (cellInputs[cellKey]) {
-        keyEvent.preventDefault();
-        cellInputs[cellKey] = "";
-        cellInputs = cellInputs;
+      keyEvent.preventDefault();
+      if (!cellLocked) {
+        const cellKey = `${rowIndex},${colIndex}`;
+        if (cellInputs[cellKey]) {
+          cellInputs[cellKey] = "";
+          cellInputs = cellInputs;
+        } else {
+          moveToPrevCell(rowIndex, colIndex);
+        }
       } else {
-        keyEvent.preventDefault();
         moveToPrevCell(rowIndex, colIndex);
       }
     } else if (keyEvent.key === "ArrowRight") {
@@ -468,18 +475,22 @@
     let nextRow = row;
     let nextCol = col;
 
-    if (selectedDirection === "across") {
-      nextCol = col + 1;
-    } else {
-      nextRow = row + 1;
-    }
+    while (true) {
+      if (selectedDirection === "across") {
+        nextCol += 1;
+      } else {
+        nextRow += 1;
+      }
 
-    if (nextRow >= grid.length || nextCol >= (grid[0]?.length || 0)) return;
-    if (!grid[nextRow] || !grid[nextRow][nextCol]) return;
+      if (nextRow >= grid.length || nextCol >= (grid[0]?.length || 0)) return;
+      if (!grid[nextRow] || !grid[nextRow][nextCol]) return;
+      if (grid[nextRow][nextCol].isBlocked) return;
 
-    if (!grid[nextRow][nextCol].isBlocked) {
-      selectedCell = { row: nextRow, col: nextCol };
-      focusCell(nextRow, nextCol);
+      if (!lockedCells.has(`${nextRow},${nextCol}`)) {
+        selectedCell = { row: nextRow, col: nextCol };
+        focusCell(nextRow, nextCol);
+        return;
+      }
     }
   }
 
@@ -487,17 +498,23 @@
     let prevRow = row;
     let prevCol = col;
 
-    if (selectedDirection === "across") {
-      prevCol = col - 1;
-      if (prevCol < 0) return;
-    } else {
-      prevRow = row - 1;
-      if (prevRow < 0) return;
-    }
+    while (true) {
+      if (selectedDirection === "across") {
+        prevCol -= 1;
+        if (prevCol < 0) return;
+      } else {
+        prevRow -= 1;
+        if (prevRow < 0) return;
+      }
 
-    if (!grid[prevRow][prevCol].isBlocked) {
-      selectedCell = { row: prevRow, col: prevCol };
-      focusCell(prevRow, prevCol);
+      if (!grid[prevRow] || !grid[prevRow][prevCol]) return;
+      if (grid[prevRow][prevCol].isBlocked) return;
+
+      if (!lockedCells.has(`${prevRow},${prevCol}`)) {
+        selectedCell = { row: prevRow, col: prevCol };
+        focusCell(prevRow, prevCol);
+        return;
+      }
     }
   }
 
@@ -582,6 +599,24 @@
       }
     }
     return solved;
+  }
+
+  function computeLockedCells(solved, puzzle) {
+    const locked = new Set();
+    if (!puzzle?._layoutWords) return locked;
+    const words = puzzle._layoutWords;
+    for (const word of words) {
+      if (!word.word || word.x === undefined || word.y === undefined) continue;
+      const num = word._number || "?";
+      const key = `${num}-${word.direction}`;
+      if (!solved.has(key)) continue;
+      const dx = word.direction === "across" ? 1 : 0;
+      const dy = word.direction === "down" ? 1 : 0;
+      for (let j = 0; j < word.word.length; j++) {
+        locked.add(`${word.y + j * dy},${word.x + j * dx}`);
+      }
+    }
+    return locked;
   }
 
   function tryDifferentLayout() {
@@ -685,6 +720,7 @@
   $: currentClue = selectedCell && selectedDirection ? getSelectedClue() : null;
   $: selectedWordCells = getSelectedWordCells(selectedCell, selectedDirection);
   $: solvedClues = computeSolvedClues(cellInputs);
+  $: lockedCells = computeLockedCells(solvedClues, puzzle);
 
   // Main word feature
   $: mainWordData = computeMainWordData(puzzle, grid);
@@ -821,6 +857,7 @@
               {selectedWordCells}
               {cellInputs}
               {mainWordCellSet}
+              {lockedCells}
               {currentClue}
               blurred={resultMode}
               on:cellClick={handleCellClick}

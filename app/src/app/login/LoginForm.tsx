@@ -4,17 +4,20 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import PlatformLogo from "@/components/PlatformLogo";
 
 interface LoginFormProps {
   platformName: string;
   isWhiteLabel: boolean;
   hideRegister: boolean;
+  orgLogoUrl?: string | null;
 }
 
 export default function LoginForm({
   platformName,
   isWhiteLabel,
   hideRegister,
+  orgLogoUrl,
 }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -55,12 +58,7 @@ export default function LoginForm({
           href={isWhiteLabel ? "/dashboard" : "/"}
           className="flex items-center justify-center gap-2 mb-8"
         >
-          <span className="material-symbols-outlined text-rust text-3xl">
-            settings_suggest
-          </span>
-          <span className="text-xl font-bold font-serif text-[#0f172a]">
-            {platformName}
-          </span>
+          <PlatformLogo platformName={platformName} orgLogoUrl={orgLogoUrl} />
         </Link>
 
         {/* Card */}

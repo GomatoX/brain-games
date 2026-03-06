@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import {
+  Panel,
+  PanelHeader,
+  Button,
+  PageHeader,
+  CodeBlock,
+} from "@/components/ui";
 
 const API_URL = typeof window !== "undefined" ? window.location.origin : "";
 const PLAY_BASE =
@@ -9,14 +16,16 @@ const PLAY_BASE =
 export default function KeysContent({
   initialToken,
   orgId,
+  initialLang,
 }: {
   initialToken: string | null;
   orgId: string;
+  initialLang: string;
 }) {
   const [token, setToken] = useState<string | null>(initialToken);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
-  const [lang, setLang] = useState("lt");
+  const [lang] = useState(initialLang);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -56,13 +65,6 @@ export default function KeysContent({
     setTimeout(() => setCopied(null), 2000);
   }
 
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((d) => d.language && setLang(d.language))
-      .catch(() => {});
-  }, []);
-
   const crosswordEmbed = `<!-- Load the game engine -->
 <script src="${PLAY_BASE}/dist/crossword-engine.iife.js"><\/script>
 
@@ -89,25 +91,14 @@ export default function KeysContent({
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-serif font-medium text-[#0f172a] mb-1">
-          API Keys & Embed Codes
-        </h1>
-        <p className="text-[#64748b] text-sm">
-          Manage your API access and get embed snippets for your site.
-        </p>
-      </div>
+      <PageHeader
+        title="API Keys & Embed Codes"
+        description="Manage your API access and get embed snippets for your site."
+      />
 
       {/* API Token */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden mb-8">
-        <div className="px-5 py-4 border-b border-[#e2e8f0] flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-            <span className="material-symbols-outlined text-amber-600 text-lg">
-              key
-            </span>
-          </div>
-          <h2 className="font-semibold text-[#0f172a]">API Token</h2>
-        </div>
+      <Panel className="mb-8">
+        <PanelHeader title="API Token" />
         <div className="p-5">
           {token ? (
             <div className="flex flex-col gap-4">
@@ -146,14 +137,14 @@ export default function KeysContent({
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="px-4 py-2 bg-rust hover:bg-rust-dark disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 disabled:opacity-50 text-white text-sm font-medium rounded-[4px] transition-colors"
               >
                 {generating ? "Generating…" : "Generate Token"}
               </button>
             </div>
           )}
         </div>
-      </div>
+      </Panel>
 
       {/* Embed Codes */}
       <div className="flex flex-col gap-6">
@@ -196,29 +187,23 @@ function EmbedCard({
   const label = `embed-${title.toLowerCase().replace(/\s/g, "-")}`;
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-      <div className="px-5 py-4 border-b border-[#e2e8f0] flex items-center gap-3">
-        <div
-          className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}`}
-        >
-          <span className="material-symbols-outlined text-lg">{icon}</span>
-        </div>
-        <h2 className="font-semibold text-[#0f172a]">{title} Embed Code</h2>
-        <button
-          onClick={() => onCopy(code, label)}
-          className="ml-auto px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-[#0f172a] transition-colors flex items-center gap-1.5"
-        >
-          <span className="material-symbols-outlined text-sm">
-            {copied === label ? "check" : "content_copy"}
-          </span>
-          {copied === label ? "Copied!" : "Copy Snippet"}
-        </button>
-      </div>
+    <Panel>
+      <PanelHeader
+        title={`${title} Embed Code`}
+        action={
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={copied === label ? "check" : "content_copy"}
+            onClick={() => onCopy(code, label)}
+          >
+            {copied === label ? "Copied!" : "Copy Snippet"}
+          </Button>
+        }
+      />
       <div className="p-5">
-        <pre className="bg-[#1e293b] text-slate-300 rounded-lg p-4 text-sm overflow-x-auto">
-          <code>{code}</code>
-        </pre>
+        <CodeBlock code={code} />
       </div>
-    </div>
+    </Panel>
   );
 }

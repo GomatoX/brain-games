@@ -18,11 +18,14 @@ export type AppUser = {
 /**
  * Get the authenticated user from the NextAuth session.
  * Joins with organizations to include org context.
- * Redirects to /login if not authenticated.
+ * Redirects to /api/auth/logout (which clears cookies) if not authenticated,
+ * preventing infinite redirect loops with stale JWT sessions.
  */
 export async function getAuthenticatedUser(): Promise<AppUser> {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) {
+    redirect("/api/auth/logout");
+  }
 
   const [row] = await db
     .select({
@@ -40,7 +43,9 @@ export async function getAuthenticatedUser(): Promise<AppUser> {
     .where(eq(users.id, session.user.id))
     .limit(1);
 
-  if (!row) redirect("/login");
+  if (!row) {
+    redirect("/api/auth/logout");
+  }
 
   return {
     id: row.id,

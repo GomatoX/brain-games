@@ -3,13 +3,12 @@ import { db } from "@/db";
 import { users, organizations } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import bcrypt from "bcryptjs";
 
 /**
  * Team management API (org-scoped).
  *
  * GET    /api/team — list members of the current org
- * POST   /api/team — invite/create a new member (owner only)
+ * POST   /api/team — invite a new member (owner only) → returns invite link
  * DELETE /api/team — remove a member (owner only)
  */
 
@@ -54,6 +53,8 @@ export async function GET() {
         firstName: users.firstName,
         lastName: users.lastName,
         orgRole: users.orgRole,
+        inviteToken: users.inviteToken,
+        inviteExpiresAt: users.inviteExpiresAt,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -70,6 +71,11 @@ export async function GET() {
         first_name: m.firstName,
         last_name: m.lastName,
         org_role: m.orgRole,
+        invite_pending: !!m.inviteToken,
+        invite_expired:
+          !!m.inviteToken &&
+          !!m.inviteExpiresAt &&
+          new Date(m.inviteExpiresAt) < new Date(),
         created_at: m.createdAt,
       })),
       currentUserId: ctx.userId,
@@ -97,13 +103,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email, firstName, lastName, password } = await request.json();
+    const { email, firstName, lastName } = await request.json();
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 },
-      );
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     // Check if user already exists
@@ -114,42 +117,56 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existing) {
+      // If this is a pending invite for the same org, regenerate the token
+      if (existing.inviteToken && existing.orgId === ctx.orgId) {
+        const inviteToken = crypto.randomUUID();
+        const inviteExpiresAt = new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000,
+        ).toISOString();
+
+        await db
+          .update(users)
+          .set({
+            inviteToken,
+            inviteExpiresAt,
+            firstName: firstName || existing.firstName,
+            lastName: lastName || existing.lastName,
+          })
+          .where(eq(users.id, existing.id));
+
+        return NextResponse.json(
+          { invite_token: inviteToken },
+          { status: 200 },
+        );
+      }
+
       return NextResponse.json(
         { error: "A user with this email already exists" },
         { status: 409 },
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    // Generate invite token (7-day expiry)
+    const inviteToken = crypto.randomUUID();
+    const inviteExpiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
-    const [member] = await db
-      .insert(users)
-      .values({
-        email,
-        passwordHash,
-        firstName: firstName || null,
-        lastName: lastName || null,
-        orgId: ctx.orgId,
-        orgRole: "member",
-      })
-      .returning();
+    await db.insert(users).values({
+      email,
+      passwordHash: "!INVITE_PENDING",
+      firstName: firstName || null,
+      lastName: lastName || null,
+      orgId: ctx.orgId,
+      orgRole: "member",
+      inviteToken,
+      inviteExpiresAt,
+    });
 
-    return NextResponse.json(
-      {
-        member: {
-          id: member.id,
-          email: member.email,
-          first_name: member.firstName,
-          last_name: member.lastName,
-          org_role: member.orgRole,
-          created_at: member.createdAt,
-        },
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ invite_token: inviteToken }, { status: 201 });
   } catch {
     return NextResponse.json(
-      { error: "Failed to create member" },
+      { error: "Failed to invite member" },
       { status: 500 },
     );
   }

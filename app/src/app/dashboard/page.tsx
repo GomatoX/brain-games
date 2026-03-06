@@ -1,13 +1,19 @@
 import { getAuthenticatedUser } from "@/lib/auth-server";
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku, users } from "@/db/schema";
+import {
+  crosswords,
+  wordgames,
+  sudoku,
+  users,
+  organizations,
+} from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import DashboardContent from "@/components/DashboardContent";
 
 export default async function DashboardPage() {
   const user = await getAuthenticatedUser();
 
-  const [cw, wg, sd] = await Promise.all([
+  const [cw, wg, sd, orgRow] = await Promise.all([
     db
       .select({
         id: crosswords.id,
@@ -74,6 +80,12 @@ export default async function DashboardPage() {
       .innerJoin(users, eq(users.id, sudoku.userId))
       .where(eq(sudoku.orgId, user.orgId))
       .orderBy(desc(sudoku.createdAt)),
+    db
+      .select({ language: organizations.defaultLanguage })
+      .from(organizations)
+      .where(eq(organizations.id, user.orgId))
+      .limit(1)
+      .then((rows) => rows[0]),
   ]);
 
   // Map to frontend-compatible shape
@@ -83,7 +95,9 @@ export default async function DashboardPage() {
     sudoku: sd.map(mapGame),
   };
 
-  return <DashboardContent initialGames={games} />;
+  const initialLang = orgRow?.language || "lt";
+
+  return <DashboardContent initialGames={games} initialLang={initialLang} />;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

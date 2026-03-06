@@ -7,6 +7,7 @@
   export let selectedWordCells = new Set();
   export let cellInputs = {};
   export let mainWordCellSet = new Set();
+  export let lockedCells = new Set();
   export let blurred = false;
   export let currentClue = null;
 
@@ -29,6 +30,20 @@
     dispatch("keyDown", { event, row: rowIndex, col: colIndex });
   }
 
+  function getWordStartCell(wordCells) {
+    if (!wordCells || wordCells.size === 0) return null;
+    let minRow = Infinity;
+    let minCol = Infinity;
+    for (const key of wordCells) {
+      const [r, c] = key.split(",").map(Number);
+      if (r < minRow || (r === minRow && c < minCol)) {
+        minRow = r;
+        minCol = c;
+      }
+    }
+    return { row: minRow, col: minCol };
+  }
+
   function getTooltipPosition(cell, gridElement) {
     if (!cell || !gridElement) return null;
     const cellEl = gridElement.querySelector(
@@ -45,7 +60,8 @@
     };
   }
 
-  $: tooltipPos = getTooltipPosition(selectedCell, gridEl);
+  $: wordStartCell = getWordStartCell(selectedWordCells);
+  $: tooltipPos = getTooltipPosition(wordStartCell, gridEl);
   $: directionLabel =
     currentClue?.direction === "across"
       ? $t("crossword.across")
@@ -60,15 +76,17 @@
   >
     {#each grid as row, rowIndex}
       {#each row as cell, colIndex}
+        {@const cellKey = `${rowIndex},${colIndex}`}
+        {@const isLocked = lockedCells.has(cellKey)}
         <div
           class="cell"
           class:blocked={cell.isBlocked}
           class:selected={!blurred &&
             selectedCell?.row === rowIndex &&
             selectedCell?.col === colIndex}
-          class:word-highlighted={!blurred &&
-            selectedWordCells.has(`${rowIndex},${colIndex}`)}
-          class:main-word-cell={mainWordCellSet.has(`${rowIndex},${colIndex}`)}
+          class:word-highlighted={!blurred && selectedWordCells.has(cellKey)}
+          class:main-word-cell={mainWordCellSet.has(cellKey)}
+          class:locked={isLocked}
           role="button"
           tabindex={cell.isBlocked || blurred ? -1 : 0}
           on:click={() => handleCellClick(rowIndex, colIndex)}
@@ -78,7 +96,7 @@
           {#if cell.number}
             <span class="cell-number">{cell.number}</span>
           {/if}
-          {#if mainWordCellSet.has(`${rowIndex},${colIndex}`)}
+          {#if mainWordCellSet.has(cellKey)}
             <span class="main-word-dot"></span>
           {/if}
           {#if !cell.isBlocked}
@@ -86,12 +104,12 @@
               type="text"
               maxlength="1"
               data-cell="{rowIndex},{colIndex}"
-              value={cellInputs[`${rowIndex},${colIndex}`] || ""}
+              value={cellInputs[cellKey] || ""}
               on:input={(e) => handleCellInput(e, rowIndex, colIndex)}
               on:keydown={(e) => handleKeyDown(e, rowIndex, colIndex)}
               autocomplete="off"
               autocapitalize="characters"
-              disabled={blurred}
+              disabled={blurred || isLocked}
             />
           {/if}
         </div>
@@ -320,6 +338,21 @@
     border: 1.5px solid var(--text-secondary);
     border-radius: 50%;
     z-index: 3;
+  }
+
+  /* Locked (correctly solved) cells */
+  .cell.locked {
+    background: var(--correct-light, #e2f3ea);
+  }
+
+  .cell.locked input {
+    color: var(--correct, #007a3c);
+    font-weight: 600;
+  }
+
+  .cell.locked input:disabled {
+    opacity: 1;
+    -webkit-text-fill-color: var(--correct, #007a3c);
   }
 
   /* Blurred result mode */

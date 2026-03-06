@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import {
+  Panel,
+  PanelHeader,
+  Badge,
+  Button,
+  Modal,
+  PageHeader,
+} from "@/components/ui";
 
 interface Member {
   id: string;
@@ -8,6 +16,8 @@ interface Member {
   first_name: string | null;
   last_name: string | null;
   org_role: string;
+  invite_pending: boolean;
+  invite_expired: boolean;
   created_at: string;
 }
 
@@ -18,18 +28,22 @@ interface TeamData {
   isOwner: boolean;
 }
 
-export default function TeamContent() {
-  const [data, setData] = useState<TeamData | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function TeamContent({
+  initialData,
+}: {
+  initialData: TeamData;
+}) {
+  const [data, setData] = useState<TeamData>(initialData);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: "",
     firstName: "",
     lastName: "",
-    password: "",
   });
   const [inviteError, setInviteError] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [copied, setCopied] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   async function fetchTeam() {
@@ -41,14 +55,8 @@ export default function TeamContent() {
       }
     } catch {
       // ignore
-    } finally {
-      setLoading(false);
     }
   }
-
-  useEffect(() => {
-    fetchTeam();
-  }, []);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -62,13 +70,12 @@ export default function TeamContent() {
         body: JSON.stringify(inviteForm),
       });
 
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || "Failed to invite member");
-      }
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed to invite member");
 
-      setInviteForm({ email: "", firstName: "", lastName: "", password: "" });
-      setInviteOpen(false);
+      // Build the invite link
+      const link = `${window.location.origin}/invite/${d.invite_token}`;
+      setInviteLink(link);
       await fetchTeam();
     } catch (err) {
       setInviteError(
@@ -77,6 +84,46 @@ export default function TeamContent() {
     } finally {
       setInviteLoading(false);
     }
+  }
+
+  async function handleResendInvite(memberId: string) {
+    const member = data?.members.find((m) => m.id === memberId);
+    if (!member) return;
+
+    try {
+      const res = await fetch("/api/team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: member.email,
+          firstName: member.first_name || "",
+          lastName: member.last_name || "",
+        }),
+      });
+
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+
+      const link = `${window.location.origin}/invite/${d.invite_token}`;
+      setInviteLink(link);
+      setInviteForm({ email: "", firstName: "", lastName: "" });
+      await fetchTeam();
+    } catch {
+      // ignore
+    }
+  }
+
+  function handleCopy() {
+    navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function closeInviteModal() {
+    setInviteOpen(false);
+    setInviteError("");
+    setInviteLink("");
+    setInviteForm({ email: "", firstName: "", lastName: "" });
   }
 
   async function handleRemove(memberId: string) {
@@ -89,59 +136,38 @@ export default function TeamContent() {
     setDeleteConfirm(null);
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-rust border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="text-center py-20 text-[#64748b]">
-        Failed to load team data.
-      </div>
-    );
-  }
+  const currentUser = data.members.find((m) => m.id === data.currentUserId);
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-serif font-medium text-[#0f172a] mb-1">
-          Team
-        </h1>
-        <p className="text-[#64748b] text-sm">
-          Manage members of{" "}
-          <span className="font-medium text-[#0f172a]">{data.org.name}</span>.
-          All members share the same games, branding, and API token.
-        </p>
-      </div>
+      <PageHeader
+        title="Team"
+        description={
+          <>
+            Manage members of{" "}
+            <span className="font-medium text-[#0f172a]">{data.org.name}</span>.
+            All members share the same games, branding, and API token.
+          </>
+        }
+      />
 
       {/* Members List */}
-      <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#e2e8f0] flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-            <span className="material-symbols-outlined text-blue-600 text-lg">
-              group
-            </span>
-          </div>
-          <h2 className="font-semibold text-[#0f172a]">Members</h2>
-          <span className="text-xs text-[#64748b] bg-slate-100 px-2 py-0.5 rounded-full">
-            {data.members.length}
-          </span>
-          {data.isOwner && (
-            <button
-              onClick={() => setInviteOpen(true)}
-              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">
-                person_add
-              </span>
-              Invite Member
-            </button>
-          )}
-        </div>
+      <Panel>
+        <PanelHeader
+          title="Members"
+          count={data.members.length}
+          action={
+            data.isOwner ? (
+              <Button
+                size="sm"
+                icon="person_add"
+                onClick={() => setInviteOpen(true)}
+              >
+                Invite Member
+              </Button>
+            ) : undefined
+          }
+        />
 
         <div className="divide-y divide-[#e2e8f0]">
           {data.members.map((member) => {
@@ -155,12 +181,24 @@ export default function TeamContent() {
                 key={member.id}
                 className="px-5 py-3 flex items-center gap-4 hover:bg-slate-50 transition-colors"
               >
-                <div className="w-9 h-9 bg-rust/10 rounded-full flex items-center justify-center text-rust font-bold text-sm shrink-0">
-                  {(
-                    member.first_name?.[0] ||
-                    member.email?.[0] ||
-                    "U"
-                  ).toUpperCase()}
+                <div
+                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                    member.invite_pending
+                      ? "bg-amber-50 text-amber-600"
+                      : "bg-navy-900/10 text-navy-900"
+                  }`}
+                >
+                  {member.invite_pending ? (
+                    <span className="material-symbols-outlined text-lg">
+                      mail
+                    </span>
+                  ) : (
+                    (
+                      member.first_name?.[0] ||
+                      member.email?.[0] ||
+                      "U"
+                    ).toUpperCase()
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[#0f172a] truncate">
@@ -173,186 +211,252 @@ export default function TeamContent() {
                   </p>
                   <p className="text-xs text-[#64748b] truncate">
                     {member.email} ·{" "}
-                    {new Date(member.created_at).toLocaleDateString()}
+                    {member.invite_pending
+                      ? "Invited"
+                      : new Date(member.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <span
-                  className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                    member.org_role === "owner"
-                      ? "bg-amber-50 text-amber-700"
-                      : "bg-slate-100 text-[#64748b]"
-                  }`}
-                >
-                  {member.org_role}
-                </span>
-                {data.isOwner &&
-                  !isCurrentUser &&
-                  member.org_role !== "owner" && (
-                    <button
-                      onClick={() => setDeleteConfirm(member.id)}
-                      className="p-1.5 text-[#64748b] hover:text-red-600 transition-colors rounded-lg hover:bg-slate-100"
-                      title="Remove member"
-                    >
-                      <span className="material-symbols-outlined text-lg">
-                        person_remove
-                      </span>
-                    </button>
-                  )}
+
+                {/* Status badges */}
+                {member.invite_pending ? (
+                  <Badge variant={member.invite_expired ? "error" : "warning"}>
+                    {member.invite_expired ? "Expired" : "Pending"}
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant={
+                      member.org_role === "owner" ? "warning" : "neutral"
+                    }
+                  >
+                    {member.org_role}
+                  </Badge>
+                )}
+
+                {/* Action buttons for owner */}
+                {data.isOwner && !isCurrentUser && (
+                  <div className="flex items-center gap-1">
+                    {member.invite_pending && (
+                      <button
+                        onClick={() => handleResendInvite(member.id)}
+                        className="p-1.5 text-[#64748b] hover:text-navy-900 transition-colors rounded-[4px] hover:bg-slate-100"
+                        title="Regenerate invite link"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          refresh
+                        </span>
+                      </button>
+                    )}
+                    {member.org_role !== "owner" && (
+                      <button
+                        onClick={() => setDeleteConfirm(member.id)}
+                        className="p-1.5 text-[#64748b] hover:text-red-600 transition-colors rounded-lg hover:bg-slate-100"
+                        title="Remove member"
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          person_remove
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
-      </div>
+      </Panel>
 
       {/* Invite Modal */}
-      {inviteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-rust">
-                  person_add
-                </span>
-                <h2 className="text-lg font-semibold text-[#0f172a]">
-                  Invite Member
-                </h2>
-              </div>
+      <Modal
+        open={inviteOpen}
+        onClose={closeInviteModal}
+        title={inviteLink ? "Invite Link Ready" : "Invite Member"}
+        icon="person_add"
+      >
+        {inviteLink ? (
+          /* Success: show invite link */
+          <div className="p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
+              <span className="material-symbols-outlined text-green-600 text-2xl">
+                check_circle
+              </span>
+            </div>
+            <p className="text-sm text-[#64748b] text-center">
+              Share this link with the new member. They&apos;ll be able to set
+              their own password and join your organization.
+            </p>
+            <div className="flex items-center gap-2 bg-slate-50 border border-[#e2e8f0] rounded-lg px-3 py-2.5">
+              <input
+                type="text"
+                readOnly
+                value={inviteLink}
+                className="flex-1 bg-transparent text-sm text-[#0f172a] outline-none truncate"
+              />
               <button
-                onClick={() => {
-                  setInviteOpen(false);
-                  setInviteError("");
-                }}
-                className="p-1 text-[#64748b] hover:text-[#0f172a] transition-colors"
+                onClick={handleCopy}
+                className="shrink-0 px-3 py-1 text-xs font-medium bg-navy-900 text-white rounded-[4px] hover:bg-navy-800 transition-colors"
               >
-                <span className="material-symbols-outlined">close</span>
+                {copied ? "Copied!" : "Copy"}
               </button>
             </div>
-            <form onSubmit={handleInvite} className="p-6 flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-[#64748b] mb-1 block">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    value={inviteForm.firstName}
-                    onChange={(e) =>
-                      setInviteForm({
-                        ...inviteForm,
-                        firstName: e.target.value,
-                      })
-                    }
-                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-                    placeholder="John"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-[#64748b] mb-1 block">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    value={inviteForm.lastName}
-                    onChange={(e) =>
-                      setInviteForm({ ...inviteForm, lastName: e.target.value })
-                    }
-                    className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-                    placeholder="Doe"
-                  />
-                </div>
-              </div>
+            <p className="text-xs text-[#94a3b8] text-center">
+              This link expires in 7 days.
+            </p>
+            <button
+              onClick={closeInviteModal}
+              className="w-full px-4 py-2 text-sm font-medium border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          /* Form: collect email + name */
+          <form onSubmit={handleInvite} className="p-6 flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-[#64748b] mb-1 block">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={inviteForm.email}
-                  onChange={(e) =>
-                    setInviteForm({ ...inviteForm, email: e.target.value })
-                  }
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-                  placeholder="member@example.com"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[#64748b] mb-1 block">
-                  Temporary Password *
+                  First Name
                 </label>
                 <input
                   type="text"
-                  required
-                  value={inviteForm.password}
+                  value={inviteForm.firstName}
                   onChange={(e) =>
-                    setInviteForm({ ...inviteForm, password: e.target.value })
+                    setInviteForm({
+                      ...inviteForm,
+                      firstName: e.target.value,
+                    })
                   }
                   className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-                  placeholder="Set a temporary password"
+                  placeholder="John"
                 />
-                <p className="text-xs text-[#94a3b8] mt-1">
-                  Share this password with the member so they can log in.
-                </p>
               </div>
-
-              {inviteError && (
-                <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-                  {inviteError}
-                </div>
-              )}
-
-              <div className="flex gap-3 justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInviteOpen(false);
-                    setInviteError("");
-                  }}
-                  className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={inviteLoading}
-                  className="px-4 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark disabled:opacity-50 transition-colors"
-                >
-                  {inviteLoading ? "Creating…" : "Create Member"}
-                </button>
+              <div>
+                <label className="text-xs font-medium text-[#64748b] mb-1 block">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={inviteForm.lastName}
+                  onChange={(e) =>
+                    setInviteForm({
+                      ...inviteForm,
+                      lastName: e.target.value,
+                    })
+                  }
+                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
+                  placeholder="Doe"
+                />
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[#64748b] mb-1 block">
+                Email *
+              </label>
+              <input
+                type="email"
+                required
+                value={inviteForm.email}
+                onChange={(e) =>
+                  setInviteForm({ ...inviteForm, email: e.target.value })
+                }
+                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
+                placeholder="member@example.com"
+              />
+            </div>
 
-      {/* Delete Confirmation */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
-              Remove Member
-            </h3>
-            <p className="text-sm text-[#64748b] mb-6">
-              Are you sure you want to remove this member? They will lose access
-              to all shared games and data.
-            </p>
-            <div className="flex gap-3 justify-end">
+            {inviteError && (
+              <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+                {inviteError}
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-end pt-2">
               <button
-                onClick={() => setDeleteConfirm(null)}
+                type="button"
+                onClick={closeInviteModal}
                 className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleRemove(deleteConfirm)}
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                type="submit"
+                disabled={inviteLoading}
+                className="px-4 py-2 text-sm bg-navy-900 text-white rounded-[4px] hover:bg-navy-800 disabled:opacity-50 transition-colors"
               >
-                Remove
+                {inviteLoading ? "Sending…" : "Send Invite"}
               </button>
             </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* Invite link modal (from resend) */}
+      <Modal
+        open={!!inviteLink && !inviteOpen}
+        onClose={() => setInviteLink("")}
+      >
+        <div className="p-6 flex flex-col gap-4">
+          <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
+            <span className="material-symbols-outlined text-green-600 text-2xl">
+              check_circle
+            </span>
+          </div>
+          <h3 className="text-lg font-semibold text-[#0f172a] text-center">
+            New Invite Link
+          </h3>
+          <p className="text-sm text-[#64748b] text-center">
+            Share this updated link with the member.
+          </p>
+          <div className="flex items-center gap-2 bg-slate-50 border border-[#e2e8f0] rounded-[4px] px-3 py-2.5">
+            <input
+              type="text"
+              readOnly
+              value={inviteLink}
+              className="flex-1 bg-transparent text-sm text-[#0f172a] outline-none truncate"
+            />
+            <Button size="sm" onClick={handleCopy}>
+              {copied ? "Copied!" : "Copy"}
+            </Button>
+          </div>
+          <p className="text-xs text-[#94a3b8] text-center">
+            This link expires in 7 days.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => setInviteLink("")}
+            className="w-full"
+          >
+            Done
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation */}
+      <Modal
+        open={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        size="sm"
+      >
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
+            Remove Member
+          </h3>
+          <p className="text-sm text-[#64748b] mb-6">
+            Are you sure you want to remove this member? They will lose access
+            to all shared games and data.
+          </p>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteConfirm && handleRemove(deleteConfirm)}
+            >
+              Remove
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

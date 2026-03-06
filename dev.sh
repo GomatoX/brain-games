@@ -42,22 +42,13 @@ cmd_dev() {
   wait
 }
 
-cmd_build_play() {
-  echo -e "${GREEN}▸ Building games play page...${NC}"
-  (cd "$ROOT_DIR/games" && yarn build:app)
-
-  echo -e "${GREEN}▸ Syncing to app/public/play...${NC}"
-  rm -rf "$ROOT_DIR/app/public/play"
-  cp -r "$ROOT_DIR/games/dist/play" "$ROOT_DIR/app/public/play"
-
-  echo -e "${GREEN}✔ Play bundle updated.${NC}"
-}
-
 cmd_build() {
-  echo -e "${GREEN}▸ Building games...${NC}"
+  echo -e "${GREEN}▸ Building game engine IIFE bundles...${NC}"
   (cd "$ROOT_DIR/games" && yarn build:all)
 
-  cmd_build_play
+  echo -e "${GREEN}▸ Syncing IIFE bundles to app/public...${NC}"
+  cp -f "$ROOT_DIR/games/dist/crossword-engine.iife.js" "$ROOT_DIR/app/public/crossword-engine.iife.js" 2>/dev/null || true
+  cp -f "$ROOT_DIR/games/dist/word-game-engine.iife.js" "$ROOT_DIR/app/public/word-game-engine.iife.js" 2>/dev/null || true
 
   echo -e "${GREEN}▸ Building app...${NC}"
   (cd "$ROOT_DIR/app" && yarn build)
@@ -111,8 +102,7 @@ usage() {
   echo "  setup       First-time setup (copy .env, install deps, push DB)"
   echo "  install     Install all dependencies"
   echo "  dev         Start app + games dev servers in parallel"
-  echo "  build       Build games & app for production"
-  echo "  build:play  Rebuild play page & sync to app/public/play"
+  echo "  build       Build game engines & app for production"
   echo "  db:push     Push DB schema (drizzle-kit push)"
   echo "  db:seed     Seed the database"
   echo "  db:studio   Open Drizzle Studio"
@@ -127,7 +117,6 @@ case "${1:-}" in
   install)    cmd_install ;;
   dev)        cmd_dev ;;
   build)      cmd_build ;;
-  build:play) cmd_build_play ;;
   db:push)    cmd_db_push ;;
   db:seed)    cmd_db_seed ;;
   db:studio)  cmd_db_studio ;;

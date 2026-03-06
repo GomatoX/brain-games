@@ -1,5 +1,49 @@
+import { getAuthenticatedUser } from "@/lib/auth-server";
+import { db } from "@/db";
+import { organizations, branding } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import SettingsContent from "@/components/SettingsContent";
 
-export default function SettingsPage() {
-  return <SettingsContent />;
+export default async function SettingsPage() {
+  const user = await getAuthenticatedUser();
+  const isOwner = user.orgRole === "owner";
+
+  const [org, presets] = await Promise.all([
+    db
+      .select({
+        language: organizations.defaultLanguage,
+        defaultBranding: organizations.defaultBranding,
+        name: organizations.name,
+        logoUrl: organizations.logoUrl,
+      })
+      .from(organizations)
+      .where(eq(organizations.id, user.orgId))
+      .limit(1)
+      .then((rows) => rows[0]),
+    db
+      .select({ id: branding.id, name: branding.name })
+      .from(branding)
+      .where(eq(branding.orgId, user.orgId))
+      .orderBy(desc(branding.createdAt)),
+  ]);
+
+  const initialSettings = {
+    language: org?.language || "lt",
+    default_branding: org?.defaultBranding || "",
+    org_name: org?.name || "",
+    logo_url: org?.logoUrl || null,
+  };
+
+  const initialBrandingOptions = presets.map((b) => ({
+    id: b.id,
+    name: b.name || `Preset ${b.id}`,
+  }));
+
+  return (
+    <SettingsContent
+      isOwner={isOwner}
+      initialSettings={initialSettings}
+      initialBrandingOptions={initialBrandingOptions}
+    />
+  );
 }

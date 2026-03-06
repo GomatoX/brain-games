@@ -4,12 +4,17 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import PlatformLogo from "@/components/PlatformLogo";
 
 interface RegisterFormProps {
   platformName: string;
+  orgLogoUrl?: string | null;
 }
 
-export default function RegisterForm({ platformName }: RegisterFormProps) {
+export default function RegisterForm({
+  platformName,
+  orgLogoUrl,
+}: RegisterFormProps) {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -60,12 +65,7 @@ export default function RegisterForm({ platformName }: RegisterFormProps) {
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <span className="material-symbols-outlined text-rust text-3xl">
-            settings_suggest
-          </span>
-          <span className="text-xl font-bold font-serif text-[#0f172a]">
-            {platformName}
-          </span>
+          <PlatformLogo platformName={platformName} orgLogoUrl={orgLogoUrl} />
         </Link>
 
         {/* Card */}

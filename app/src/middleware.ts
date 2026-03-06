@@ -73,7 +73,11 @@ export async function middleware(request: NextRequest) {
         }
 
         // Stale cookie — clear it and let them see login
-        return clearAuthAndRedirect(request);
+        const response = NextResponse.next();
+        response.cookies.delete(SESSION_COOKIE);
+        response.cookies.delete("authjs.csrf-token");
+        response.cookies.delete("authjs.callback-url");
+        return response;
       } catch {
         // If check fails, let them through to login
       }
@@ -84,5 +88,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/login", "/register"],
+  matcher: ["/", "/dashboard/:path*", "/login", "/register", "/invite/:path*"],
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Panel, PanelHeader, Badge, Button, PageHeader } from "@/components/ui";
 
 interface Game {
   id: string | number;
@@ -46,8 +47,10 @@ const API_URL = typeof window !== "undefined" ? window.location.origin : "";
 
 export default function DashboardContent({
   initialGames,
+  initialLang,
 }: {
   initialGames: Games;
+  initialLang: string;
 }) {
   const [games, setGames] = useState<Games>(initialGames);
   const [modal, setModal] = useState<ModalState>({
@@ -64,7 +67,7 @@ export default function DashboardContent({
     type: GameType;
   } | null>(null);
   const [embedCopied, setEmbedCopied] = useState(false);
-  const [lang, setLang] = useState("lt");
+  const [lang, setLang] = useState(initialLang);
 
   function getEmbedSnippet(gameId: string | number, gameType: GameType) {
     const tagMap: Record<GameType, { tag: string; script: string }> = {
@@ -112,18 +115,6 @@ export default function DashboardContent({
     }
   }
 
-  async function fetchLang() {
-    try {
-      const res = await fetch("/api/settings");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.language) setLang(data.language);
-      }
-    } catch {
-      // ignore
-    }
-  }
-
   async function handleDelete(type: GameType, id: string | number) {
     try {
       const res = await fetch(`/api/games?collection=${type}&id=${id}`, {
@@ -165,20 +156,12 @@ export default function DashboardContent({
       ).length
     : 0;
 
-  useEffect(() => {
-    fetchLang();
-  }, []);
-
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-serif font-medium text-[#0f172a] mb-1">
-          Dashboard
-        </h1>
-        <p className="text-[#64748b] text-sm">
-          Manage your brain games and track their status.
-        </p>
-      </div>
+      <PageHeader
+        title="Games"
+        description="Manage your brain games and track their status."
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -249,22 +232,15 @@ export default function DashboardContent({
           lang={lang}
         />
         {/* Sudoku - Coming Soon */}
-        <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden opacity-60">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#e2e8f0]">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-purple-50 flex items-center justify-center">
-                <span className="material-symbols-outlined text-lg text-purple-600">
-                  tag
-                </span>
-              </div>
-              <h2 className="text-lg font-bold text-[#0f172a] font-serif">
-                Sudoku
-              </h2>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700">
+        <Panel className="opacity-60">
+          <PanelHeader
+            title="Sudoku"
+            count={
+              <Badge variant="info" dot={false}>
                 Coming Soon
-              </span>
-            </div>
-          </div>
+              </Badge>
+            }
+          />
           <div className="p-12 text-center">
             <span className="material-symbols-outlined text-4xl text-[#cbd5e1] mb-3 block">
               lock
@@ -273,7 +249,7 @@ export default function DashboardContent({
               Sudoku puzzles are coming soon. Stay tuned!
             </p>
           </div>
-        </div>
+        </Panel>
       </div>
 
       {/* Create/Edit Modal */}
@@ -292,7 +268,7 @@ export default function DashboardContent({
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl">
+          <div className="bg-white rounded-[4px] p-6 w-full max-w-sm shadow-xl">
             <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
               Delete Game
             </h3>
@@ -322,7 +298,7 @@ export default function DashboardContent({
       {/* Embed Code Popover */}
       {embedPopover && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+          <div className="bg-white rounded-[4px] w-full max-w-lg shadow-xl overflow-hidden">
             <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-rust">
@@ -413,7 +389,7 @@ function StatCard({
     orange: "bg-orange-50 text-orange-600",
   };
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-5">
+    <div className="bg-white border border-[#e2e8f0] rounded-[4px] shadow-sharp p-5">
       <div className="flex items-center gap-3">
         <div
           className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorMap[color]}`}
@@ -462,25 +438,16 @@ function GameSection({
   };
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden">
-      <div className="px-5 py-4 border-b border-[#e2e8f0] flex items-center gap-3">
-        <div
-          className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorMap[iconColor]}`}
-        >
-          <span className="material-symbols-outlined text-lg">{icon}</span>
-        </div>
-        <h2 className="font-semibold text-[#0f172a]">{title}</h2>
-        <span className="text-xs text-[#64748b] bg-slate-100 px-2 py-0.5 rounded-full">
-          {games.length}
-        </span>
-        <button
-          onClick={onAdd}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors"
-        >
-          <span className="material-symbols-outlined text-sm">add</span>
-          New
-        </button>
-      </div>
+    <Panel>
+      <PanelHeader
+        title={title}
+        count={games.length}
+        action={
+          <Button size="sm" icon="add" onClick={onAdd}>
+            New
+          </Button>
+        }
+      />
 
       {games.length === 0 ? (
         <div className="p-8 text-center text-sm text-[#64748b]">
@@ -503,17 +470,13 @@ function GameSection({
                   {game.word && ` · "${game.word}"`}
                 </p>
               </div>
-              <button
+              <Badge
+                variant={game.status === "published" ? "success" : "draft"}
                 onClick={() => onToggleStatus(type, game.id, game.status)}
-                className={`text-xs font-medium px-2.5 py-0.5 rounded-full cursor-pointer transition-colors ${
-                  game.status === "published"
-                    ? "bg-green-50 text-green-700 hover:bg-green-100"
-                    : "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                }`}
                 title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
               >
                 {game.status}
-              </button>
+              </Badge>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onShowCode(game)}
@@ -525,7 +488,7 @@ function GameSection({
                   </span>
                 </button>
                 <a
-                  href={`${PLAY_BASE}/?id=${game.id}${type !== "crosswords" ? `&type=${type === "wordgames" ? "word" : "sudoku"}` : ""}&lang=${lang}`}
+                  href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : "sudoku"}&id=${game.id}&lang=${lang}${game.status !== "published" ? "&preview=true" : ""}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 text-[#64748b] hover:text-blue-600 transition-colors rounded-lg hover:bg-slate-100"
@@ -558,7 +521,7 @@ function GameSection({
           ))}
         </div>
       )}
-    </div>
+    </Panel>
   );
 }
 
@@ -911,7 +874,7 @@ function GameModal({
   if (createdGame) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+        <div className="bg-white rounded-[4px] w-full max-w-lg shadow-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#0f172a]">
               {typeLabels[type]} Created!
@@ -984,7 +947,7 @@ function GameModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-[4px] w-full max-w-lg shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
         <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[#0f172a]">
             {mode === "create" ? "Create" : "Edit"} {typeLabels[type]}

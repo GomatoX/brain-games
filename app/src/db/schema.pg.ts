@@ -10,6 +10,7 @@ export const organizations = pgTable("organizations", {
   apiToken: text("api_token").unique(),
   defaultLanguage: text("default_language").default("lt"),
   defaultBranding: text("default_branding"),
+  logoUrl: text("logo_url"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),
@@ -29,6 +30,8 @@ export const users = pgTable("users", {
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
   orgRole: text("org_role").notNull().default("member"),
+  inviteToken: text("invite_token").unique(),
+  inviteExpiresAt: text("invite_expires_at"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),
@@ -51,7 +54,9 @@ export const branding = pgTable("branding", {
   selectionRingColor: text("selection_ring_color"),
   highlightColor: text("highlight_color"),
   correctColor: text("correct_color"),
+  correctLightColor: text("correct_light_color"),
   presentColor: text("present_color"),
+  absentColor: text("absent_color"),
   bgPrimaryColor: text("bg_primary_color"),
   bgSecondaryColor: text("bg_secondary_color"),
   textPrimaryColor: text("text_primary_color"),

@@ -38,6 +38,8 @@ if (isPostgres) {
       role TEXT NOT NULL DEFAULT 'publisher',
       org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       org_role TEXT NOT NULL DEFAULT 'member',
+      invite_token TEXT UNIQUE,
+      invite_expires_at TEXT,
       created_at TEXT NOT NULL DEFAULT now()
     );
 
@@ -154,6 +156,8 @@ if (isPostgres) {
       role TEXT NOT NULL DEFAULT 'publisher',
       org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       org_role TEXT NOT NULL DEFAULT 'member',
+      invite_token TEXT UNIQUE,
+      invite_expires_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -340,6 +344,23 @@ if (isPostgres) {
     }
 
     sqlite.pragma("foreign_keys = ON");
+  }
+
+  // ─── Auto-migrate: add invite columns ─────────────────
+  if (cols.includes("org_id") && !cols.includes("invite_token")) {
+    console.log("[migrate] Adding invite_token + invite_expires_at columns...");
+    try {
+      // SQLite cannot ALTER TABLE ADD COLUMN with UNIQUE constraint,
+      // so we add the column first, then create a unique index.
+      sqlite.exec("ALTER TABLE users ADD COLUMN invite_token TEXT;");
+      sqlite.exec("ALTER TABLE users ADD COLUMN invite_expires_at TEXT;");
+      sqlite.exec(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_invite_token ON users(invite_token) WHERE invite_token IS NOT NULL;",
+      );
+      console.log("[migrate] ✅ invite columns added");
+    } catch (err) {
+      console.error("[migrate] invite columns may already exist:", err);
+    }
   }
 
   db = drizzleSqlite(sqlite, { schema });

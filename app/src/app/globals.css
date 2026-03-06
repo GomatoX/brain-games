@@ -7,12 +7,14 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-ibm-plex);
   --font-serif: var(--font-playfair);
   --font-mono: var(--font-geist-mono);
   --color-rust: var(--rust);
   --color-rust-dark: var(--rust-dark);
   --color-rust-light: var(--rust-light);
+  --color-navy-900: #0f172a;
+  --color-navy-800: #1e293b;
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -29,11 +31,12 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 4px;
+  --shadow-sharp: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 :root {
@@ -98,7 +101,8 @@
     --primary: var(--platform-accent);
     --ring: var(--platform-accent);
 
-    @apply bg-background text-foreground font-[family-name:var(--font-inter)];
+    @apply bg-background text-foreground;
+    font-family: var(--font-ibm-plex), "IBM Plex Sans", sans-serif;
   }
   h1,
   h2,
@@ -106,7 +110,7 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-playfair), "Playfair Display", serif;
+    font-family: var(--font-ibm-plex), "IBM Plex Sans", sans-serif;
   }
 }
 
@@ -116,7 +120,7 @@
 }
 
 .font-sans {
-  font-family: var(--font-inter), "Inter", sans-serif;
+  font-family: var(--font-ibm-plex), "IBM Plex Sans", sans-serif;
 }
 
 /* Custom scrollbar */

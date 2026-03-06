@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Playfair_Display, Inter, IBM_Plex_Sans } from "next/font/google";
 import { platformConfig } from "@/lib/platform";
 import Providers from "@/components/Providers";
 import "./globals.css";
@@ -13,6 +13,13 @@ const playfair = Playfair_Display({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const ibmPlex = IBM_Plex_Sans({
+  variable: "--font-ibm-plex",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -52,7 +59,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${playfair.variable} ${inter.variable} antialiased`}
+        className={`${playfair.variable} ${inter.variable} ${ibmPlex.variable} antialiased`}
         style={
           {
             "--platform-accent": platformConfig.accent,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { requireAuth } from "@/lib/api-auth";
+import { requireAuth, requireOwner } from "@/lib/api-auth";
 
 export async function GET() {
   const result = await requireAuth();
@@ -15,6 +15,7 @@ export async function GET() {
         language: organizations.defaultLanguage,
         defaultBranding: organizations.defaultBranding,
         name: organizations.name,
+        logoUrl: organizations.logoUrl,
       })
       .from(organizations)
       .where(eq(organizations.id, orgId))
@@ -24,18 +25,20 @@ export async function GET() {
       language: org?.language || "lt",
       default_branding: org?.defaultBranding || null,
       org_name: org?.name || null,
+      logo_url: org?.logoUrl || null,
     });
   } catch {
     return NextResponse.json({
       language: "lt",
       default_branding: null,
       org_name: null,
+      logo_url: null,
     });
   }
 }
 
 export async function POST(request: NextRequest) {
-  const result = await requireAuth();
+  const result = await requireOwner();
   if (result instanceof NextResponse) return result;
   const { orgId } = result;
 
@@ -49,6 +52,7 @@ export async function POST(request: NextRequest) {
     if (body.default_branding !== undefined)
       updates.defaultBranding = body.default_branding || null;
     if (body.org_name !== undefined) updates.name = body.org_name;
+    if (body.logo_url !== undefined) updates.logoUrl = body.logo_url || null;
 
     await db
       .update(organizations)
@@ -59,6 +63,7 @@ export async function POST(request: NextRequest) {
       language: body.language || "lt",
       default_branding: body.default_branding || null,
       org_name: body.org_name || null,
+      logo_url: body.logo_url || null,
     });
   } catch (err) {
     const message =

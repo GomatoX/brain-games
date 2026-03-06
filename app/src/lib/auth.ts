@@ -78,6 +78,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     },
   },
+  logger: {
+    error: (error) => {
+      // Suppress expected CredentialsSignin errors — handled on the client
+      if (
+        error instanceof Error &&
+        error.message?.includes("CredentialsSignin")
+      ) {
+        return;
+      }
+      console.error("[auth]", error);
+    },
+  },
   pages: {
     signIn: "/login",
   },
