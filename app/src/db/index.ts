@@ -24,6 +24,7 @@ if (isPostgres) {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       api_token TEXT UNIQUE,
+      logo_url TEXT,
       default_language TEXT DEFAULT 'lt',
       default_branding TEXT,
       created_at TEXT NOT NULL DEFAULT now()
@@ -54,7 +55,9 @@ if (isPostgres) {
       selection_ring_color TEXT,
       highlight_color TEXT,
       correct_color TEXT,
+      correct_light_color TEXT,
       present_color TEXT,
+      absent_color TEXT,
       bg_primary_color TEXT,
       bg_secondary_color TEXT,
       text_primary_color TEXT,
@@ -142,6 +145,7 @@ if (isPostgres) {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       api_token TEXT UNIQUE,
+      logo_url TEXT,
       default_language TEXT DEFAULT 'lt',
       default_branding TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -172,7 +176,9 @@ if (isPostgres) {
       selection_ring_color TEXT,
       highlight_color TEXT,
       correct_color TEXT,
+      correct_light_color TEXT,
       present_color TEXT,
+      absent_color TEXT,
       bg_primary_color TEXT,
       bg_secondary_color TEXT,
       text_primary_color TEXT,
@@ -360,6 +366,36 @@ if (isPostgres) {
       console.log("[migrate] ✅ invite columns added");
     } catch (err) {
       console.error("[migrate] invite columns may already exist:", err);
+    }
+  }
+
+  // ─── Auto-migrate: add logo_url to organizations ──────
+  const orgCols = sqlite
+    .pragma("table_info(organizations)")
+    .map((c: { name: string }) => c.name);
+  if (!orgCols.includes("logo_url")) {
+    console.log("[migrate] Adding logo_url column to organizations...");
+    try {
+      sqlite.exec("ALTER TABLE organizations ADD COLUMN logo_url TEXT;");
+      console.log("[migrate] ✅ logo_url column added");
+    } catch (err) {
+      console.error("[migrate] logo_url may already exist:", err);
+    }
+  }
+
+  // ─── Auto-migrate: add new branding columns ───────────
+  const brandCols = sqlite
+    .pragma("table_info(branding)")
+    .map((c: { name: string }) => c.name);
+  const newBrandingCols = ["correct_light_color", "absent_color"];
+  for (const col of newBrandingCols) {
+    if (brandCols.length > 0 && !brandCols.includes(col)) {
+      try {
+        sqlite.exec(`ALTER TABLE branding ADD COLUMN ${col} TEXT;`);
+        console.log(`[migrate] ✅ Added ${col} to branding`);
+      } catch (err) {
+        console.error(`[migrate] ${col} may already exist:`, err);
+      }
     }
   }
 
