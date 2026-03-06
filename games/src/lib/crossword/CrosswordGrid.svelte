@@ -109,7 +109,8 @@
               on:keydown={(e) => handleKeyDown(e, rowIndex, colIndex)}
               autocomplete="off"
               autocapitalize="characters"
-              disabled={blurred || isLocked}
+              readonly={isLocked}
+              disabled={blurred}
             />
           {/if}
         </div>
@@ -350,7 +351,7 @@
     font-weight: 600;
   }
 
-  .cell.locked input:disabled {
+  .cell.locked input[readonly] {
     opacity: 1;
     -webkit-text-fill-color: var(--correct, #007a3c);
   }

@@ -518,11 +518,11 @@
     }
   }
 
-  function focusCell(row, col) {
-    setTimeout(() => {
-      const input = document.querySelector(`[data-cell="${row},${col}"]`);
-      if (input) input.focus();
-    }, 0);
+  async function focusCell(row, col) {
+    await tick();
+    const root = containerEl?.shadowRoot || containerEl || document;
+    const input = root.querySelector(`[data-cell="${row},${col}"]`);
+    if (input) input.focus();
   }
 
   function checkAnswers() {
