@@ -1032,7 +1032,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   @media (max-width: 1024px) {

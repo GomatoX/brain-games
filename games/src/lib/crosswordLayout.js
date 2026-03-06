@@ -203,7 +203,7 @@ function scorePlacement(grid, word, x, y, dir, intersections) {
     }
   }
 
-  return intersections * 5000 - expansion * 100 - distFromCom * 10;
+  return intersections * 5000 - expansion * 300 - distFromCom * 30;
 }
 
 // ─── Find Valid Placements ────────────────────────────────────────────
@@ -496,7 +496,7 @@ export function generateLayoutOptimized(words, seedHint = 1, attempts = 200) {
     const score =
       layout.wordsPlaced * 100000 +
       layout.densityScore * 10000 -
-      layout.area * 5 -
+      layout.area * 20 -
       layout.dirBalance * 500 +
       balancePenalty;
 
@@ -506,7 +506,7 @@ export function generateLayoutOptimized(words, seedHint = 1, attempts = 200) {
     }
 
     // Early exit: all words placed with high density and acceptable balance
-    if (layout.success && layout.densityScore > 0.45 && layout.dirBalance <= 4)
+    if (layout.success && layout.densityScore > 0.55 && layout.dirBalance <= 4)
       break;
   }
 
