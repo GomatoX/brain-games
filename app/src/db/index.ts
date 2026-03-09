@@ -82,6 +82,7 @@ if (isPostgres) {
       title TEXT NOT NULL,
       difficulty TEXT DEFAULT 'Medium',
       words JSONB,
+      layout JSONB,
       main_word TEXT,
       scheduled_date TEXT,
       branding_id TEXT REFERENCES branding(id) ON DELETE SET NULL,
@@ -203,6 +204,7 @@ if (isPostgres) {
       title TEXT NOT NULL,
       difficulty TEXT DEFAULT 'Medium',
       words TEXT,
+      layout TEXT,
       main_word TEXT,
       scheduled_date TEXT,
       branding_id TEXT REFERENCES branding(id) ON DELETE SET NULL,
@@ -396,6 +398,19 @@ if (isPostgres) {
       } catch (err) {
         console.error(`[migrate] ${col} may already exist:`, err);
       }
+    }
+  }
+
+  // ─── Auto-migrate: add layout column to crosswords ────
+  const cwCols = sqlite
+    .pragma("table_info(crosswords)")
+    .map((c: { name: string }) => c.name);
+  if (cwCols.length > 0 && !cwCols.includes("layout")) {
+    try {
+      sqlite.exec("ALTER TABLE crosswords ADD COLUMN layout TEXT;");
+      console.log("[migrate] ✅ Added layout column to crosswords");
+    } catch (err) {
+      console.error("[migrate] layout column may already exist:", err);
     }
   }
 

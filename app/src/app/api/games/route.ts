@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { crosswords, wordgames, sudoku, branding, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireAuth } from "@/lib/api-auth";
+import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
 
 type Collection = "crosswords" | "wordgames" | "sudoku";
 
@@ -115,6 +116,13 @@ export async function POST(request: NextRequest) {
     const table = collections[collection as Collection];
     const insertData = mapToDb(data, userId, orgId);
 
+    // Auto-compute layout for crosswords
+    if (collection === "crosswords" && data.words?.length > 0) {
+      const layout = computeCrosswordLayout(data.words, data.main_word || null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (insertData as any).layout = layout;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [created] = await db
       .insert(table)
@@ -145,6 +153,13 @@ export async function PATCH(request: NextRequest) {
 
     const table = collections[collection as Collection];
     const updateData = mapToDb(data);
+
+    // Auto-recompute layout for crosswords when words change
+    if (collection === "crosswords" && data.words?.length > 0) {
+      const layout = computeCrosswordLayout(data.words, data.main_word || null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (updateData as any).layout = layout;
+    }
 
     // Any org member can edit games
     const [updated] = await db

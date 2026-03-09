@@ -203,7 +203,7 @@ function scorePlacement(grid, word, x, y, dir, intersections) {
     }
   }
 
-  return intersections * 5000 - expansion * 300 - distFromCom * 30;
+  return intersections * 8000 - expansion * 600 - distFromCom * 60;
 }
 
 // ─── Find Valid Placements ────────────────────────────────────────────
@@ -311,7 +311,7 @@ function getDirectionStats(placed) {
 
 // ─── Recursive Backtracking Solver ────────────────────────────────────
 
-const BEAM_WIDTH = 16;
+const BEAM_WIDTH = 20;
 
 function solve(grid, refs, words, idx, placed, deadline) {
   if (idx >= words.length) return true;
@@ -344,7 +344,7 @@ function solve(grid, refs, words, idx, placed, deadline) {
 
 function greedyPlace(grid, refs, words, placed) {
   let unplaced = [...words];
-  let passes = 50;
+  let passes = 80;
 
   while (unplaced.length > 0 && passes-- > 0) {
     const still = [];
@@ -430,7 +430,7 @@ export function generateLayout(words, seed = 1) {
 
   // Phase 1: recursive backtracking (time-budgeted)
   const remaining = shuffled.slice(1);
-  const deadline = Date.now() + 500;
+  const deadline = Date.now() + 800;
   const btOk = solve(grid, refs, remaining, 0, placed, deadline);
 
   // Phase 2: greedy fallback for any words backtracking couldn't place
@@ -495,8 +495,8 @@ export function generateLayoutOptimized(words, seedHint = 1, attempts = 200) {
     // Score: words placed >> density >> compactness >> balance
     const score =
       layout.wordsPlaced * 100000 +
-      layout.densityScore * 10000 -
-      layout.area * 20 -
+      layout.densityScore * 20000 -
+      layout.area * 50 -
       layout.dirBalance * 500 +
       balancePenalty;
 
@@ -506,7 +506,7 @@ export function generateLayoutOptimized(words, seedHint = 1, attempts = 200) {
     }
 
     // Early exit: all words placed with high density and acceptable balance
-    if (layout.success && layout.densityScore > 0.55 && layout.dirBalance <= 4)
+    if (layout.success && layout.densityScore > 0.65 && layout.dirBalance <= 4)
       break;
   }
 

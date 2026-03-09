@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { crosswords, wordgames, sudoku, branding } from "@/db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
+import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
 
 type GameType = "crosswords" | "wordgames" | "sudoku";
 
@@ -125,9 +126,59 @@ export async function GET(request: NextRequest) {
     };
 
     if ("words" in game) {
-      gameData.words = game.words;
-      gameData.main_word = game.mainWord;
       gameData.difficulty = game.difficulty;
+
+      // Use pre-computed layout if available (anti-cheat: no answers sent)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const layout = (game as any).layout;
+      if (layout) {
+        gameData.layout = {
+          cells: layout.cells,
+          clues: layout.clues,
+          gridWidth: layout.gridWidth,
+          gridHeight: layout.gridHeight,
+          gridSize: layout.gridSize,
+          seed: layout.seed,
+          mainWord: layout.mainWord
+            ? {
+                word: layout.mainWord.word,
+                cells: layout.mainWord.cells,
+              }
+            : undefined,
+        };
+        gameData.main_word = game.mainWord;
+      } else if (game.words && game.words.length > 0) {
+        // Compute layout on-the-fly for old crosswords without pre-computed layout
+        const computed = computeCrosswordLayout(
+          game.words,
+          game.mainWord || null,
+        );
+
+        // Auto-save for future requests (fire-and-forget)
+        db.update(crosswords)
+          .set({ layout: computed } as any)
+          .where(eq(crosswords.id, game.id))
+          .then(() =>
+            console.log(`[layout] Auto-computed layout for ${game.id}`),
+          )
+          .catch(() => {});
+
+        gameData.layout = {
+          cells: computed.cells,
+          clues: computed.clues,
+          gridWidth: computed.gridWidth,
+          gridHeight: computed.gridHeight,
+          gridSize: computed.gridSize,
+          seed: computed.seed,
+          mainWord: computed.mainWord
+            ? {
+                word: computed.mainWord.word,
+                cells: computed.mainWord.cells,
+              }
+            : undefined,
+        };
+        gameData.main_word = game.mainWord;
+      }
     }
     if ("word" in game) {
       gameData.word = game.word;

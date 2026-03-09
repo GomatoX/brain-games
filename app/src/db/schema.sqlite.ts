@@ -93,6 +93,8 @@ export const crosswords = sqliteTable("crosswords", {
   words: text("words", { mode: "json" }).$type<
     { word: string; clue: string; main_word_index?: number }[]
   >(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  layout: text("layout", { mode: "json" }).$type<Record<string, any>>(),
   mainWord: text("main_word"),
   scheduledDate: text("scheduled_date"),
   brandingId: text("branding_id").references(() => branding.id, {

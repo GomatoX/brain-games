@@ -37,6 +37,7 @@
   let selectedCell = null;
   let selectedDirection = "across";
   let isPreviewMode = false;
+  let hasServerLayout = false;
 
   // Latest/history mode
   let latestMode = !puzzleId && !!userId;
@@ -266,6 +267,13 @@
   }
 
   function buildGrid() {
+    // Check if we have a pre-computed layout from the server
+    if (puzzle.layout && puzzle.layout.cells && puzzle.layout.clues) {
+      buildGridFromLayout();
+      return;
+    }
+
+    // Legacy path: build from raw words (preview mode / old data)
     const words = puzzle.words || [];
 
     let layoutWords = words;
@@ -370,6 +378,68 @@
     gridSize = Math.max(trimmedRows, trimmedCols);
 
     puzzle._layoutWords = sortedWords;
+    hasServerLayout = false;
+  }
+
+  /**
+   * Build grid from a server-side pre-computed layout.
+   * No answer letters are available — the grid stores structure only.
+   */
+  function buildGridFromLayout() {
+    const layout = puzzle.layout;
+    const rows = layout.gridHeight;
+    const cols = layout.gridWidth;
+    gridSize = layout.gridSize || Math.max(rows, cols);
+
+    grid = Array(rows)
+      .fill(null)
+      .map(() =>
+        Array(cols)
+          .fill(null)
+          .map(() => ({
+            letter: "",
+            isBlocked: true,
+            number: null,
+            wordIds: [],
+          })),
+      );
+
+    // Fill cell structure from layout.cells
+    for (const cell of layout.cells) {
+      if (grid[cell.row] && grid[cell.row][cell.col]) {
+        grid[cell.row][cell.col].isBlocked = cell.isBlocked;
+        grid[cell.row][cell.col].number = cell.number;
+      }
+    }
+
+    // Build _layoutWords from clues (for navigation/highlighting)
+    const layoutWords = layout.clues.map((clue, index) => ({
+      clue: clue.clue,
+      direction: clue.direction,
+      x: clue.startCol,
+      y: clue.startRow,
+      _number: clue.number,
+      word: "X".repeat(clue.length), // Placeholder — no real answers
+      wordLength: clue.length,
+      _wordIndex: index,
+    }));
+
+    // Mark cells as non-blocked based on word paths
+    for (const w of layoutWords) {
+      const dx = w.direction === "across" ? 1 : 0;
+      const dy = w.direction === "down" ? 1 : 0;
+      for (let i = 0; i < w.wordLength; i++) {
+        const cx = w.x + i * dx;
+        const cy = w.y + i * dy;
+        if (grid[cy] && grid[cy][cx]) {
+          grid[cy][cx].isBlocked = false;
+          grid[cy][cx].wordIds.push(w._wordIndex);
+        }
+      }
+    }
+
+    puzzle._layoutWords = layoutWords;
+    hasServerLayout = true;
   }
 
   function handleCellClick(event) {
@@ -525,34 +595,77 @@
     if (input) input.focus();
   }
 
-  function checkAnswers() {
-    let correct = 0;
-    let total = 0;
+  async function checkAnswers() {
+    // For server-side layout, use the validate API
+    if (hasServerLayout && apiUrl && puzzle?.id) {
+      try {
+        const response = await fetch(`${apiUrl}/api/public/games/validate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: puzzle.id,
+            answers: cellInputs,
+          }),
+        });
+        if (!response.ok) throw new Error("Validation failed");
+        const result = await response.json();
 
-    grid.forEach((row, rowIndex) => {
-      row.forEach((cell, colIndex) => {
-        if (!cell.isBlocked) {
-          total++;
-          const userInput = cellInputs[`${rowIndex},${colIndex}`] || "";
-          if (userInput === cell.letter) {
-            correct++;
+        // Update solved clues from server response
+        if (result.solvedWords) {
+          const newSolved = new Set(solvedClues);
+          for (const sw of result.solvedWords) {
+            newSolved.add(`${sw.number}-${sw.direction}`);
           }
+          solvedClues = newSolved;
         }
-      });
-    });
 
-    if (correct === total) {
-      feedback = { type: "success", message: "🎉 Perfect! All correct!" };
-    } else if (correct >= total * 0.8) {
-      feedback = {
-        type: "good",
-        message: `👍 Great job! ${correct}/${total} correct`,
-      };
+        const { correct, total } = result;
+        if (correct === total) {
+          feedback = { type: "success", message: "🎉 Perfect! All correct!" };
+        } else if (correct >= total * 0.8) {
+          feedback = {
+            type: "good",
+            message: `👍 Great job! ${correct}/${total} correct`,
+          };
+        } else {
+          feedback = {
+            type: "info",
+            message: `${correct}/${total} correct - keep trying!`,
+          };
+        }
+      } catch {
+        feedback = { type: "info", message: "Could not validate answers" };
+      }
     } else {
-      feedback = {
-        type: "info",
-        message: `${correct}/${total} correct - keep trying!`,
-      };
+      // Fallback: client-side validation (preview mode)
+      let correct = 0;
+      let total = 0;
+
+      grid.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+          if (!cell.isBlocked) {
+            total++;
+            const userInput = cellInputs[`${rowIndex},${colIndex}`] || "";
+            if (userInput === cell.letter) {
+              correct++;
+            }
+          }
+        });
+      });
+
+      if (correct === total) {
+        feedback = { type: "success", message: "🎉 Perfect! All correct!" };
+      } else if (correct >= total * 0.8) {
+        feedback = {
+          type: "good",
+          message: `👍 Great job! ${correct}/${total} correct`,
+        };
+      } else {
+        feedback = {
+          type: "info",
+          message: `${correct}/${total} correct - keep trying!`,
+        };
+      }
     }
 
     setTimeout(() => (feedback = null), 4000);
@@ -577,6 +690,10 @@
   }
 
   function computeSolvedClues(_cellInputs) {
+    // For server layout, solved clues are managed by the server validate response
+    if (hasServerLayout) return solvedClues;
+
+    // Legacy client-side validation (preview mode)
     const solved = new Set();
     const words = puzzle?._layoutWords || puzzle?.words || [];
     for (const word of words) {
@@ -728,6 +845,19 @@
   $: mainWordProgress = computeMainWordProgress(mainWordData, cellInputs);
 
   function computeMainWordData(puzzle, grid) {
+    // For server layout, use the layout's mainWord metadata
+    if (hasServerLayout && puzzle?.layout?.mainWord) {
+      const mw = puzzle.layout.mainWord;
+      return mw.cells.map((c) => ({
+        row: c.row,
+        col: c.col,
+        expectedLetter: mw.word[c.letterIndex],
+        number: grid[c.row]?.[c.col]?.number,
+        parentWord: null,
+      }));
+    }
+
+    // Legacy path (preview mode)
     if (!puzzle?.main_word || !puzzle?._layoutWords) return [];
     const words = puzzle._layoutWords;
     const collected = [];
@@ -785,9 +915,16 @@
       const key = `${d.row},${d.col}`;
       const typed = inputs[key] || "";
       const letterMatches = typed.toUpperCase() === d.expectedLetter;
-      const wordCorrect = d.parentWord
-        ? isWordFullyCorrect(d.parentWord, inputs)
-        : letterMatches;
+
+      // For server layout, we check if the word's clue is in solvedClues
+      let wordCorrect = letterMatches;
+      if (!hasServerLayout && d.parentWord) {
+        wordCorrect = isWordFullyCorrect(d.parentWord, inputs);
+      } else if (hasServerLayout) {
+        // For server layout, letter match is sufficient since we validate server-side
+        wordCorrect = letterMatches;
+      }
+
       return {
         ...d,
         filled: letterMatches && wordCorrect,
