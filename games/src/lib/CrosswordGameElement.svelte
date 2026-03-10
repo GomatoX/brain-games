@@ -1,4 +1,17 @@
-<svelte:options customElement="crossword-game" />
+<svelte:options
+  customElement={{
+    tag: "crossword-game",
+    shadow: "none",
+    props: {
+      puzzleId: { attribute: "puzzle-id" },
+      userId: { attribute: "userid" },
+      org: { attribute: "org" },
+      apiUrl: { attribute: "api-url" },
+      layoutSeed: { attribute: "layout-seed", type: "Number" },
+      resultId: { attribute: "result-id" },
+    },
+  }}
+/>
 
 <script>
   import CrosswordGame from "./crossword/CrosswordGame.svelte";

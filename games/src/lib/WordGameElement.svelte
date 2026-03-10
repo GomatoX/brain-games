@@ -1,4 +1,13 @@
-<svelte:options customElement="word-game" />
+<svelte:options
+  customElement={{
+    tag: "word-game",
+    shadow: "none",
+    props: {
+      gameId: { attribute: "game-id" },
+      apiUrl: { attribute: "api-url" },
+    },
+  }}
+/>
 
 <script>
   import WordGame from "./WordGame.svelte";
