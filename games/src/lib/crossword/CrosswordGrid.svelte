@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, afterUpdate } from "svelte";
   import { t } from "../i18n.js";
 
   export let grid = [];
@@ -14,6 +14,8 @@
   const dispatch = createEventDispatcher();
 
   let gridEl;
+  let tooltipEl;
+  let tooltipShiftX = 0;
 
   function handleCellClick(rowIndex, colIndex) {
     if (blurred) return;
@@ -57,8 +59,41 @@
     return {
       left: cellRect.left - gridRect.left + cellRect.width / 2,
       top: cellRect.top - gridRect.top,
+      gridWidth: gridRect.width,
     };
   }
+
+  /**
+   * After each DOM update, measure the tooltip and clamp it
+   * so the body stays within viewport / grid boundaries.
+   */
+  function clampTooltip() {
+    if (!tooltipEl || !gridEl || !tooltipPos) {
+      tooltipShiftX = 0;
+      return;
+    }
+
+    const tooltipRect = tooltipEl.getBoundingClientRect();
+    const gridRect = gridEl.getBoundingClientRect();
+    const padding = 4;
+
+    let shift = 0;
+
+    // Check if tooltip overflows left of viewport
+    if (tooltipRect.left < padding) {
+      shift = padding - tooltipRect.left;
+    }
+
+    // Check if tooltip overflows right of viewport
+    const viewportWidth = window.innerWidth;
+    if (tooltipRect.right > viewportWidth - padding) {
+      shift = viewportWidth - padding - tooltipRect.right;
+    }
+
+    tooltipShiftX = shift;
+  }
+
+  afterUpdate(clampTooltip);
 
   $: wordStartCell = getWordStartCell(selectedWordCells);
   $: tooltipPos = getTooltipPosition(wordStartCell, gridEl);
@@ -121,8 +156,14 @@
       <div
         class="grid-tooltip"
         style="left: {tooltipPos.left}px; top: {tooltipPos.top - 8}px;"
+        bind:this={tooltipEl}
       >
-        <div class="tooltip-body">
+        <div
+          class="tooltip-body"
+          style={tooltipShiftX
+            ? `transform: translateX(${tooltipShiftX}px)`
+            : ""}
+        >
           <div class="tooltip-header">
             <svg class="tooltip-icon" viewBox="0 0 16 16" fill="none">
               {#if currentClue.direction === "across"}

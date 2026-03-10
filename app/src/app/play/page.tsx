@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { crosswords, wordgames, sudoku, organizations } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { platformConfig } from "@/lib/platform";
+import { getTranslations } from "@/lib/translations";
 import PlayEmbed from "@/components/PlayEmbed";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +15,17 @@ const typeIcons: Record<string, string> = {
   sudoku: "grid_4x4",
 };
 
-const typeLabels: Record<string, string> = {
-  crossword: "Crossword",
-  word: "Word Game",
-  sudoku: "Sudoku",
+const typeLabels: Record<string, Record<string, string>> = {
+  en: {
+    crossword: "Crossword",
+    word: "Word Game",
+    sudoku: "Sudoku",
+  },
+  lt: {
+    crossword: "Kryžiažodis",
+    word: "Žodžių žaidimas",
+    sudoku: "Sudoku",
+  },
 };
 
 interface PlayPageProps {
@@ -51,7 +59,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
               <span className="material-symbols-outlined animate-spin">
                 progress_activity
               </span>
-              Loading game…
+              Loading…
             </div>
           </div>
         }
@@ -116,15 +124,22 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
       : []),
   ];
 
-  // Fetch org info for branding & latest links
+  // Fetch org info for branding, latest links & language
   const [org] = await db
-    .select({ id: organizations.id, logoUrl: organizations.logoUrl })
+    .select({
+      id: organizations.id,
+      logoUrl: organizations.logoUrl,
+      language: organizations.defaultLanguage,
+    })
     .from(organizations)
     .limit(1);
 
   const name = platformConfig.name;
   const logoUrl = org?.logoUrl || null;
   const orgId = org?.id || "";
+  const lang = org?.language || "lt";
+  const t = getTranslations(lang);
+  const labels = typeLabels[lang] || typeLabels.lt;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9fafb] font-[family-name:var(--font-inter)]">
@@ -156,9 +171,9 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-serif font-medium text-[#0f172a] mb-3">
-            Published Games
+            {t.play.publishedGames}
           </h1>
-          <p className="text-[#64748b] text-base">Select a game to play</p>
+          <p className="text-[#64748b] text-base">{t.play.selectGame}</p>
         </div>
 
         {games.length > 0 ? (
@@ -174,7 +189,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                     id="latest-heading"
                     className="text-lg font-serif font-semibold text-[#0f172a]"
                   >
-                    Latest Games
+                    {t.play.latestGames}
                   </h2>
                 </div>
 
@@ -186,7 +201,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                       className="group relative overflow-hidden bg-white border-2 border-[#e2e8f0] rounded-2xl p-7 shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-rust/50 transition-all"
                     >
                       <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl bg-rust/10 text-rust text-[10px] font-bold uppercase tracking-widest">
-                        Latest
+                        {t.play.latest}
                       </div>
                       <div
                         className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${
@@ -202,16 +217,16 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                         </span>
                       </div>
                       <p className="text-[10px] text-[#94a3b8] uppercase tracking-widest font-semibold mb-1">
-                        {typeLabels[type] || "Game"}
+                        {labels[type] || "Game"}
                       </p>
                       <h3 className="text-lg font-serif font-bold text-[#0f172a] group-hover:text-rust transition-colors mb-4">
-                        Latest {typeLabels[type]}
+                        {t.play.latestType(labels[type] || "Game")}
                       </h3>
                       <div className="flex items-center gap-2 text-sm font-semibold text-rust pt-4 border-t border-[#e2e8f0] group-hover:text-rust-dark transition-colors">
                         <span className="material-symbols-outlined text-base">
                           play_circle
                         </span>
-                        Play Now
+                        {t.play.playNow}
                       </div>
                     </Link>
                   ))}
@@ -229,7 +244,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                   id="all-heading"
                   className="text-lg font-serif font-semibold text-[#0f172a]"
                 >
-                  All Games
+                  {t.play.allGames}
                 </h2>
               </div>
 
@@ -259,13 +274,13 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                       </div>
                     </div>
                     <p className="text-xs text-[#94a3b8] uppercase tracking-wide font-medium mb-4">
-                      {typeLabels[game.type] || "Game"}
+                      {labels[game.type] || "Game"}
                     </p>
                     <div className="flex items-center gap-2 text-sm font-semibold text-rust pt-4 border-t border-[#e2e8f0] group-hover:text-rust-dark transition-colors">
                       <span className="material-symbols-outlined text-base">
                         play_circle
                       </span>
-                      Play
+                      {t.play.play}
                     </div>
                   </Link>
                 ))}
@@ -277,7 +292,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
             <span className="material-symbols-outlined text-5xl text-[#cbd5e1] mb-4 block">
               sports_esports
             </span>
-            <p className="text-[#94a3b8]">No published games yet.</p>
+            <p className="text-[#94a3b8]">{t.play.noPublishedGames}</p>
           </div>
         )}
       </main>
