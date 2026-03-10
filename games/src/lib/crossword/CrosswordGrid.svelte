@@ -143,14 +143,10 @@
     {#if currentClue && !blurred && tooltipPos}
       <div
         class="grid-tooltip"
-        style="left: {tooltipPos.left}px; top: {tooltipPos.top - 8}px;"
+        style="left: {tooltipPos.left +
+          (tooltipPos.bodyShift || 0)}px; top: {tooltipPos.top - 8}px;"
       >
-        <div
-          class="tooltip-body"
-          style={tooltipPos.bodyShift
-            ? `transform: translateX(${tooltipPos.bodyShift}px)`
-            : ""}
-        >
+        <div class="tooltip-body">
           <div class="tooltip-header">
             <svg class="tooltip-icon" viewBox="0 0 16 16" fill="none">
               {#if currentClue.direction === "across"}
@@ -176,7 +172,12 @@
           <div class="tooltip-separator"></div>
           <span class="tooltip-text">{currentClue.clue}</span>
         </div>
-        <div class="tooltip-arrow"></div>
+        <div
+          class="tooltip-arrow"
+          style={tooltipPos.bodyShift
+            ? `transform: translateX(${-tooltipPos.bodyShift}px)`
+            : ""}
+        ></div>
       </div>
     {/if}
   </div>
