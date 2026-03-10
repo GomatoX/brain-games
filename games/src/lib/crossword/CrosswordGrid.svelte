@@ -326,7 +326,7 @@
 
   /* Main word indicators */
   .main-word-cell {
-    box-shadow: inset 0 0 0 2px var(--accent) !important;
+    box-shadow: inset 0 0 0 2px var(--main-word-marker, #fff2ca) !important;
   }
 
   .main-word-dot {

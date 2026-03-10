@@ -38,6 +38,7 @@
   let selectedDirection = "across";
   let isPreviewMode = false;
   let hasServerLayout = false;
+  let autoValidateTimer = null;
 
   // Latest/history mode — supports both puzzle-id="latest" and empty puzzleId with userId
   let latestMode = puzzleId === "latest" || (!puzzleId && !!userId);
@@ -492,6 +493,7 @@
     if (cellInputs[key] !== value) {
       cellInputs[key] = value;
       cellInputs = cellInputs;
+      autoValidateWord();
     }
   }
 
@@ -507,6 +509,7 @@
         const newValue = key.toUpperCase();
         cellInputs[cellKey] = newValue;
         cellInputs = cellInputs;
+        autoValidateWord();
       }
       moveToNextCell(rowIndex, colIndex);
     } else if (key === "Backspace") {
@@ -539,6 +542,47 @@
       selectedDirection = "down";
       moveToPrevCell(rowIndex, colIndex);
     }
+  }
+
+  /**
+   * Auto-validate answers with the server after each input.
+   * Debounced to avoid flooding the API on fast typing.
+   */
+  function autoValidateWord() {
+    if (!hasServerLayout || !apiUrl || !puzzle?.id) return;
+
+    clearTimeout(autoValidateTimer);
+    autoValidateTimer = setTimeout(async () => {
+      try {
+        const response = await fetch(`${apiUrl}/api/public/games/validate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: puzzle.id,
+            answers: cellInputs,
+          }),
+        });
+        if (!response.ok) return;
+        const result = await response.json();
+
+        if (result.solvedWords) {
+          const newSolved = new Set(solvedClues);
+          let changed = false;
+          for (const sw of result.solvedWords) {
+            const key = `${sw.number}-${sw.direction}`;
+            if (!newSolved.has(key)) {
+              newSolved.add(key);
+              changed = true;
+            }
+          }
+          if (changed) {
+            solvedClues = newSolved;
+          }
+        }
+      } catch {
+        // silently ignore validation errors
+      }
+    }, 300);
   }
 
   function moveToNextCell(row, col) {
@@ -1160,7 +1204,6 @@
   .game-layout {
     display: flex;
     gap: 32px;
-    padding: 20px 32px 32px;
     align-items: flex-start;
   }
 

@@ -30,6 +30,7 @@ const BRANDING_FIELD_MAP = {
   sidebar_active_color: ["--sidebar-active"],
   sidebar_active_bg_color: ["--sidebar-active-bg"],
   grid_border_color: ["--grid-border"],
+  main_word_marker_color: ["--main-word-marker"],
   font_sans: ["--font-sans"],
   font_serif: ["--font-serif"],
   border_radius: ["--radius-md", "--radius-lg", "--radius-xl"],

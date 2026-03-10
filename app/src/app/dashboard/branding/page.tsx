@@ -37,6 +37,7 @@ export default async function BrandingPage() {
     sidebar_active_color: p.sidebarActiveColor,
     sidebar_active_bg_color: p.sidebarActiveBgColor,
     grid_border_color: p.gridBorderColor,
+    main_word_marker_color: p.mainWordMarkerColor,
     font_sans: p.fontSans,
     font_serif: p.fontSerif,
     border_radius: p.borderRadius,

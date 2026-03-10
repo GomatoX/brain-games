@@ -26,6 +26,7 @@ interface BrandingPreset {
   sidebar_active_color: string | null;
   sidebar_active_bg_color: string | null;
   grid_border_color: string | null;
+  main_word_marker_color: string | null;
   font_sans: string | null;
   font_serif: string | null;
   border_radius: string | null;
@@ -197,6 +198,12 @@ const FIELD_GROUPS: { title: string; icon: string; fields: FieldDef[] }[] = [
         label: "Grid Lines",
         type: "color",
         defaultValue: "#e2e8f0",
+      },
+      {
+        key: "main_word_marker_color",
+        label: "Main Word Marker",
+        type: "color",
+        defaultValue: "#FFF2CA",
       },
     ],
   },

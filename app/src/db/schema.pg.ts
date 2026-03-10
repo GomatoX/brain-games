@@ -67,6 +67,7 @@ export const branding = pgTable("branding", {
   sidebarActiveColor: text("sidebar_active_color"),
   sidebarActiveBgColor: text("sidebar_active_bg_color"),
   gridBorderColor: text("grid_border_color"),
+  mainWordMarkerColor: text("main_word_marker_color"),
   // Typography
   fontSans: text("font_sans"),
   fontSerif: text("font_serif"),

@@ -35,12 +35,12 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
       crosswords: {
         script: "/crossword-engine.iife.js",
         tag: "crossword-game",
-        idAttr: "puzzleid",
+        idAttr: "puzzle-id",
       },
       word: {
         script: "/word-game-engine.iife.js",
         tag: "word-game",
-        idAttr: "gameid",
+        idAttr: "game-id",
       },
       // sudoku: when IIFE is added
     };
@@ -66,10 +66,10 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
       }
 
       el.setAttribute("theme", theme);
-      el.setAttribute("apiurl", window.location.origin);
+      el.setAttribute("api-url", window.location.origin);
       if (lang) el.setAttribute("lang", lang);
-      if (userId) el.setAttribute("userid", userId);
-      if (resultId) el.setAttribute("resultid", resultId);
+      if (userId) el.setAttribute("user-id", userId);
+      if (resultId) el.setAttribute("result-id", resultId);
       if (token) el.setAttribute("token", token);
 
       containerRef.current.appendChild(el);

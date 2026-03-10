@@ -62,14 +62,19 @@
 
   .main-word-slots {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
+    width: 100%;
+    padding: 0 24px;
+    box-sizing: border-box;
   }
 
   .main-word-slot {
-    width: 40px;
-    height: 40px;
+    flex: 1 1 auto;
+    max-width: 52px;
+    min-width: 28px;
+    aspect-ratio: 1;
     border-bottom: 2px solid var(--text-primary, #02030d);
     display: flex;
     align-items: center;
