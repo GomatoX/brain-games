@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import DashboardSidebar from "@/components/DashboardSidebar";
+import SessionGuard from "@/components/SessionGuard";
 
 export default async function DashboardLayout({
   children,
@@ -34,7 +35,7 @@ export default async function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 ml-[260px] h-screen overflow-y-auto">
         <div className="w-full max-w-[880px] mx-auto px-10 py-10 pb-24">
-          {children}
+          <SessionGuard>{children}</SessionGuard>
         </div>
       </main>
     </div>

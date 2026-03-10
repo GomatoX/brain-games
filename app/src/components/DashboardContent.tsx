@@ -144,6 +144,39 @@ export default function DashboardContent({
     }
   }
 
+  const exportGameCsv = (game: Game) => {
+    const rows: string[][] = [];
+
+    if (game.main_word) {
+      rows.push(["Main Word", game.main_word]);
+      rows.push([]);
+    }
+
+    rows.push(["Word", "Clue"]);
+
+    if (game.words) {
+      for (const w of game.words) {
+        rows.push([w.word, w.clue]);
+      }
+    }
+
+    const csvContent = rows
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${game.title || "crossword"}-words.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const totalGames =
     (games?.crosswords.length || 0) + (games?.wordgames.length || 0);
 
@@ -204,6 +237,7 @@ export default function DashboardContent({
           onDelete={(id) => setDeleteConfirm({ type: "crosswords", id })}
           onToggleStatus={handleToggleStatus}
           onShowCode={(g) => setEmbedPopover({ game: g, type: "crosswords" })}
+          onExportCsv={exportGameCsv}
           lang={lang}
         />
         <GameSection
@@ -414,6 +448,7 @@ function GameSection({
   onDelete,
   onToggleStatus,
   onShowCode,
+  onExportCsv,
   lang,
 }: {
   title: string;
@@ -426,6 +461,7 @@ function GameSection({
   onDelete: (id: string | number) => void;
   onToggleStatus: (type: GameType, id: string | number, status: string) => void;
   onShowCode: (game: Game) => void;
+  onExportCsv?: (game: Game) => void;
   lang: string;
 }) {
   const colorMap: Record<string, string> = {
@@ -484,6 +520,17 @@ function GameSection({
                     code
                   </span>
                 </button>
+                {onExportCsv && game.words && game.words.length > 0 && (
+                  <button
+                    onClick={() => onExportCsv(game)}
+                    className="p-1.5 text-[#64748b] hover:text-emerald-600 transition-colors rounded-lg hover:bg-slate-100"
+                    title="Export CSV"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      download
+                    </span>
+                  </button>
+                )}
                 <a
                   href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : "sudoku"}&id=${game.id}&lang=${lang}${game.status !== "published" ? "&preview=true" : ""}`}
                   target="_blank"
