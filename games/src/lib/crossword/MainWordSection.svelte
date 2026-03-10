@@ -43,7 +43,7 @@
   .main-word-section {
     background: var(--bg-secondary);
     border-radius: 8px;
-    padding: 32px 0;
+    padding: 32px 24px;
     margin-top: 16px;
     display: flex;
     flex-direction: column;
@@ -62,18 +62,15 @@
 
   .main-word-slots {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     justify-content: center;
-    flex-wrap: wrap;
     width: 100%;
-    padding: 0 24px;
+    padding: 0 8%;
     box-sizing: border-box;
   }
 
   .main-word-slot {
-    flex: 1 1 auto;
-    max-width: 52px;
-    min-width: 28px;
+    flex: 0 1 44px;
     aspect-ratio: 1;
     border-bottom: 2px solid var(--text-primary, #02030d);
     display: flex;
