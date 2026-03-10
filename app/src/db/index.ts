@@ -68,6 +68,7 @@ if (isPostgres) {
       sidebar_active_color TEXT,
       sidebar_active_bg_color TEXT,
       grid_border_color TEXT,
+      main_word_marker_color TEXT,
       font_sans TEXT,
       font_serif TEXT,
       border_radius TEXT,
@@ -190,6 +191,7 @@ if (isPostgres) {
       sidebar_active_color TEXT,
       sidebar_active_bg_color TEXT,
       grid_border_color TEXT,
+      main_word_marker_color TEXT,
       font_sans TEXT,
       font_serif TEXT,
       border_radius TEXT,
@@ -389,7 +391,11 @@ if (isPostgres) {
   const brandCols = sqlite
     .pragma("table_info(branding)")
     .map((c: { name: string }) => c.name);
-  const newBrandingCols = ["correct_light_color", "absent_color"];
+  const newBrandingCols = [
+    "correct_light_color",
+    "absent_color",
+    "main_word_marker_color",
+  ];
   for (const col of newBrandingCols) {
     if (brandCols.length > 0 && !brandCols.includes(col)) {
       try {
