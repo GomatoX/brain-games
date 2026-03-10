@@ -5,20 +5,24 @@
 
   // Re-export all props from the base component
   export let puzzleId = "";
+  export let userId = "";
   export let theme = "light";
   export let apiUrl = "";
   export let layoutSeed = 1;
   export let token = "";
   export let client = "";
+  export let resultId = "";
   export let lang = "lt";
 </script>
 
 <CrosswordGame
   {puzzleId}
+  {userId}
   {theme}
   {apiUrl}
   {layoutSeed}
   {token}
   {client}
+  {resultId}
   {lang}
 />

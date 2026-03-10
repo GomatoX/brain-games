@@ -85,14 +85,11 @@ export default function DashboardContent({
       },
     };
     const { tag, script } = tagMap[gameType];
-    return `<!-- Load the game engine -->
-<script src="${script}"><\/script>
+    return `<script src="${script}"><\/script>
 
-<!-- Drop in the Web Component -->
 <${tag}
   puzzle-id="${gameId}"
   api-url="${API_URL}"
-  token="YOUR_API_TOKEN"
   lang="${lang}"
   theme="light"></${tag}>`;
   }
@@ -770,10 +767,8 @@ function GameModal({
       },
     };
     const { tag, script } = tagMap[type];
-    return `<!-- Load the game engine -->
-<script src="${script}"><\/script>
+    return `<script src="${script}"><\/script>
 
-<!-- Drop in the Web Component -->
 <${tag}
   puzzle-id="${gameId}"
   api-url="${API_URL}"

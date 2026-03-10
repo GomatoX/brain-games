@@ -103,14 +103,28 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
-  // Fetch org logo for branding
+  // Determine which game types have published content
+  const availableTypes = [
+    ...(cw.length > 0
+      ? [{ type: "crossword" as const, apiType: "crosswords" as const }]
+      : []),
+    ...(wg.length > 0
+      ? [{ type: "word" as const, apiType: "wordgames" as const }]
+      : []),
+    ...(sd.length > 0
+      ? [{ type: "sudoku" as const, apiType: "sudoku" as const }]
+      : []),
+  ];
+
+  // Fetch org info for branding & latest links
   const [org] = await db
-    .select({ logoUrl: organizations.logoUrl })
+    .select({ id: organizations.id, logoUrl: organizations.logoUrl })
     .from(organizations)
     .limit(1);
 
   const name = platformConfig.name;
   const logoUrl = org?.logoUrl || null;
+  const orgId = org?.id || "";
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9fafb] font-[family-name:var(--font-inter)]">
@@ -148,43 +162,116 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
         </div>
 
         {games.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {games.map((game) => (
-              <Link
-                key={`${game.type}-${game.id}`}
-                href={`/play?type=${game.type === "crossword" ? "crosswords" : game.type}&id=${game.id}`}
-                className="group bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-rust/40 transition-all"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-base font-serif font-bold text-[#0f172a] group-hover:text-rust transition-colors">
-                    {game.title}
-                  </h3>
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      game.type === "crossword"
-                        ? "bg-blue-50 text-blue-500"
-                        : game.type === "word"
-                          ? "bg-green-50 text-green-500"
-                          : "bg-purple-50 text-purple-500"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-lg">
-                      {typeIcons[game.type] || "sports_esports"}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-[#94a3b8] uppercase tracking-wide font-medium mb-4">
-                  {typeLabels[game.type] || "Game"}
-                </p>
-                <div className="flex items-center gap-2 text-sm font-semibold text-rust pt-4 border-t border-[#e2e8f0] group-hover:text-rust-dark transition-colors">
-                  <span className="material-symbols-outlined text-base">
-                    play_circle
+          <>
+            {/* ── Latest Games ─────────────────────────────── */}
+            {orgId && availableTypes.length > 0 && (
+              <section className="mb-14" aria-labelledby="latest-heading">
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="material-symbols-outlined text-rust text-xl">
+                    new_releases
                   </span>
-                  Play
+                  <h2
+                    id="latest-heading"
+                    className="text-lg font-serif font-semibold text-[#0f172a]"
+                  >
+                    Latest Games
+                  </h2>
                 </div>
-              </Link>
-            ))}
-          </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {availableTypes.map(({ type, apiType }) => (
+                    <Link
+                      key={`latest-${type}`}
+                      href={`/play?type=${apiType}&id=latest&user=${orgId}`}
+                      className="group relative overflow-hidden bg-white border-2 border-[#e2e8f0] rounded-2xl p-7 shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-rust/50 transition-all"
+                    >
+                      <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl bg-rust/10 text-rust text-[10px] font-bold uppercase tracking-widest">
+                        Latest
+                      </div>
+                      <div
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${
+                          type === "crossword"
+                            ? "bg-blue-50 text-blue-500"
+                            : type === "word"
+                              ? "bg-green-50 text-green-500"
+                              : "bg-purple-50 text-purple-500"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-xl">
+                          {typeIcons[type] || "sports_esports"}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-[#94a3b8] uppercase tracking-widest font-semibold mb-1">
+                        {typeLabels[type] || "Game"}
+                      </p>
+                      <h3 className="text-lg font-serif font-bold text-[#0f172a] group-hover:text-rust transition-colors mb-4">
+                        Latest {typeLabels[type]}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-rust pt-4 border-t border-[#e2e8f0] group-hover:text-rust-dark transition-colors">
+                        <span className="material-symbols-outlined text-base">
+                          play_circle
+                        </span>
+                        Play Now
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── All Games ────────────────────────────────── */}
+            <section aria-labelledby="all-heading">
+              <div className="flex items-center gap-2 mb-6">
+                <span className="material-symbols-outlined text-[#64748b] text-xl">
+                  grid_view
+                </span>
+                <h2
+                  id="all-heading"
+                  className="text-lg font-serif font-semibold text-[#0f172a]"
+                >
+                  All Games
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {games.map((game) => (
+                  <Link
+                    key={`${game.type}-${game.id}`}
+                    href={`/play?type=${game.type === "crossword" ? "crosswords" : game.type}&id=${game.id}`}
+                    className="group bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-rust/40 transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-base font-serif font-bold text-[#0f172a] group-hover:text-rust transition-colors">
+                        {game.title}
+                      </h3>
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          game.type === "crossword"
+                            ? "bg-blue-50 text-blue-500"
+                            : game.type === "word"
+                              ? "bg-green-50 text-green-500"
+                              : "bg-purple-50 text-purple-500"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-lg">
+                          {typeIcons[game.type] || "sports_esports"}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[#94a3b8] uppercase tracking-wide font-medium mb-4">
+                      {typeLabels[game.type] || "Game"}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-rust pt-4 border-t border-[#e2e8f0] group-hover:text-rust-dark transition-colors">
+                      <span className="material-symbols-outlined text-base">
+                        play_circle
+                      </span>
+                      Play
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </>
         ) : (
           <div className="text-center py-16">
             <span className="material-symbols-outlined text-5xl text-[#cbd5e1] mb-4 block">

@@ -58,7 +58,13 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
       containerRef.current.innerHTML = "";
 
       const el = document.createElement(engine.tag);
-      el.setAttribute(engine.idAttr, gameId);
+
+      // "latest" mode: skip puzzleId so the engine uses userId for latest fetch
+      const isLatestMode = gameId === "latest";
+      if (!isLatestMode) {
+        el.setAttribute(engine.idAttr, gameId);
+      }
+
       el.setAttribute("theme", theme);
       el.setAttribute("apiurl", window.location.origin);
       if (lang) el.setAttribute("lang", lang);

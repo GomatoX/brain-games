@@ -65,35 +65,29 @@ export default function KeysContent({
     setTimeout(() => setCopied(null), 2000);
   }
 
-  const crosswordEmbed = `<!-- Load the game engine -->
-<script src="${PLAY_BASE}/dist/crossword-engine.iife.js"><\/script>
+  const crosswordEmbed = `<script src="${PLAY_BASE}/dist/crossword-engine.iife.js"><\/script>
 
-<!-- Drop in the Web Component -->
 <crossword-game
   puzzle-id="latest"
   api-url="${API_URL}"
-  ${token ? `token="${token}"` : 'token="YOUR_API_TOKEN"'}
-  org="${orgId}"
+  userid="${orgId}"
   lang="${lang}"
   theme="light"></crossword-game>`;
 
-  const wordGameEmbed = `<!-- Load the game engine -->
-<script src="${PLAY_BASE}/dist/word-game.iife.js"><\/script>
+  const wordGameEmbed = `<script src="${PLAY_BASE}/dist/word-game.iife.js"><\/script>
 
-<!-- Drop in the Web Component -->
 <word-game
   puzzle-id="latest"
   api-url="${API_URL}"
-  ${token ? `token="${token}"` : 'token="YOUR_API_TOKEN"'}
-  org="${orgId}"
+  userid="${orgId}"
   lang="${lang}"
   theme="light"></word-game>`;
 
   return (
     <div>
       <PageHeader
-        title="API Keys & Embed Codes"
-        description="Manage your API access and get embed snippets for your site."
+        title="Embed Codes"
+        description="Copy and paste these snippets into your website to embed games."
       />
 
       {/* API Token */}
