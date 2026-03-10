@@ -4,7 +4,7 @@
     shadow: "none",
     props: {
       puzzleId: { attribute: "puzzle-id" },
-      userId: { attribute: "userid" },
+      userId: { attribute: "user-id" },
       org: { attribute: "org" },
       apiUrl: { attribute: "api-url" },
       layoutSeed: { attribute: "layout-seed", type: "Number" },

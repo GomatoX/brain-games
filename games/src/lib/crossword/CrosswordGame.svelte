@@ -127,6 +127,12 @@
       window.addEventListener("message", handlePreviewMessage);
     }
 
+    // Auto-detect result param from host page URL (for embeds with share links)
+    if (!resultId) {
+      const urlResult = urlParams.get("result");
+      if (urlResult) resultId = urlResult;
+    }
+
     if (resultId) {
       resultMode = true;
       fetchPuzzle().then(async () => {
@@ -1129,8 +1135,6 @@
     padding: 0;
     margin: 0 auto;
     max-width: 1440px;
-    min-height: 100vh;
-    min-height: 100dvh;
     background: var(--bg-primary);
     color: var(--text-primary);
   }
@@ -1218,7 +1222,6 @@
   @media (max-width: 1024px) {
     .game-layout {
       flex-direction: column;
-      padding: 0 16px 16px;
       gap: 16px;
     }
     .grid-section {

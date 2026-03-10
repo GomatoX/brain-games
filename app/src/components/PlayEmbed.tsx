@@ -59,11 +59,8 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
 
       const el = document.createElement(engine.tag);
 
-      // "latest" mode: skip puzzleId so the engine uses userId for latest fetch
-      const isLatestMode = gameId === "latest";
-      if (!isLatestMode) {
-        el.setAttribute(engine.idAttr, gameId);
-      }
+      // Always set the ID attribute — the engine handles "latest" internally
+      el.setAttribute(engine.idAttr, gameId);
 
       el.setAttribute("theme", theme);
       el.setAttribute("api-url", window.location.origin);
