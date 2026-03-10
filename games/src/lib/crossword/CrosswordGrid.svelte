@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher, afterUpdate } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import { t } from "../i18n.js";
 
   export let grid = [];
@@ -14,8 +14,6 @@
   const dispatch = createEventDispatcher();
 
   let gridEl;
-  let tooltipEl;
-  let tooltipShiftX = 0;
 
   function handleCellClick(rowIndex, colIndex) {
     if (blurred) return;
@@ -56,44 +54,34 @@
     if (!cellParent) return null;
     const gridRect = gridElement.getBoundingClientRect();
     const cellRect = cellParent.getBoundingClientRect();
-    return {
-      left: cellRect.left - gridRect.left + cellRect.width / 2,
-      top: cellRect.top - gridRect.top,
-      gridWidth: gridRect.width,
-    };
+
+    const left = cellRect.left - gridRect.left + cellRect.width / 2;
+    const top = cellRect.top - gridRect.top;
+
+    // Compute viewport-aware body shift synchronously.
+    // The tooltip-body has max-width: 200px, centered via translate(-50%).
+    // We use max-width as a safe estimate for clamping.
+    const tooltipHalfWidth = 100;
+    const padding = 8;
+
+    // Viewport-space center of the tooltip
+    const centerViewport = gridRect.left + left;
+
+    let bodyShift = 0;
+
+    // Left overflow
+    if (centerViewport - tooltipHalfWidth < padding) {
+      bodyShift = padding - (centerViewport - tooltipHalfWidth);
+    }
+
+    // Right overflow
+    if (centerViewport + tooltipHalfWidth > window.innerWidth - padding) {
+      bodyShift =
+        window.innerWidth - padding - (centerViewport + tooltipHalfWidth);
+    }
+
+    return { left, top, bodyShift };
   }
-
-  /**
-   * After each DOM update, measure the tooltip and clamp it
-   * so the body stays within viewport / grid boundaries.
-   */
-  function clampTooltip() {
-    if (!tooltipEl || !gridEl || !tooltipPos) {
-      tooltipShiftX = 0;
-      return;
-    }
-
-    const tooltipRect = tooltipEl.getBoundingClientRect();
-    const gridRect = gridEl.getBoundingClientRect();
-    const padding = 4;
-
-    let shift = 0;
-
-    // Check if tooltip overflows left of viewport
-    if (tooltipRect.left < padding) {
-      shift = padding - tooltipRect.left;
-    }
-
-    // Check if tooltip overflows right of viewport
-    const viewportWidth = window.innerWidth;
-    if (tooltipRect.right > viewportWidth - padding) {
-      shift = viewportWidth - padding - tooltipRect.right;
-    }
-
-    tooltipShiftX = shift;
-  }
-
-  afterUpdate(clampTooltip);
 
   $: wordStartCell = getWordStartCell(selectedWordCells);
   $: tooltipPos = getTooltipPosition(wordStartCell, gridEl);
@@ -156,12 +144,11 @@
       <div
         class="grid-tooltip"
         style="left: {tooltipPos.left}px; top: {tooltipPos.top - 8}px;"
-        bind:this={tooltipEl}
       >
         <div
           class="tooltip-body"
-          style={tooltipShiftX
-            ? `transform: translateX(${tooltipShiftX}px)`
+          style={tooltipPos.bodyShift
+            ? `transform: translateX(${tooltipPos.bodyShift}px)`
             : ""}
         >
           <div class="tooltip-header">
