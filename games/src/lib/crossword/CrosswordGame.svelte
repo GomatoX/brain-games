@@ -39,8 +39,8 @@
   let isPreviewMode = false;
   let hasServerLayout = false;
 
-  // Latest/history mode
-  let latestMode = !puzzleId && !!userId;
+  // Latest/history mode — supports both puzzle-id="latest" and empty puzzleId with userId
+  let latestMode = puzzleId === "latest" || (!puzzleId && !!userId);
   let historyOffset = 0;
   let historyMeta = null; // { current, total, hasNewer, hasOlder }
   let loading = true;

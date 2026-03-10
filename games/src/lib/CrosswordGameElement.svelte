@@ -6,6 +6,7 @@
   // Re-export all props from the base component
   export let puzzleId = "";
   export let userId = "";
+  export let org = "";
   export let theme = "light";
   export let apiUrl = "";
   export let layoutSeed = 1;
@@ -13,11 +14,14 @@
   export let client = "";
   export let resultId = "";
   export let lang = "lt";
+
+  // Support both "userid" and "org" attributes — org is the legacy alias
+  $: resolvedUserId = userId || org;
 </script>
 
 <CrosswordGame
   {puzzleId}
-  {userId}
+  userId={resolvedUserId}
   {theme}
   {apiUrl}
   {layoutSeed}
