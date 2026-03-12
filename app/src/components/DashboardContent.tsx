@@ -4,25 +4,26 @@ import { useState, useEffect } from "react";
 import { Panel, PanelHeader, Badge, Button, PageHeader } from "@/components/ui";
 
 interface Game {
-  id: string | number;
-  status: string;
-  title: string;
-  date_created: string;
-  word?: string;
-  definition?: string;
-  max_attempts?: number;
-  difficulty?: string;
+  id: string | number
+  status: string
+  title: string
+  date_created: string
+  scheduled_date?: string | null
+  word?: string
+  definition?: string
+  max_attempts?: number
+  difficulty?: string
   words?: {
-    word: string;
-    clue: string;
-    main_word_index?: number;
-    x?: number;
-    y?: number;
-    direction?: string;
-  }[];
-  main_word?: string;
-  branding?: string | number | null;
-  created_by?: string | null;
+    word: string
+    clue: string
+    main_word_index?: number
+    x?: number
+    y?: number
+    direction?: string
+  }[]
+  main_word?: string
+  branding?: string | number | null
+  created_by?: string | null
 }
 
 interface Games {
@@ -131,14 +132,19 @@ export default function DashboardContent({
     id: string | number,
     currentStatus: string,
   ) {
-    const newStatus = currentStatus === "published" ? "draft" : "published";
+    const newStatus = currentStatus === "published" ? "draft" : "published"
     try {
       await fetch("/api/games", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ collection: type, id, status: newStatus }),
-      });
-      await fetchGames();
+        body: JSON.stringify({
+          collection: type,
+          id,
+          status: newStatus,
+          scheduled_date: newStatus === "published" ? null : undefined,
+        }),
+      })
+      await fetchGames()
     } catch {
       // ignore
     }
@@ -177,14 +183,21 @@ export default function DashboardContent({
     URL.revokeObjectURL(url);
   };
 
-  const totalGames =
-    (games?.crosswords.length || 0) + (games?.wordgames.length || 0);
+  const allGames = games
+    ? [...games.crosswords, ...games.wordgames]
+    : []
 
-  const publishedCount = games
-    ? [...games.crosswords, ...games.wordgames].filter(
-        (g) => g.status === "published",
-      ).length
-    : 0;
+  const totalGames = allGames.length
+
+  const publishedCount = allGames.filter(
+    (g) => g.status === "published",
+  ).length
+
+  const scheduledCount = allGames.filter(
+    (g) => g.status === "scheduled",
+  ).length
+
+  const draftCount = totalGames - publishedCount - scheduledCount
 
   return (
     <div>
@@ -194,7 +207,7 @@ export default function DashboardContent({
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
         <StatCard
           icon="stacks"
           color="blue"
@@ -208,9 +221,15 @@ export default function DashboardContent({
           label="Published"
         />
         <StatCard
+          icon="schedule_send"
+          color="purple"
+          value={String(scheduledCount)}
+          label="Scheduled"
+        />
+        <StatCard
           icon="edit_note"
           color="orange"
-          value={String(totalGames - publishedCount)}
+          value={String(draftCount)}
           label="Drafts"
         />
       </div>
@@ -417,8 +436,9 @@ function StatCard({
   const colorMap: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
     green: "bg-green-50 text-green-600",
+    purple: "bg-purple-50 text-purple-600",
     orange: "bg-orange-50 text-orange-600",
-  };
+  }
   return (
     <div className="bg-white border border-[#e2e8f0] rounded-[4px] shadow-sharp p-5">
       <div className="flex items-center gap-3">
@@ -503,13 +523,42 @@ function GameSection({
                   {game.word && ` · "${game.word}"`}
                 </p>
               </div>
-              <Badge
-                variant={game.status === "published" ? "success" : "draft"}
-                onClick={() => onToggleStatus(type, game.id, game.status)}
-                title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
-              >
-                {game.status}
-              </Badge>
+              {game.status === "scheduled" && game.scheduled_date ? (
+                <div className="flex items-center gap-1.5">
+                  <Badge
+                    variant="scheduled"
+                    onClick={() => onToggleStatus(type, game.id, game.status)}
+                    title="Click to publish now"
+                  >
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">
+                        schedule_send
+                      </span>
+                      {new Date(game.scheduled_date).toLocaleDateString(
+                        undefined,
+                        {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
+                    </span>
+                  </Badge>
+                </div>
+              ) : (
+                <Badge
+                  variant={
+                    game.status === "published" ? "success" : "draft"
+                  }
+                  onClick={() =>
+                    onToggleStatus(type, game.id, game.status)
+                  }
+                  title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
+                >
+                  {game.status}
+                </Badge>
+              )}
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onShowCode(game)}
@@ -592,9 +641,12 @@ function GameModal({
   const [embedCopied, setEmbedCopied] = useState(false);
 
   // Form fields
-  const [title, setTitle] = useState(game?.title || "");
-  const [status, setStatus] = useState(game?.status || "draft");
-  const [difficulty, setDifficulty] = useState(game?.difficulty || "medium");
+  const [title, setTitle] = useState(game?.title || "")
+  const [status, setStatus] = useState(game?.status || "draft")
+  const [scheduledDate, setScheduledDate] = useState(
+    game?.scheduled_date || "",
+  )
+  const [difficulty, setDifficulty] = useState(game?.difficulty || "medium")
   // Word game fields
   const [word, setWord] = useState(game?.word || "");
   const [definition, setDefinition] = useState(game?.definition || "");
@@ -840,7 +892,9 @@ function GameModal({
         title,
         status,
         branding: selectedBranding || null,
-      };
+        scheduled_date:
+          status === "scheduled" && scheduledDate ? scheduledDate : null,
+      }
 
       if (type === "crosswords") {
         if (mode === "create" && wordsList.length < 2) {
@@ -1031,13 +1085,44 @@ function GameModal({
             </label>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => {
+                setStatus(e.target.value)
+                if (e.target.value !== "scheduled") {
+                  setScheduledDate("")
+                }
+              }}
               className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
             >
               <option value="draft">Draft</option>
+              <option value="scheduled">Scheduled</option>
               <option value="published">Published</option>
             </select>
           </div>
+
+          {/* Scheduled Date */}
+          {status === "scheduled" && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                Publish Date &amp; Time
+              </label>
+              <div className="relative">
+                <input
+                  type="datetime-local"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                  required
+                  aria-label="Schedule publish date and time"
+                />
+              </div>
+              <p className="text-xs text-[#64748b] mt-1.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">info</span>
+                The game will automatically become public at this date and
+                time.
+              </p>
+            </div>
+          )}
 
           {/* Difficulty (crosswords / sudoku) */}
           {(type === "crosswords" || type === "sudoku") && (

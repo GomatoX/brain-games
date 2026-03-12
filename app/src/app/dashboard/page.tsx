@@ -1,17 +1,21 @@
-import { getAuthenticatedUser } from "@/lib/auth-server";
-import { db } from "@/db";
+import { getAuthenticatedUser } from "@/lib/auth-server"
+import { db } from "@/db"
 import {
   crosswords,
   wordgames,
   sudoku,
   users,
   organizations,
-} from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-import DashboardContent from "@/components/DashboardContent";
+} from "@/db/schema"
+import { eq, desc } from "drizzle-orm"
+import DashboardContent from "@/components/DashboardContent"
+import { promoteScheduledGames } from "@/lib/schedule-publisher"
 
 export default async function DashboardPage() {
-  const user = await getAuthenticatedUser();
+  const user = await getAuthenticatedUser()
+
+  // Auto-promote any scheduled games whose time has passed
+  await promoteScheduledGames()
 
   const [cw, wg, sd, orgRow] = await Promise.all([
     db

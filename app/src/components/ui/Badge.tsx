@@ -6,7 +6,8 @@ type BadgeVariant =
   | "error"
   | "info"
   | "neutral"
-  | "draft";
+  | "draft"
+  | "scheduled"
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -25,7 +26,8 @@ const solidStyles: Record<BadgeVariant, string> = {
   info: "bg-blue-100 text-blue-800",
   neutral: "bg-slate-100 text-slate-700",
   draft: "bg-slate-100 text-slate-700",
-};
+  scheduled: "bg-purple-100 text-purple-800",
+}
 
 const outlineStyles: Record<BadgeVariant, string> = {
   success: "border border-emerald-300 text-emerald-700 bg-emerald-50/50",
@@ -34,7 +36,8 @@ const outlineStyles: Record<BadgeVariant, string> = {
   info: "border border-blue-300 text-blue-700 bg-blue-50/50",
   neutral: "border border-slate-300 text-slate-700 bg-slate-50",
   draft: "border border-slate-300 text-slate-700 bg-slate-50",
-};
+  scheduled: "border border-purple-300 text-purple-700 bg-purple-50/50",
+}
 
 const dotColors: Record<BadgeVariant, string> = {
   success: "bg-emerald-600",
@@ -43,7 +46,8 @@ const dotColors: Record<BadgeVariant, string> = {
   info: "bg-blue-600",
   neutral: "bg-slate-500",
   draft: "bg-slate-500",
-};
+  scheduled: "bg-purple-600",
+}
 
 export const Badge = ({
   variant = "neutral",

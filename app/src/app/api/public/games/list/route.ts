@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { crosswords, wordgames, sudoku } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { NextResponse } from "next/server"
+import { db } from "@/db"
+import { crosswords, wordgames, sudoku } from "@/db/schema"
+import { eq, desc, or, and, lte } from "drizzle-orm"
+import { promoteScheduledGames } from "@/lib/schedule-publisher"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,18 @@ export async function OPTIONS() {
  */
 export async function GET() {
   try {
+    // Auto-promote scheduled games whose time has passed
+    await promoteScheduledGames()
+
+    const publishedOrDue = (table: typeof crosswords | typeof wordgames | typeof sudoku) =>
+      or(
+        eq(table.status, "published"),
+        and(
+          eq(table.status, "scheduled"),
+          lte(table.scheduledDate, new Date().toISOString()),
+        ),
+      )
+
     const [cw, wg, sd] = await Promise.all([
       db
         .select({
@@ -27,7 +40,7 @@ export async function GET() {
           createdAt: crosswords.createdAt,
         })
         .from(crosswords)
-        .where(eq(crosswords.status, "published"))
+        .where(publishedOrDue(crosswords))
         .orderBy(desc(crosswords.createdAt))
         .limit(50),
       db
@@ -37,7 +50,7 @@ export async function GET() {
           createdAt: wordgames.createdAt,
         })
         .from(wordgames)
-        .where(eq(wordgames.status, "published"))
+        .where(publishedOrDue(wordgames))
         .orderBy(desc(wordgames.createdAt))
         .limit(50),
       db
@@ -47,10 +60,10 @@ export async function GET() {
           createdAt: sudoku.createdAt,
         })
         .from(sudoku)
-        .where(eq(sudoku.status, "published"))
+        .where(publishedOrDue(sudoku))
         .orderBy(desc(sudoku.createdAt))
         .limit(50),
-    ]);
+    ])
 
     const games = [
       ...cw.map((g) => ({ ...g, type: "crossword" as const })),

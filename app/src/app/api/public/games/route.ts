@@ -62,16 +62,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // If draft, check token auth against the org
+    // Auto-promote scheduled games whose time has passed
+    if (
+      game.status === "scheduled" &&
+      game.scheduledDate &&
+      new Date(game.scheduledDate) <= new Date()
+    ) {
+      // Fire-and-forget: promote to published in DB
+      db.update(table)
+        .set({
+          status: "published",
+          scheduledDate: null,
+          updatedAt: new Date().toISOString(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
+        .where(eq(table.id, id!))
+        .then(() =>
+          console.log(`[schedule] Auto-published ${type}/${id}`),
+        )
+        .catch(() => {})
+
+      // Treat as published for this request
+      game.status = "published"
+    }
+
+    // If draft or future-scheduled, check token auth against the org
     if (game.status !== "published") {
-      const authHeader = request.headers.get("authorization");
-      const token = authHeader?.replace("Bearer ", "");
+      const authHeader = request.headers.get("authorization")
+      const token = authHeader?.replace("Bearer ", "")
 
       if (!token) {
         return NextResponse.json(
           { error: "Not found" },
           { status: 404, headers: corsHeaders },
-        );
+        )
       }
 
       // Verify token belongs to the game's organization
@@ -79,13 +103,13 @@ export async function GET(request: NextRequest) {
         .select({ apiToken: organizations.apiToken })
         .from(organizations)
         .where(eq(organizations.id, game.orgId))
-        .limit(1);
+        .limit(1)
 
       if (!org || org.apiToken !== token) {
         return NextResponse.json(
           { error: "Not found" },
           { status: 404, headers: corsHeaders },
-        );
+        )
       }
     }
 

@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { crosswords, wordgames, sudoku, branding, users } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { requireAuth } from "@/lib/api-auth";
-import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/db"
+import { crosswords, wordgames, sudoku, branding, users } from "@/db/schema"
+import { eq, and, desc } from "drizzle-orm"
+import { requireAuth } from "@/lib/api-auth"
+import { computeCrosswordLayout } from "@/lib/crossword-layout-server"
+import { promoteScheduledGames } from "@/lib/schedule-publisher"
 
 type Collection = "crosswords" | "wordgames" | "sudoku";
 
@@ -15,6 +16,9 @@ export async function GET() {
   const { userId, orgId } = result;
 
   try {
+    // Auto-promote any scheduled games whose time has passed
+    await promoteScheduledGames()
+
     const [cw, wg, sd] = await Promise.all([
       db
         .select({

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { crosswords, wordgames, sudoku, branding } from "@/db/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, or, lte } from "drizzle-orm"
 import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
 
 type GameType = "crosswords" | "wordgames" | "sudoku";
@@ -45,35 +45,62 @@ export async function GET(request: NextRequest) {
   try {
     const table = tables[type];
 
-    // Count total published games for this org
+    // Build condition: published OR (scheduled with past date)
+    const publishedCondition = or(
+      eq(table.status, "published"),
+      and(
+        eq(table.status, "scheduled"),
+        lte(table.scheduledDate, new Date().toISOString()),
+      ),
+    )
+
+    // Count total published + auto-publishable games for this org
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(table)
-      .where(and(eq(table.orgId, orgId), eq(table.status, "published")));
+      .where(and(eq(table.orgId, orgId), publishedCondition))
 
-    const total = countResult?.count || 0;
+    const total = countResult?.count || 0
 
     if (total === 0 || offset >= total) {
       return NextResponse.json(
         { error: "No published games found" },
         { status: 404, headers: corsHeaders },
-      );
+      )
     }
 
     // Fetch the game at the given offset (0 = latest)
     const [game] = await db
       .select()
       .from(table)
-      .where(and(eq(table.orgId, orgId), eq(table.status, "published")))
+      .where(and(eq(table.orgId, orgId), publishedCondition))
       .orderBy(desc(table.createdAt))
       .limit(1)
-      .offset(offset);
+      .offset(offset)
 
     if (!game) {
       return NextResponse.json(
         { error: "Not found" },
         { status: 404, headers: corsHeaders },
-      );
+      )
+    }
+
+    // Auto-promote if this was a scheduled game past its date
+    if (game.status === "scheduled" && game.scheduledDate) {
+      db.update(table)
+        .set({
+          status: "published",
+          scheduledDate: null,
+          updatedAt: new Date().toISOString(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
+        .where(eq(table.id, game.id))
+        .then(() =>
+          console.log(`[schedule] Auto-published ${type}/${game.id}`),
+        )
+        .catch(() => {})
+
+      game.status = "published"
     }
 
     // Fetch branding if assigned
