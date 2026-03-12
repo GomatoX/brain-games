@@ -51,34 +51,10 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     if (isPreview && !previewToken) {
       // Resolve the org from the game itself or the org param
       const orgParam = params.org
-      if (orgParam) {
-        const [org] = await db
-          .select({ apiToken: organizations.apiToken })
-          .from(organizations)
-          .where(eq(organizations.id, orgParam))
-          .limit(1)
-        previewToken = org?.apiToken || ""
-      } else {
-        // Fallback: find org from the game record
-        const table =
-          gameType === "crosswords"
-            ? crosswords
-            : gameType === "word" || gameType === "wordgames"
-              ? wordgames
-              : sudoku
-        const [game] = await db
-          .select({ orgId: table.orgId })
-          .from(table)
-          .where(eq(table.id, gameId))
-          .limit(1)
-        if (game) {
-          const [org] = await db
-            .select({ apiToken: organizations.apiToken })
-            .from(organizations)
-            .where(eq(organizations.id, game.orgId))
-            .limit(1)
-          previewToken = org?.apiToken || ""
-        }
+      const resolvedOrgId = orgParam || await getOrgIdFromGame(gameType, gameId)
+
+      if (resolvedOrgId) {
+        previewToken = await ensureOrgToken(resolvedOrgId)
       }
     }
 
@@ -401,4 +377,49 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
       </footer>
     </div>
   )
+}
+
+/* ─── Preview helpers ───────────────────────────────────── */
+
+/** Resolve orgId from a game record when no org param is provided */
+async function getOrgIdFromGame(
+  gameType: string,
+  gameId: string,
+): Promise<string | null> {
+  const table =
+    gameType === "crosswords"
+      ? crosswords
+      : gameType === "word" || gameType === "wordgames"
+        ? wordgames
+        : sudoku
+  const [game] = await db
+    .select({ orgId: table.orgId })
+    .from(table)
+    .where(eq(table.id, gameId))
+    .limit(1)
+  return game?.orgId || null
+}
+
+/**
+ * Get the org's API token, auto-generating one if it doesn't exist yet.
+ * This ensures preview mode always works even if the user hasn't
+ * manually generated an API key from the dashboard settings.
+ */
+async function ensureOrgToken(orgId: string): Promise<string> {
+  const [org] = await db
+    .select({ apiToken: organizations.apiToken })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1)
+
+  if (org?.apiToken) return org.apiToken
+
+  // Auto-generate a token for this org
+  const newToken = crypto.randomUUID()
+  await db
+    .update(organizations)
+    .set({ apiToken: newToken })
+    .where(eq(organizations.id, orgId))
+
+  return newToken
 }
