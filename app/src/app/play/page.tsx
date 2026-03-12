@@ -1,19 +1,24 @@
-import { Suspense } from "react";
-import Link from "next/link";
-import { db } from "@/db";
-import { crosswords, wordgames, sudoku, organizations } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { platformConfig } from "@/lib/platform";
-import { getTranslations } from "@/lib/translations";
-import PlayEmbed from "@/components/PlayEmbed";
+import { Suspense } from "react"
+import Link from "next/link"
+import { db } from "@/db"
+import {
+  crosswords,
+  wordgames,
+  sudoku,
+  organizations,
+} from "@/db/schema"
+import { eq, desc, and } from "drizzle-orm"
+import { platformConfig, isWhiteLabel } from "@/lib/platform"
+import { getTranslations } from "@/lib/translations"
+import PlayEmbed from "@/components/PlayEmbed"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 const typeIcons: Record<string, string> = {
   crossword: "grid_on",
   word: "spellcheck",
   sudoku: "grid_4x4",
-};
+}
 
 const typeLabels: Record<string, Record<string, string>> = {
   en: {
@@ -26,29 +31,55 @@ const typeLabels: Record<string, Record<string, string>> = {
     word: "Žodžių žaidimas",
     sudoku: "Sudoku",
   },
-};
+}
 
 interface PlayPageProps {
-  searchParams: Promise<{ [key: string]: string | undefined }>;
+  searchParams: Promise<{ [key: string]: string | undefined }>
 }
 
 export default async function PlayPage({ searchParams }: PlayPageProps) {
-  const params = await searchParams;
-  const gameId = params.id;
-  const gameType = params.type;
+  const params = await searchParams
+  const gameId = params.id
+  const gameType = params.type
 
   // If a specific game was requested, render the embed
   if (gameId && gameType) {
     // For preview of unpublished games, inject the org API token
-    const isPreview = params.preview === "true";
-    let previewToken = params.token || "";
+    const isPreview = params.preview === "true"
+    let previewToken = params.token || ""
 
     if (isPreview && !previewToken) {
-      const [org] = await db
-        .select({ apiToken: organizations.apiToken })
-        .from(organizations)
-        .limit(1);
-      previewToken = org?.apiToken || "";
+      // Resolve the org from the game itself or the org param
+      const orgParam = params.org
+      if (orgParam) {
+        const [org] = await db
+          .select({ apiToken: organizations.apiToken })
+          .from(organizations)
+          .where(eq(organizations.id, orgParam))
+          .limit(1)
+        previewToken = org?.apiToken || ""
+      } else {
+        // Fallback: find org from the game record
+        const table =
+          gameType === "crosswords"
+            ? crosswords
+            : gameType === "word" || gameType === "wordgames"
+              ? wordgames
+              : sudoku
+        const [game] = await db
+          .select({ orgId: table.orgId })
+          .from(table)
+          .where(eq(table.id, gameId))
+          .limit(1)
+        if (game) {
+          const [org] = await db
+            .select({ apiToken: organizations.apiToken })
+            .from(organizations)
+            .where(eq(organizations.id, game.orgId))
+            .limit(1)
+          previewToken = org?.apiToken || ""
+        }
+      }
     }
 
     return (
@@ -66,10 +97,68 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
       >
         <PlayEmbed previewToken={previewToken} />
       </Suspense>
-    );
+    )
   }
 
-  // Otherwise, show the games gallery
+  // ── Gallery mode: resolve organization ─────────────────
+  const orgParam = params.org
+
+  let org: {
+    id: string
+    name: string
+    logoUrl: string | null
+    language: string | null
+  } | null = null
+
+  if (orgParam) {
+    // Explicit org param — scoped to that org
+    const [row] = await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        logoUrl: organizations.logoUrl,
+        language: organizations.defaultLanguage,
+      })
+      .from(organizations)
+      .where(eq(organizations.id, orgParam))
+      .limit(1)
+    org = row || null
+  } else {
+    // No org param — check if single-org deployment
+    const allOrgs = await db
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        logoUrl: organizations.logoUrl,
+        language: organizations.defaultLanguage,
+      })
+      .from(organizations)
+      .limit(2)
+
+    if (allOrgs.length === 1) {
+      // Single org — auto-select
+      org = allOrgs[0]
+    } else if (allOrgs.length > 1 && isWhiteLabel()) {
+      // Whitelabel with multiple orgs — use first (shouldn't happen typically)
+      org = allOrgs[0]
+    }
+    // Multi-org SaaS without org param — falls through to "not found"
+  }
+
+  if (!org) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f9fafb]">
+        <div className="text-center">
+          <span className="material-symbols-outlined text-5xl text-[#cbd5e1] mb-4 block">
+            business
+          </span>
+          <p className="text-[#94a3b8]">Organization not found</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Fetch published games for this org
   const [cw, wg, sd] = await Promise.all([
     db
       .select({
@@ -78,7 +167,12 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
         createdAt: crosswords.createdAt,
       })
       .from(crosswords)
-      .where(eq(crosswords.status, "published"))
+      .where(
+        and(
+          eq(crosswords.orgId, org.id),
+          eq(crosswords.status, "published"),
+        ),
+      )
       .orderBy(desc(crosswords.createdAt))
       .limit(50),
     db
@@ -88,7 +182,12 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
         createdAt: wordgames.createdAt,
       })
       .from(wordgames)
-      .where(eq(wordgames.status, "published"))
+      .where(
+        and(
+          eq(wordgames.orgId, org.id),
+          eq(wordgames.status, "published"),
+        ),
+      )
       .orderBy(desc(wordgames.createdAt))
       .limit(50),
     db
@@ -98,18 +197,24 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
         createdAt: sudoku.createdAt,
       })
       .from(sudoku)
-      .where(eq(sudoku.status, "published"))
+      .where(
+        and(
+          eq(sudoku.orgId, org.id),
+          eq(sudoku.status, "published"),
+        ),
+      )
       .orderBy(desc(sudoku.createdAt))
       .limit(50),
-  ]);
+  ])
 
   const games = [
     ...cw.map((g) => ({ ...g, type: "crossword" as const })),
     ...wg.map((g) => ({ ...g, type: "word" as const })),
     ...sd.map((g) => ({ ...g, type: "sudoku" as const })),
   ].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )
 
   // Determine which game types have published content
   const availableTypes = [
@@ -122,31 +227,24 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     ...(sd.length > 0
       ? [{ type: "sudoku" as const, apiType: "sudoku" as const }]
       : []),
-  ];
+  ]
 
-  // Fetch org info for branding, latest links & language
-  const [org] = await db
-    .select({
-      id: organizations.id,
-      logoUrl: organizations.logoUrl,
-      language: organizations.defaultLanguage,
-    })
-    .from(organizations)
-    .limit(1);
-
-  const name = platformConfig.name;
-  const logoUrl = org?.logoUrl || null;
-  const orgId = org?.id || "";
-  const lang = org?.language || "lt";
-  const t = getTranslations(lang);
-  const labels = typeLabels[lang] || typeLabels.lt;
+  const name = platformConfig.name
+  const logoUrl = org.logoUrl || null
+  const orgId = org.id
+  const lang = org.language || "lt"
+  const t = getTranslations(lang)
+  const labels = typeLabels[lang] || typeLabels.lt
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f9fafb] font-[family-name:var(--font-inter)]">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#e2e8f0]">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-center">
-          <Link href="/play" className="flex items-center gap-2">
+          <Link
+            href={`/play${orgParam ? `?org=${orgParam}` : ""}`}
+            className="flex items-center gap-2"
+          >
             {logoUrl ? (
               <img
                 src={logoUrl}
@@ -302,5 +400,5 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
         <span className="text-sm text-[#94a3b8]">{name}</span>
       </footer>
     </div>
-  );
+  )
 }

@@ -99,9 +99,15 @@ export default async function DashboardPage() {
     sudoku: sd.map(mapGame),
   };
 
-  const initialLang = orgRow?.language || "lt";
+  const initialLang = orgRow?.language || "lt"
 
-  return <DashboardContent initialGames={games} initialLang={initialLang} />;
+  return (
+    <DashboardContent
+      initialGames={games}
+      initialLang={initialLang}
+      orgId={user.orgId}
+    />
+  )
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

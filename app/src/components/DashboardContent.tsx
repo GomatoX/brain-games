@@ -49,11 +49,13 @@ const API_URL = typeof window !== "undefined" ? window.location.origin : "";
 export default function DashboardContent({
   initialGames,
   initialLang,
+  orgId,
 }: {
-  initialGames: Games;
-  initialLang: string;
+  initialGames: Games
+  initialLang: string
+  orgId: string
 }) {
-  const [games, setGames] = useState<Games>(initialGames);
+  const [games, setGames] = useState<Games>(initialGames)
   const [modal, setModal] = useState<ModalState>({
     open: false,
     mode: "create",
@@ -84,15 +86,16 @@ export default function DashboardContent({
         tag: "sudoku-game",
         script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
       },
-    };
-    const { tag, script } = tagMap[gameType];
+    }
+    const { tag, script } = tagMap[gameType]
     return `<script src="${script}"><\/script>
 
 <${tag}
   puzzle-id="${gameId}"
   api-url="${API_URL}"
+  user-id="${orgId}"
   lang="${lang}"
-  theme="light"></${tag}>`;
+  theme="light"></${tag}>`
   }
 
   function copyEmbedSnippet(gameId: string | number, gameType: GameType) {
@@ -258,6 +261,7 @@ export default function DashboardContent({
           onShowCode={(g) => setEmbedPopover({ game: g, type: "crosswords" })}
           onExportCsv={exportGameCsv}
           lang={lang}
+          orgId={orgId}
         />
         <GameSection
           title="Word Games"
@@ -280,6 +284,7 @@ export default function DashboardContent({
           onToggleStatus={handleToggleStatus}
           onShowCode={(g) => setEmbedPopover({ game: g, type: "wordgames" })}
           lang={lang}
+          orgId={orgId}
         />
         {/* Sudoku - Coming Soon */}
         <Panel className="opacity-60">
@@ -308,6 +313,7 @@ export default function DashboardContent({
           mode={modal.mode}
           type={modal.type}
           game={modal.game}
+          orgId={orgId}
           onClose={() =>
             setModal({ open: false, mode: "create", type: "crosswords" })
           }
@@ -470,19 +476,21 @@ function GameSection({
   onShowCode,
   onExportCsv,
   lang,
+  orgId,
 }: {
-  title: string;
-  icon: string;
-  iconColor: string;
-  games: Game[];
-  type: GameType;
-  onAdd: () => void;
-  onEdit: (game: Game) => void;
-  onDelete: (id: string | number) => void;
-  onToggleStatus: (type: GameType, id: string | number, status: string) => void;
-  onShowCode: (game: Game) => void;
-  onExportCsv?: (game: Game) => void;
-  lang: string;
+  title: string
+  icon: string
+  iconColor: string
+  games: Game[]
+  type: GameType
+  onAdd: () => void
+  onEdit: (game: Game) => void
+  onDelete: (id: string | number) => void
+  onToggleStatus: (type: GameType, id: string | number, status: string) => void
+  onShowCode: (game: Game) => void
+  onExportCsv?: (game: Game) => void
+  lang: string
+  orgId: string
 }) {
   const colorMap: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
@@ -581,7 +589,7 @@ function GameSection({
                   </button>
                 )}
                 <a
-                  href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : "sudoku"}&id=${game.id}&lang=${lang}${game.status !== "published" ? "&preview=true" : ""}`}
+                  href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : "sudoku"}&id=${game.id}&lang=${lang}&org=${orgId}${game.status !== "published" ? "&preview=true" : ""}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 text-[#64748b] hover:text-blue-600 transition-colors rounded-lg hover:bg-slate-100"
@@ -623,14 +631,16 @@ function GameModal({
   mode,
   type,
   game,
+  orgId,
   onClose,
   onSaved,
 }: {
-  mode: "create" | "edit";
-  type: GameType;
-  game?: Game;
-  onClose: () => void;
-  onSaved: () => void;
+  mode: "create" | "edit"
+  type: GameType
+  game?: Game
+  orgId: string
+  onClose: () => void
+  onSaved: () => void
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -864,14 +874,15 @@ function GameModal({
         tag: "sudoku-game",
         script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
       },
-    };
-    const { tag, script } = tagMap[type];
+    }
+    const { tag, script } = tagMap[type]
     return `<script src="${script}"><\/script>
 
 <${tag}
   puzzle-id="${gameId}"
   api-url="${API_URL}"
-  theme="light"></${tag}>`;
+  user-id="${orgId}"
+  theme="light"></${tag}>`
   }
 
   function copyEmbed() {

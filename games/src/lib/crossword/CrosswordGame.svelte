@@ -501,6 +501,12 @@
       cellInputs = cellInputs;
       autoValidateWord();
     }
+
+    // Auto-advance to next cell (critical for Android virtual keyboards
+    // which don't fire reliable keydown events)
+    if (value) {
+      moveToNextCell(rowIndex, colIndex);
+    }
   }
 
   function handleKeyDown(event) {
