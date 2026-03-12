@@ -4,26 +4,26 @@ import { useState, useEffect } from "react";
 import { Panel, PanelHeader, Badge, Button, PageHeader } from "@/components/ui";
 
 interface Game {
-  id: string | number
-  status: string
-  title: string
-  date_created: string
-  scheduled_date?: string | null
-  word?: string
-  definition?: string
-  max_attempts?: number
-  difficulty?: string
+  id: string | number;
+  status: string;
+  title: string;
+  date_created: string;
+  scheduled_date?: string | null;
+  word?: string;
+  definition?: string;
+  max_attempts?: number;
+  difficulty?: string;
   words?: {
-    word: string
-    clue: string
-    main_word_index?: number
-    x?: number
-    y?: number
-    direction?: string
-  }[]
-  main_word?: string
-  branding?: string | number | null
-  created_by?: string | null
+    word: string;
+    clue: string;
+    main_word_index?: number;
+    x?: number;
+    y?: number;
+    direction?: string;
+  }[];
+  main_word?: string;
+  branding?: string | number | null;
+  created_by?: string | null;
 }
 
 interface Games {
@@ -51,11 +51,11 @@ export default function DashboardContent({
   initialLang,
   orgId,
 }: {
-  initialGames: Games
-  initialLang: string
-  orgId: string
+  initialGames: Games;
+  initialLang: string;
+  orgId: string;
 }) {
-  const [games, setGames] = useState<Games>(initialGames)
+  const [games, setGames] = useState<Games>(initialGames);
   const [modal, setModal] = useState<ModalState>({
     open: false,
     mode: "create",
@@ -86,8 +86,8 @@ export default function DashboardContent({
         tag: "sudoku-game",
         script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
       },
-    }
-    const { tag, script } = tagMap[gameType]
+    };
+    const { tag, script } = tagMap[gameType];
     return `<script src="${script}"><\/script>
 
 <${tag}
@@ -95,7 +95,7 @@ export default function DashboardContent({
   api-url="${API_URL}"
   user-id="${orgId}"
   lang="${lang}"
-  theme="light"></${tag}>`
+  theme="light"></${tag}>`;
   }
 
   function copyEmbedSnippet(gameId: string | number, gameType: GameType) {
@@ -135,7 +135,7 @@ export default function DashboardContent({
     id: string | number,
     currentStatus: string,
   ) {
-    const newStatus = currentStatus === "published" ? "draft" : "published"
+    const newStatus = currentStatus === "published" ? "draft" : "published";
     try {
       await fetch("/api/games", {
         method: "PATCH",
@@ -146,8 +146,8 @@ export default function DashboardContent({
           status: newStatus,
           scheduled_date: newStatus === "published" ? null : undefined,
         }),
-      })
-      await fetchGames()
+      });
+      await fetchGames();
     } catch {
       // ignore
     }
@@ -186,21 +186,19 @@ export default function DashboardContent({
     URL.revokeObjectURL(url);
   };
 
-  const allGames = games
-    ? [...games.crosswords, ...games.wordgames]
-    : []
+  const allGames = games ? [...games.crosswords, ...games.wordgames] : [];
 
-  const totalGames = allGames.length
+  const totalGames = allGames.length;
 
   const publishedCount = allGames.filter(
     (g) => g.status === "published",
-  ).length
+  ).length;
 
   const scheduledCount = allGames.filter(
     (g) => g.status === "scheduled",
-  ).length
+  ).length;
 
-  const draftCount = totalGames - publishedCount - scheduledCount
+  const draftCount = totalGames - publishedCount - scheduledCount;
 
   return (
     <div>
@@ -444,7 +442,7 @@ function StatCard({
     green: "bg-green-50 text-green-600",
     purple: "bg-purple-50 text-purple-600",
     orange: "bg-orange-50 text-orange-600",
-  }
+  };
   return (
     <div className="bg-white border border-[#e2e8f0] rounded-[4px] shadow-sharp p-5">
       <div className="flex items-center gap-3">
@@ -478,19 +476,19 @@ function GameSection({
   lang,
   orgId,
 }: {
-  title: string
-  icon: string
-  iconColor: string
-  games: Game[]
-  type: GameType
-  onAdd: () => void
-  onEdit: (game: Game) => void
-  onDelete: (id: string | number) => void
-  onToggleStatus: (type: GameType, id: string | number, status: string) => void
-  onShowCode: (game: Game) => void
-  onExportCsv?: (game: Game) => void
-  lang: string
-  orgId: string
+  title: string;
+  icon: string;
+  iconColor: string;
+  games: Game[];
+  type: GameType;
+  onAdd: () => void;
+  onEdit: (game: Game) => void;
+  onDelete: (id: string | number) => void;
+  onToggleStatus: (type: GameType, id: string | number, status: string) => void;
+  onShowCode: (game: Game) => void;
+  onExportCsv?: (game: Game) => void;
+  lang: string;
+  orgId: string;
 }) {
   const colorMap: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
@@ -556,12 +554,8 @@ function GameSection({
                 </div>
               ) : (
                 <Badge
-                  variant={
-                    game.status === "published" ? "success" : "draft"
-                  }
-                  onClick={() =>
-                    onToggleStatus(type, game.id, game.status)
-                  }
+                  variant={game.status === "published" ? "success" : "draft"}
+                  onClick={() => onToggleStatus(type, game.id, game.status)}
                   title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
                 >
                   {game.status}
@@ -589,7 +583,7 @@ function GameSection({
                   </button>
                 )}
                 <a
-                  href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : "sudoku"}&id=${game.id}&lang=${lang}&org=${orgId}${game.status !== "published" ? "&preview=true" : ""}`}
+                  href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : "sudoku"}&id=${game.id}&lang=${lang}&org=${orgId}&preview=true`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 text-[#64748b] hover:text-blue-600 transition-colors rounded-lg hover:bg-slate-100"
@@ -635,12 +629,12 @@ function GameModal({
   onClose,
   onSaved,
 }: {
-  mode: "create" | "edit"
-  type: GameType
-  game?: Game
-  orgId: string
-  onClose: () => void
-  onSaved: () => void
+  mode: "create" | "edit";
+  type: GameType;
+  game?: Game;
+  orgId: string;
+  onClose: () => void;
+  onSaved: () => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -651,12 +645,12 @@ function GameModal({
   const [embedCopied, setEmbedCopied] = useState(false);
 
   // Form fields
-  const [title, setTitle] = useState(game?.title || "")
-  const [status, setStatus] = useState(game?.status || "draft")
+  const [title, setTitle] = useState(game?.title || "");
+  const [status, setStatus] = useState(game?.status || "draft");
   const [scheduledDate, setScheduledDate] = useState(
     game?.scheduled_date || "",
-  )
-  const [difficulty, setDifficulty] = useState(game?.difficulty || "medium")
+  );
+  const [difficulty, setDifficulty] = useState(game?.difficulty || "medium");
   // Word game fields
   const [word, setWord] = useState(game?.word || "");
   const [definition, setDefinition] = useState(game?.definition || "");
@@ -874,15 +868,15 @@ function GameModal({
         tag: "sudoku-game",
         script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
       },
-    }
-    const { tag, script } = tagMap[type]
+    };
+    const { tag, script } = tagMap[type];
     return `<script src="${script}"><\/script>
 
 <${tag}
   puzzle-id="${gameId}"
   api-url="${API_URL}"
   user-id="${orgId}"
-  theme="light"></${tag}>`
+  theme="light"></${tag}>`;
   }
 
   function copyEmbed() {
@@ -904,8 +898,10 @@ function GameModal({
         status,
         branding: selectedBranding || null,
         scheduled_date:
-          status === "scheduled" && scheduledDate ? scheduledDate : null,
-      }
+          status === "scheduled" && scheduledDate
+            ? new Date(scheduledDate).toISOString()
+            : null,
+      };
 
       if (type === "crosswords") {
         if (mode === "create" && wordsList.length < 2) {
@@ -1097,9 +1093,9 @@ function GameModal({
             <select
               value={status}
               onChange={(e) => {
-                setStatus(e.target.value)
+                setStatus(e.target.value);
                 if (e.target.value !== "scheduled") {
-                  setScheduledDate("")
+                  setScheduledDate("");
                 }
               }}
               className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
@@ -1129,8 +1125,7 @@ function GameModal({
               </div>
               <p className="text-xs text-[#64748b] mt-1.5 flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs">info</span>
-                The game will automatically become public at this date and
-                time.
+                The game will automatically become public at this date and time.
               </p>
             </div>
           )}

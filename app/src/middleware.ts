@@ -4,6 +4,7 @@ import { platformConfig } from "@/lib/platform";
 
 const hideLanding = platformConfig.hideLanding;
 const hideRegister = platformConfig.hideRegister;
+const allowedIps = platformConfig.allowedIps;
 
 const SESSION_COOKIE = "authjs.session-token";
 
@@ -21,6 +22,16 @@ function clearAuthAndRedirect(request: NextRequest) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionToken = request.cookies.get(SESSION_COOKIE)?.value;
+
+  // ── IP Allowlist ──────────────────────────────────────
+  // When ALLOWED_IPS is set, restrict page access to those IPs only.
+  // API routes (/api/*) are NOT restricted so embeds work everywhere.
+  if (allowedIps.length > 0 && !pathname.startsWith("/api")) {
+    const clientIp = getClientIp(request);
+    if (!allowedIps.includes(clientIp)) {
+      return new NextResponse("Access denied", { status: 403 });
+    }
+  }
 
   // White-label: redirect landing page to dashboard/login
   if (hideLanding && pathname === "/") {
@@ -87,6 +98,26 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+/**
+ * Extract client IP from request headers.
+ * Supports x-forwarded-for (standard reverse proxy header) and x-real-ip.
+ */
+function getClientIp(request: NextRequest): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    // x-forwarded-for can contain multiple IPs: "client, proxy1, proxy2"
+    return forwarded.split(",")[0].trim();
+  }
+  return request.headers.get("x-real-ip") || "unknown";
+}
+
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/login", "/register", "/invite/:path*"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/login",
+    "/register",
+    "/invite/:path*",
+    "/play/:path*",
+  ],
 };

@@ -26,7 +26,18 @@ export const platformConfig = {
 
   /** Whether to hide self-registration */
   hideRegister: process.env.HIDE_REGISTER === "true",
-};
+
+  /**
+   * IP allowlist (comma-separated).
+   * When set, only these IPs can access login, dashboard, and play pages.
+   * API routes remain open so game embeds work from any domain.
+   * Example: "1.2.3.4,5.6.7.8"
+   */
+  allowedIps: (process.env.ALLOWED_IPS || "")
+    .split(",")
+    .map((ip) => ip.trim())
+    .filter(Boolean),
+}
 
 /** Helper: is this a white-label deployment? */
 export function isWhiteLabel() {
