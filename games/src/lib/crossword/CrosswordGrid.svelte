@@ -175,8 +175,8 @@
           </div>
           <div class="tooltip-separator"></div>
           <span class="tooltip-text">{currentClue.clue}</span>
+          <div class="tooltip-arrow"></div>
         </div>
-        <div class="tooltip-arrow"></div>
       </div>
     {/if}
   </div>
@@ -195,6 +195,7 @@
   @media (max-width: 1024px) {
     .grid-wrapper {
       padding: 0;
+      overflow: hidden;
     }
   }
 
@@ -229,6 +230,7 @@
   }
 
   .tooltip-body {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -278,11 +280,15 @@
   }
 
   .tooltip-arrow {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-top: 5px solid #67686e;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #67686e;
   }
 
   .cell {
