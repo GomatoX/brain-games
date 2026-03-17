@@ -80,7 +80,16 @@
         window.innerWidth - padding - (centerViewport + tooltipHalfWidth);
     }
 
-    return { left, top, bodyShift };
+    // Compute the arrow's position within the body.
+    // The arrow needs to stay pointing at the anchor cell, so it must
+    // counteract the body's horizontal shift.
+    // 50% = centered (no shift). We subtract bodyShift as a percentage
+    // of the full tooltip width (tooltipHalfWidth * 2).
+    const arrowLeftPercent = 50 - (bodyShift / (tooltipHalfWidth * 2)) * 100
+    // Clamp so the arrow stays within the rounded body edges
+    const arrowLeft = Math.max(12, Math.min(88, arrowLeftPercent))
+
+    return { left, top, bodyShift, arrowLeft }
   }
 
   $: wordStartCell = getWordStartCell(selectedWordCells);
@@ -175,7 +184,10 @@
           </div>
           <div class="tooltip-separator"></div>
           <span class="tooltip-text">{currentClue.clue}</span>
-          <div class="tooltip-arrow"></div>
+          <div
+            class="tooltip-arrow"
+            style="left: {tooltipPos.arrowLeft}%"
+          ></div>
         </div>
       </div>
     {/if}
