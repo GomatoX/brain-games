@@ -45,51 +45,42 @@
   }
 
   function getTooltipPosition(cell, gridElement) {
-    if (!cell || !gridElement) return null;
+    if (!cell || !gridElement) return null
     const cellEl = gridElement.querySelector(
       `[data-cell="${cell.row},${cell.col}"]`,
-    );
-    if (!cellEl) return null;
-    const cellParent = cellEl.closest(".cell");
-    if (!cellParent) return null;
-    const gridRect = gridElement.getBoundingClientRect();
-    const cellRect = cellParent.getBoundingClientRect();
+    )
+    if (!cellEl) return null
+    const cellParent = cellEl.closest(".cell")
+    if (!cellParent) return null
+    const gridRect = gridElement.getBoundingClientRect()
+    const cellRect = cellParent.getBoundingClientRect()
 
-    const left = cellRect.left - gridRect.left + cellRect.width / 2;
-    const top = cellRect.top - gridRect.top;
+    const top = cellRect.top - gridRect.top
 
-    // Compute viewport-aware body shift synchronously.
-    // The tooltip-body has max-width: 200px, centered via translate(-50%).
-    // We use max-width as a safe estimate for clamping.
-    const tooltipHalfWidth = 100;
-    const padding = 8;
+    // Anchor point in viewport coordinates
+    const anchorViewportX = cellRect.left + cellRect.width / 2
 
-    // Viewport-space center of the tooltip
-    const centerViewport = gridRect.left + left;
+    // Tooltip dimensions
+    const tooltipWidth = 200
+    const padding = 8
 
-    let bodyShift = 0;
+    // Calculate tooltip left-edge in viewport space, clamped to bounds
+    let tooltipLeftViewport = anchorViewportX - tooltipWidth / 2
+    tooltipLeftViewport = Math.max(padding, tooltipLeftViewport)
+    tooltipLeftViewport = Math.min(
+      window.innerWidth - padding - tooltipWidth,
+      tooltipLeftViewport,
+    )
 
-    // Left overflow
-    if (centerViewport - tooltipHalfWidth < padding) {
-      bodyShift = padding - (centerViewport - tooltipHalfWidth);
-    }
+    // Convert to grid-wrapper-relative coordinate
+    const left = tooltipLeftViewport - gridRect.left
 
-    // Right overflow
-    if (centerViewport + tooltipHalfWidth > window.innerWidth - padding) {
-      bodyShift =
-        window.innerWidth - padding - (centerViewport + tooltipHalfWidth);
-    }
+    // Arrow: where the anchor is within the tooltip body (percentage)
+    const arrowPercent =
+      ((anchorViewportX - tooltipLeftViewport) / tooltipWidth) * 100
+    const arrowLeft = Math.max(12, Math.min(88, arrowPercent))
 
-    // Compute the arrow's position within the body.
-    // The arrow needs to stay pointing at the anchor cell, so it must
-    // counteract the body's horizontal shift.
-    // 50% = centered (no shift). We subtract bodyShift as a percentage
-    // of the full tooltip width (tooltipHalfWidth * 2).
-    const arrowLeftPercent = 50 - (bodyShift / (tooltipHalfWidth * 2)) * 100
-    // Clamp so the arrow stays within the rounded body edges
-    const arrowLeft = Math.max(12, Math.min(88, arrowLeftPercent))
-
-    return { left, top, bodyShift, arrowLeft }
+    return { left, top, arrowLeft }
   }
 
   $: wordStartCell = getWordStartCell(selectedWordCells);
@@ -155,12 +146,7 @@
       class="grid-tooltip"
       style="left: {tooltipPos.left}px; top: {tooltipPos.top - 8}px;"
     >
-      <div
-        class="tooltip-body"
-        style={tooltipPos.bodyShift
-          ? `transform: translateX(${tooltipPos.bodyShift}px)`
-          : ""}
-      >
+      <div class="tooltip-body">
         <div class="tooltip-header">
           <svg class="tooltip-icon" viewBox="0 0 16 16" fill="none">
             {#if currentClue.direction === "across"}
@@ -231,15 +217,12 @@
     }
   }
 
-  /* Floating tooltip — Figma design */
+  /* Floating tooltip */
   .grid-tooltip {
     position: absolute;
     z-index: 10;
     pointer-events: none;
-    transform: translate(-50%, -100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    transform: translateY(-100%);
   }
 
   .tooltip-body {
