@@ -134,19 +134,15 @@
     }
 
     if (resultId) {
-      resultMode = true;
-      fetchPuzzle().then(async () => {
-        await tick();
-        try {
-          const decoded = JSON.parse(atob(resultId));
-          elapsedTime = decoded.t || 0;
-          mainWordComplete = true;
-          fillGridWithAnswers();
-        } catch {
-          console.error("Invalid result data");
-          resultMode = false;
-        }
-      });
+      // Shared result link: just load the puzzle normally (let them play)
+      // The share page already showed the sharer's time
+      resultId = ""
+      if (latestMode) {
+        fetchLatest()
+      } else if (puzzleId) {
+        fetchPuzzle()
+      }
+      startTimer()
     } else if (latestMode) {
       fetchLatest();
       startTimer();
@@ -282,6 +278,15 @@
     const sharePageUrl = new URL("/play/share.html", window.location.origin)
     sharePageUrl.searchParams.set("data", shareData)
     if (lang) sharePageUrl.searchParams.set("lang", lang)
+
+    // Include org share config if available
+    const shareConfig = puzzle?.share
+    if (shareConfig?.image_url)
+      sharePageUrl.searchParams.set("img", shareConfig.image_url)
+    if (shareConfig?.title)
+      sharePageUrl.searchParams.set("title", shareConfig.title)
+    if (shareConfig?.description)
+      sharePageUrl.searchParams.set("desc", shareConfig.description)
 
     shareUrl = sharePageUrl.toString()
   }

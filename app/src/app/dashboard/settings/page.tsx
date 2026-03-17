@@ -15,6 +15,9 @@ export default async function SettingsPage() {
         defaultBranding: organizations.defaultBranding,
         name: organizations.name,
         logoUrl: organizations.logoUrl,
+        shareImageUrl: organizations.shareImageUrl,
+        shareTitle: organizations.shareTitle,
+        shareDescription: organizations.shareDescription,
       })
       .from(organizations)
       .where(eq(organizations.id, user.orgId))
@@ -32,6 +35,9 @@ export default async function SettingsPage() {
     default_branding: org?.defaultBranding || "",
     org_name: org?.name || "",
     logo_url: org?.logoUrl || null,
+    share_image_url: org?.shareImageUrl || "",
+    share_title: org?.shareTitle || "",
+    share_description: org?.shareDescription || "",
   };
 
   const initialBrandingOptions = presets.map((b) => ({

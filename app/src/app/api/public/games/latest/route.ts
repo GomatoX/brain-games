@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku, branding } from "@/db/schema";
+import { crosswords, wordgames, sudoku, branding, organizations } from "@/db/schema"
 import { eq, desc, and, sql, or, lte } from "drizzle-orm"
 import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
 
@@ -143,6 +143,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Fetch org-level share config
+    const [orgData] = await db
+      .select({
+        shareImageUrl: organizations.shareImageUrl,
+        shareTitle: organizations.shareTitle,
+        shareDescription: organizations.shareDescription,
+      })
+      .from(organizations)
+      .where(eq(organizations.id, game.orgId))
+      .limit(1)
+
     // Build response
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const gameData: Record<string, any> = {
@@ -150,7 +161,12 @@ export async function GET(request: NextRequest) {
       status: game.status,
       title: game.title,
       branding: brandingData,
-    };
+      share: {
+        image_url: orgData?.shareImageUrl || null,
+        title: orgData?.shareTitle || null,
+        description: orgData?.shareDescription || null,
+      },
+    }
 
     if ("words" in game) {
       gameData.difficulty = game.difficulty;

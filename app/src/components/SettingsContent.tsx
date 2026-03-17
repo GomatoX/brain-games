@@ -24,8 +24,11 @@ interface SettingsProps {
     language: string;
     default_branding: string;
     org_name: string;
-    logo_url: string | null;
-  };
+    logo_url: string | null
+    share_image_url: string
+    share_title: string
+    share_description: string
+  }
   initialBrandingOptions: { id: string; name: string }[];
 }
 
@@ -50,7 +53,14 @@ export default function SettingsContent({
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [logoError, setLogoError] = useState("");
+  const [logoError, setLogoError] = useState("")
+  const [shareImageUrl, setShareImageUrl] = useState(
+    initialSettings.share_image_url,
+  )
+  const [shareTitle, setShareTitle] = useState(initialSettings.share_title)
+  const [shareDescription, setShareDescription] = useState(
+    initialSettings.share_description,
+  )
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,6 +105,9 @@ export default function SettingsContent({
           default_branding: defaultBranding || null,
           org_name: orgName || null,
           logo_url: logoUrl,
+          share_image_url: shareImageUrl || null,
+          share_title: shareTitle || null,
+          share_description: shareDescription || null,
         }),
       });
 
@@ -226,6 +239,63 @@ export default function SettingsContent({
 
         {/* Security & Access */}
         <PasswordSection />
+
+        {/* Social Sharing */}
+        <Panel>
+          <div className="p-8 space-y-6">
+            <div className="border-b border-[#f1f5f9] pb-4">
+              <h2 className="text-lg font-semibold text-navy-900">
+                Social Sharing
+              </h2>
+              <p className="text-sm text-[#94a3b8] mt-1">
+                Configure how shared game results appear on social media.
+              </p>
+            </div>
+
+            <Input
+              label="Share Image URL"
+              id="share-image-url"
+              value={shareImageUrl}
+              onChange={(e) => setShareImageUrl(e.target.value)}
+              placeholder="https://example.com/share-image.jpg"
+              disabled={!isOwner}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Share Title"
+                id="share-title"
+                value={shareTitle}
+                onChange={(e) => setShareTitle(e.target.value)}
+                placeholder="e.g. Kryžiažodis — rezultatas"
+                disabled={!isOwner}
+              />
+              <Input
+                label="Share Description"
+                id="share-description"
+                value={shareDescription}
+                onChange={(e) => setShareDescription(e.target.value)}
+                placeholder="e.g. Mano draugas išsprendė kryžiažodį!"
+                disabled={!isOwner}
+              />
+            </div>
+          </div>
+
+          {isOwner && (
+            <div className="px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
+              {saved && (
+                <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
+                  <span className="material-symbols-outlined text-base">
+                    check_circle
+                  </span>
+                  Saved!
+                </span>
+              )}
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          )}
+        </Panel>
       </div>
     </div>
   );

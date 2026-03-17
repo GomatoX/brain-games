@@ -153,6 +153,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Fetch org-level share config
+    const [org] = await db
+      .select({
+        shareImageUrl: organizations.shareImageUrl,
+        shareTitle: organizations.shareTitle,
+        shareDescription: organizations.shareDescription,
+      })
+      .from(organizations)
+      .where(eq(organizations.id, game.orgId))
+      .limit(1)
+
     // Build response
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const gameData: Record<string, any> = {
@@ -160,7 +171,12 @@ export async function GET(request: NextRequest) {
       status: game.status,
       title: game.title,
       branding: brandingData,
-    };
+      share: {
+        image_url: org?.shareImageUrl || null,
+        title: org?.shareTitle || null,
+        description: org?.shareDescription || null,
+      },
+    }
 
     // Type-specific fields
     if ("words" in game) {

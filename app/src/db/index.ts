@@ -25,6 +25,9 @@ if (isPostgres) {
       name TEXT NOT NULL,
       api_token TEXT UNIQUE,
       logo_url TEXT,
+      share_image_url TEXT,
+      share_title TEXT,
+      share_description TEXT,
       default_language TEXT DEFAULT 'lt',
       default_branding TEXT,
       created_at TEXT NOT NULL DEFAULT now()
@@ -123,6 +126,13 @@ if (isPostgres) {
   `);
 
   // TODO: PG auto-migration for orgs (similar to SQLite below)
+
+  // Auto-migrate PG: add share columns
+  pool.query(`
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS share_image_url TEXT;
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS share_title TEXT;
+    ALTER TABLE organizations ADD COLUMN IF NOT EXISTS share_description TEXT;
+  `).catch(() => {})
 
   db = drizzle(pool, { schema });
 } else {
@@ -244,6 +254,22 @@ if (isPostgres) {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // ─── Auto-migrate: add share columns to organizations ──
+  const orgColsCheck = sqlite
+    .pragma("table_info(organizations)")
+    .map((c: { name: string }) => c.name)
+  const shareColumns = ["share_image_url", "share_title", "share_description"]
+  for (const col of shareColumns) {
+    if (orgColsCheck.length > 0 && !orgColsCheck.includes(col)) {
+      try {
+        sqlite.exec(`ALTER TABLE organizations ADD COLUMN ${col} TEXT;`)
+        console.log(`[migrate] ✅ Added ${col} to organizations`)
+      } catch (err) {
+        console.error(`[migrate] ${col} may already exist:`, err)
+      }
+    }
+  }
 
   // ─── Auto-migrate: old schema → org-scoped ────────────
   // Detects if users table exists but lacks org_id column,

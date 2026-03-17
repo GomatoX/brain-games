@@ -165,16 +165,28 @@
     </style>
 
     <script>
-      // Override OG image if ?img= param is present
+      // Override OG meta tags from URL params
       // This must run before social crawlers read the meta tags
       ;(function () {
         var params = new URLSearchParams(window.location.search)
         var img = params.get("img")
+        var title = params.get("title")
+        var desc = params.get("desc")
         if (img) {
           var ogImg = document.getElementById("og-image")
           var twImg = document.getElementById("twitter-image")
           if (ogImg) ogImg.setAttribute("content", img)
           if (twImg) twImg.setAttribute("content", img)
+        }
+        if (title) {
+          document.querySelector('meta[property="og:title"]').setAttribute("content", title)
+          document.querySelector('meta[name="twitter:title"]').setAttribute("content", title)
+          document.title = title
+        }
+        if (desc) {
+          document.querySelector('meta[property="og:description"]').setAttribute("content", desc)
+          document.querySelector('meta[name="twitter:description"]').setAttribute("content", desc)
+          document.querySelector('meta[name="description"]').setAttribute("content", desc)
         }
       })()
     </script>
@@ -243,14 +255,20 @@
         var seconds = String(timeSeconds % 60).padStart(2, "0")
         var timeStr = minutes + ":" + seconds
 
+        // Apply custom title/subtitle from URL params if provided
+        var customTitle = params.get("title")
+        var customDesc = params.get("desc")
+        var displayTitle = customTitle || t.title
+        var displaySubtitle = customDesc || t.subtitle
+
         // Build the card
         card.innerHTML =
           '<div class="share-icon">' +
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">' +
           '<path d="M170.83,101.17a4,4,0,0,1,0,5.66l-56,56a4,4,0,0,1-5.66,0l-24-24a4,4,0,0,1,5.66-5.66L112,154.34l53.17-53.17A4,4,0,0,1,170.83,101.17ZM228,128A100,100,0,1,1,128,28,100.11,100.11,0,0,1,228,128Zm-8,0a92,92,0,1,0-92,92A92.1,92.1,0,0,0,220,128Z"></path>' +
           "</svg></div>" +
-          "<h1>" + t.title + "</h1>" +
-          '<p class="subtitle">' + t.subtitle + "</p>" +
+          "<h1>" + displayTitle + "</h1>" +
+          '<p class="subtitle">' + displaySubtitle + "</p>" +
           '<div class="time-badge">' +
           '<span class="time-label">' + t.timeLabel + "</span>" +
           '<span class="time-value">' + timeStr + "</span></div>" +

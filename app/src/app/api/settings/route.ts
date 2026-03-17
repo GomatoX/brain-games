@@ -16,6 +16,9 @@ export async function GET() {
         defaultBranding: organizations.defaultBranding,
         name: organizations.name,
         logoUrl: organizations.logoUrl,
+        shareImageUrl: organizations.shareImageUrl,
+        shareTitle: organizations.shareTitle,
+        shareDescription: organizations.shareDescription,
       })
       .from(organizations)
       .where(eq(organizations.id, orgId))
@@ -26,6 +29,9 @@ export async function GET() {
       default_branding: org?.defaultBranding || null,
       org_name: org?.name || null,
       logo_url: org?.logoUrl || null,
+      share_image_url: org?.shareImageUrl || null,
+      share_title: org?.shareTitle || null,
+      share_description: org?.shareDescription || null,
     });
   } catch {
     return NextResponse.json({
@@ -33,6 +39,9 @@ export async function GET() {
       default_branding: null,
       org_name: null,
       logo_url: null,
+      share_image_url: null,
+      share_title: null,
+      share_description: null,
     });
   }
 }
@@ -53,6 +62,12 @@ export async function POST(request: NextRequest) {
       updates.defaultBranding = body.default_branding || null;
     if (body.org_name !== undefined) updates.name = body.org_name;
     if (body.logo_url !== undefined) updates.logoUrl = body.logo_url || null;
+    if (body.share_image_url !== undefined)
+      updates.shareImageUrl = body.share_image_url || null;
+    if (body.share_title !== undefined)
+      updates.shareTitle = body.share_title || null;
+    if (body.share_description !== undefined)
+      updates.shareDescription = body.share_description || null;
 
     await db
       .update(organizations)
@@ -64,6 +79,9 @@ export async function POST(request: NextRequest) {
       default_branding: body.default_branding || null,
       org_name: body.org_name || null,
       logo_url: body.logo_url || null,
+      share_image_url: body.share_image_url || null,
+      share_title: body.share_title || null,
+      share_description: body.share_description || null,
     });
   } catch (err) {
     const message =

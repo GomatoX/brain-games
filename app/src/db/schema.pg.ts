@@ -11,6 +11,9 @@ export const organizations = pgTable("organizations", {
   defaultLanguage: text("default_language").default("lt"),
   defaultBranding: text("default_branding"),
   logoUrl: text("logo_url"),
+  shareImageUrl: text("share_image_url"),
+  shareTitle: text("share_title"),
+  shareDescription: text("share_description"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),
