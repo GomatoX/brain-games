@@ -148,54 +148,55 @@
         </div>
       {/each}
     {/each}
-
-    {#if currentClue && !blurred && tooltipPos}
-      <div
-        class="grid-tooltip"
-        style="left: {tooltipPos.left}px; top: {tooltipPos.top - 8}px;"
-      >
-        <div
-          class="tooltip-body"
-          style={tooltipPos.bodyShift
-            ? `transform: translateX(${tooltipPos.bodyShift}px)`
-            : ""}
-        >
-          <div class="tooltip-header">
-            <svg class="tooltip-icon" viewBox="0 0 16 16" fill="none">
-              {#if currentClue.direction === "across"}
-                <path
-                  d="M1 8h14M10 3l5 5-5 5"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              {:else}
-                <path
-                  d="M8 1v14M3 10l5 5 5-5"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              {/if}
-            </svg>
-            <span class="tooltip-direction">{directionLabel}</span>
-          </div>
-          <div class="tooltip-separator"></div>
-          <span class="tooltip-text">{currentClue.clue}</span>
-          <div
-            class="tooltip-arrow"
-            style="left: {tooltipPos.arrowLeft}%"
-          ></div>
-        </div>
-      </div>
-    {/if}
   </div>
+
+  {#if currentClue && !blurred && tooltipPos}
+    <div
+      class="grid-tooltip"
+      style="left: {tooltipPos.left}px; top: {tooltipPos.top - 8}px;"
+    >
+      <div
+        class="tooltip-body"
+        style={tooltipPos.bodyShift
+          ? `transform: translateX(${tooltipPos.bodyShift}px)`
+          : ""}
+      >
+        <div class="tooltip-header">
+          <svg class="tooltip-icon" viewBox="0 0 16 16" fill="none">
+            {#if currentClue.direction === "across"}
+              <path
+                d="M1 8h14M10 3l5 5-5 5"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            {:else}
+              <path
+                d="M8 1v14M3 10l5 5 5-5"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            {/if}
+          </svg>
+          <span class="tooltip-direction">{directionLabel}</span>
+        </div>
+        <div class="tooltip-separator"></div>
+        <span class="tooltip-text">{currentClue.clue}</span>
+        <div
+          class="tooltip-arrow"
+          style="left: {tooltipPos.arrowLeft}%"
+        ></div>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
   .grid-wrapper {
+    position: relative;
     background-color: var(--bg-secondary);
     padding: 32px;
     border-radius: 0;
@@ -207,7 +208,6 @@
   @media (max-width: 1024px) {
     .grid-wrapper {
       padding: 0;
-      overflow: hidden;
     }
   }
 
@@ -227,6 +227,7 @@
     .crossword-grid {
       grid-template-columns: repeat(var(--grid-cols), 1fr);
       width: 100%;
+      overflow: hidden;
     }
   }
 
