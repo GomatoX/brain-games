@@ -266,11 +266,24 @@
   }
 
   function shareResult() {
-    const data = btoa(JSON.stringify({ t: elapsedTime }));
-    const url = new URL(window.location.href);
-    url.searchParams.delete("result");
-    url.searchParams.set("result", data);
-    shareUrl = url.toString();
+    // Build the redirect URL (current game page without result param)
+    const redirectUrl = new URL(window.location.href)
+    redirectUrl.searchParams.delete("result")
+
+    // Encode share data: time + redirect destination
+    const shareData = btoa(
+      JSON.stringify({
+        t: elapsedTime,
+        redirect: redirectUrl.toString(),
+      }),
+    )
+
+    // Build share page URL — relative to the games engine base
+    const sharePageUrl = new URL("/play/share.html", window.location.origin)
+    sharePageUrl.searchParams.set("data", shareData)
+    if (lang) sharePageUrl.searchParams.set("lang", lang)
+
+    shareUrl = sharePageUrl.toString()
   }
 
   function buildGrid() {
