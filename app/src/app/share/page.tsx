@@ -68,8 +68,7 @@ const SharePage = async ({
 
   return (
     <>
-      {/* Redirect for browsers — 1s delay lets crawlers parse head first */}
-      <meta httpEquiv="refresh" content={`1;url=${redirectUrl}`} />
+      {/* JS-only redirect — crawlers don't execute JS so they read our OG tags */}
       <script
         dangerouslySetInnerHTML={{
           __html: `window.location.replace(${JSON.stringify(redirectUrl)})`,
