@@ -28,7 +28,6 @@ export const generateMetadata = async ({
   const title = shareData?.title || "Game Result"
   const description = shareData?.desc || "Check out this game result!"
   const image = shareData?.img || undefined
-  const canonicalUrl = shareData?.r || undefined
 
   return {
     title,
@@ -37,7 +36,6 @@ export const generateMetadata = async ({
       type: "website",
       title,
       description,
-      url: canonicalUrl,
       ...(image
         ? {
             images: [
@@ -70,8 +68,8 @@ const SharePage = async ({
 
   return (
     <>
-      {/* Immediate redirect for browsers (works without JS too) */}
-      <meta httpEquiv="refresh" content={`0;url=${redirectUrl}`} />
+      {/* Redirect for browsers — 1s delay lets crawlers parse head first */}
+      <meta httpEquiv="refresh" content={`1;url=${redirectUrl}`} />
       <script
         dangerouslySetInnerHTML={{
           __html: `window.location.replace(${JSON.stringify(redirectUrl)})`,
