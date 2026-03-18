@@ -622,50 +622,27 @@
   }
 
   function moveToNextCell(row, col) {
-    let nextRow = row;
-    let nextCol = col;
+    const nextRow = selectedDirection === "across" ? row : row + 1
+    const nextCol = selectedDirection === "across" ? col + 1 : col
 
-    while (true) {
-      if (selectedDirection === "across") {
-        nextCol += 1;
-      } else {
-        nextRow += 1;
-      }
+    if (nextRow >= grid.length || nextCol >= (grid[0]?.length || 0)) return
+    if (!grid[nextRow] || !grid[nextRow][nextCol]) return
+    if (grid[nextRow][nextCol].isBlocked) return
 
-      if (nextRow >= grid.length || nextCol >= (grid[0]?.length || 0)) return;
-      if (!grid[nextRow] || !grid[nextRow][nextCol]) return;
-      if (grid[nextRow][nextCol].isBlocked) return;
-
-      if (!lockedCells.has(`${nextRow},${nextCol}`)) {
-        selectedCell = { row: nextRow, col: nextCol };
-        focusCell(nextRow, nextCol);
-        return;
-      }
-    }
+    selectedCell = { row: nextRow, col: nextCol }
+    focusCell(nextRow, nextCol)
   }
 
   function moveToPrevCell(row, col) {
-    let prevRow = row;
-    let prevCol = col;
+    const prevRow = selectedDirection === "across" ? row : row - 1
+    const prevCol = selectedDirection === "across" ? col - 1 : col
 
-    while (true) {
-      if (selectedDirection === "across") {
-        prevCol -= 1;
-        if (prevCol < 0) return;
-      } else {
-        prevRow -= 1;
-        if (prevRow < 0) return;
-      }
+    if (prevRow < 0 || prevCol < 0) return
+    if (!grid[prevRow] || !grid[prevRow][prevCol]) return
+    if (grid[prevRow][prevCol].isBlocked) return
 
-      if (!grid[prevRow] || !grid[prevRow][prevCol]) return;
-      if (grid[prevRow][prevCol].isBlocked) return;
-
-      if (!lockedCells.has(`${prevRow},${prevCol}`)) {
-        selectedCell = { row: prevRow, col: prevCol };
-        focusCell(prevRow, prevCol);
-        return;
-      }
-    }
+    selectedCell = { row: prevRow, col: prevCol }
+    focusCell(prevRow, prevCol)
   }
 
   async function focusCell(row, col) {

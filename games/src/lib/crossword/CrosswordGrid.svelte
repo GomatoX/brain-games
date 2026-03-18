@@ -1,97 +1,106 @@
 <script>
-  import { createEventDispatcher } from "svelte";
-  import { t } from "../i18n.js";
+  import { createEventDispatcher, tick } from "svelte"
+  import { computePosition, offset, flip, shift, arrow as arrowMiddleware } from "@floating-ui/dom"
+  import { t } from "../i18n.js"
 
-  export let grid = [];
-  export let selectedCell = null;
-  export let selectedWordCells = new Set();
-  export let cellInputs = {};
-  export let mainWordCellSet = new Set();
-  export let lockedCells = new Set();
-  export let blurred = false;
-  export let currentClue = null;
+  export let grid = []
+  export let selectedCell = null
+  export let selectedWordCells = new Set()
+  export let cellInputs = {}
+  export let mainWordCellSet = new Set()
+  export let lockedCells = new Set()
+  export let blurred = false
+  export let currentClue = null
 
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher()
 
-  let gridEl;
+  let gridEl
+  let tooltipEl
+  let arrowEl
 
-  function handleCellClick(rowIndex, colIndex) {
-    if (blurred) return;
-    dispatch("cellClick", { row: rowIndex, col: colIndex });
+  const handleCellClick = (rowIndex, colIndex) => {
+    if (blurred) return
+    dispatch("cellClick", { row: rowIndex, col: colIndex })
   }
 
-  function handleCellInput(event, rowIndex, colIndex) {
-    if (blurred) return;
-    dispatch("cellInput", { event, row: rowIndex, col: colIndex });
+  const handleCellInput = (event, rowIndex, colIndex) => {
+    if (blurred) return
+    dispatch("cellInput", { event, row: rowIndex, col: colIndex })
   }
 
-  function handleKeyDown(event, rowIndex, colIndex) {
-    if (blurred) return;
-    dispatch("keyDown", { event, row: rowIndex, col: colIndex });
+  const handleKeyDown = (event, rowIndex, colIndex) => {
+    if (blurred) return
+    dispatch("keyDown", { event, row: rowIndex, col: colIndex })
   }
 
-  function getWordStartCell(wordCells) {
-    if (!wordCells || wordCells.size === 0) return null;
-    let minRow = Infinity;
-    let minCol = Infinity;
+  const getWordStartCell = (wordCells) => {
+    if (!wordCells || wordCells.size === 0) return null
+    let minRow = Infinity
+    let minCol = Infinity
     for (const key of wordCells) {
-      const [r, c] = key.split(",").map(Number);
+      const [r, c] = key.split(",").map(Number)
       if (r < minRow || (r === minRow && c < minCol)) {
-        minRow = r;
-        minCol = c;
+        minRow = r
+        minCol = c
       }
     }
-    return { row: minRow, col: minCol };
+    return { row: minRow, col: minCol }
   }
 
-  function getTooltipPosition(cell, gridElement) {
-    if (!cell || !gridElement) return null
-    const cellEl = gridElement.querySelector(
-      `[data-cell="${cell.row},${cell.col}"]`,
+  const updateTooltipPosition = async () => {
+    await tick()
+    if (!tooltipEl || !gridEl) return
+
+    const startCell = getWordStartCell(selectedWordCells)
+    if (!startCell) return
+
+    const cellInput = gridEl.querySelector(
+      `[data-cell="${startCell.row},${startCell.col}"]`,
     )
-    if (!cellEl) return null
-    const cellParent = cellEl.closest(".cell")
-    if (!cellParent) return null
-    const gridRect = gridElement.getBoundingClientRect()
-    const cellRect = cellParent.getBoundingClientRect()
+    if (!cellInput) return
 
-    const top = cellRect.top - gridRect.top
+    const referenceEl = cellInput.closest(".cell")
+    if (!referenceEl) return
 
-    // Anchor point in viewport coordinates
-    const anchorViewportX = cellRect.left + cellRect.width / 2
-
-    // Tooltip dimensions
-    const tooltipWidth = 200
-    const padding = 8
-
-    // Use grid container width for clamping (not window.innerWidth which is wrong in embeds)
-    const containerRight = gridRect.left + gridRect.width
-
-    // Calculate tooltip left-edge in viewport space, clamped to grid bounds
-    let tooltipLeftViewport = anchorViewportX - tooltipWidth / 2
-    tooltipLeftViewport = Math.max(gridRect.left + padding, tooltipLeftViewport)
-    tooltipLeftViewport = Math.min(
-      containerRight - padding - tooltipWidth,
-      tooltipLeftViewport,
+    const { x, y, placement, middlewareData } = await computePosition(
+      referenceEl,
+      tooltipEl,
+      {
+        placement: "top",
+        middleware: [
+          offset(8),
+          flip({ fallbackPlacements: ["bottom"] }),
+          shift({ padding: 8 }),
+          arrowMiddleware({ element: arrowEl }),
+        ],
+      },
     )
 
-    // Convert to grid-wrapper-relative coordinate
-    const left = tooltipLeftViewport - gridRect.left
+    Object.assign(tooltipEl.style, {
+      left: `${x}px`,
+      top: `${y}px`,
+    })
 
-    // Arrow: where the anchor is within the tooltip body (percentage)
-    const arrowPercent =
-      ((anchorViewportX - tooltipLeftViewport) / tooltipWidth) * 100
-    const arrowLeft = Math.max(12, Math.min(88, arrowPercent))
+    if (middlewareData.arrow && arrowEl) {
+      const { x: arrowX } = middlewareData.arrow
+      const isTop = placement === "top"
 
-    return { left, top, arrowLeft }
+      Object.assign(arrowEl.style, {
+        left: arrowX != null ? `${arrowX}px` : "",
+        top: isTop ? "" : "-5px",
+        bottom: isTop ? "-5px" : "",
+      })
+    }
   }
 
-  $: wordStartCell = getWordStartCell(selectedWordCells);
-  $: tooltipPos = getTooltipPosition(wordStartCell, gridEl);
+  $: wordStartCell = getWordStartCell(selectedWordCells)
+  $: if (currentClue && wordStartCell && !blurred) {
+    updateTooltipPosition()
+  }
   $: directionLabel =
     currentClue?.direction === "across"
       ? $t("crossword.across")
-      : $t("crossword.down");
+      : $t("crossword.down")
 </script>
 
 <div class="grid-wrapper" class:blurred>
@@ -144,10 +153,10 @@
     {/each}
   </div>
 
-  {#if currentClue && !blurred && tooltipPos}
+  {#if currentClue && !blurred && wordStartCell}
     <div
       class="grid-tooltip"
-      style="left: {tooltipPos.left}px; top: {tooltipPos.top - 8}px;"
+      bind:this={tooltipEl}
     >
       <div class="tooltip-body">
         <div class="tooltip-header">
@@ -176,7 +185,7 @@
         <span class="tooltip-text">{currentClue.clue}</span>
         <div
           class="tooltip-arrow"
-          style="left: {tooltipPos.arrowLeft}%"
+          bind:this={arrowEl}
         ></div>
       </div>
     </div>
@@ -220,12 +229,14 @@
     }
   }
 
-  /* Floating tooltip */
+  /* Floating tooltip — positioned by @floating-ui/dom */
   .grid-tooltip {
     position: absolute;
     z-index: 10;
     pointer-events: none;
-    transform: translateY(-100%);
+    top: 0;
+    left: 0;
+    width: max-content;
   }
 
   .tooltip-body {
@@ -280,9 +291,6 @@
 
   .tooltip-arrow {
     position: absolute;
-    bottom: -5px;
-    left: 50%;
-    transform: translateX(-50%);
     width: 0;
     height: 0;
     border-left: 6px solid transparent;
