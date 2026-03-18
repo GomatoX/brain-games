@@ -266,36 +266,33 @@
     const redirectUrl = new URL(window.location.href)
     redirectUrl.searchParams.delete("result")
 
-    // Encode share data: time + redirect destination
-    const shareData = btoa(
-      JSON.stringify({
-        t: elapsedTime,
-        redirect: redirectUrl.toString(),
-      }),
-    )
-
-    // Build share page URL — use apiUrl (games engine origin), not window.location
-    const sharePageUrl = new URL("/play/share.html", apiUrl || window.location.origin)
-    sharePageUrl.searchParams.set("data", shareData)
-    if (lang) sharePageUrl.searchParams.set("lang", lang)
-
-    // Include org share config if available, processing template variables
-    const shareConfig = puzzle?.share
-    if (shareConfig?.image_url)
-      sharePageUrl.searchParams.set("img", shareConfig.image_url)
-
     // Format time for template replacement
     const mins = String(Math.floor(elapsedTime / 60)).padStart(2, "0")
     const secs = String(elapsedTime % 60).padStart(2, "0")
     const timeStr = `${mins}:${secs}`
 
+    // Process template variables in title/description
     const processTemplate = (str) =>
-      str.replace(/\{\{time\}\}/gi, timeStr)
+      str
+        .replace(/\{\{time\}\}/gi, timeStr)
+        .replace(/\{\{title\}\}/gi, puzzle?.title || "")
 
-    if (shareConfig?.title)
-      sharePageUrl.searchParams.set("title", processTemplate(shareConfig.title))
-    if (shareConfig?.description)
-      sharePageUrl.searchParams.set("desc", processTemplate(shareConfig.description))
+    const shareConfig = puzzle?.share || {}
+
+    // Encode all share data into a single compact payload
+    const payload = {
+      t: elapsedTime,
+      r: redirectUrl.toString(),
+    }
+    if (shareConfig.image_url) payload.img = shareConfig.image_url
+    if (shareConfig.title) payload.title = processTemplate(shareConfig.title)
+    if (shareConfig.description) payload.desc = processTemplate(shareConfig.description)
+
+    const shareData = btoa(JSON.stringify(payload))
+
+    // Build share page URL — Next.js route on apiUrl
+    const sharePageUrl = new URL("/share", apiUrl || window.location.origin)
+    sharePageUrl.searchParams.set("data", shareData)
 
     shareUrl = sharePageUrl.toString()
   }

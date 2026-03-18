@@ -283,7 +283,11 @@ export default function SettingsContent({
               <code className="bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
                 {"{{time}}"}
               </code>{" "}
-              — solver&apos;s time (MM:SS)
+              — solver&apos;s time (MM:SS),{" "}
+              <code className="bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
+                {"{{title}}"}
+              </code>{" "}
+              — game title
             </p>
           </div>
 
