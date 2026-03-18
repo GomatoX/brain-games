@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher, tick } from "svelte"
+  import { createEventDispatcher, tick, onMount, onDestroy } from "svelte"
   import { computePosition, offset, flip, shift, arrow as arrowMiddleware } from "@floating-ui/dom"
   import { t } from "../i18n.js"
 
@@ -12,6 +12,7 @@
   export let blurred = false
   export let currentClue = null
 
+  const ARROW_SIZE = 8
   const dispatch = createEventDispatcher()
 
   let gridEl
@@ -47,9 +48,8 @@
     return { row: minRow, col: minCol }
   }
 
-  const updateTooltipPosition = async () => {
-    await tick()
-    if (!tooltipEl || !gridEl) return
+  const positionTooltip = () => {
+    if (!tooltipEl || !gridEl || !arrowEl) return
 
     const startCell = getWordStartCell(selectedWordCells)
     if (!startCell) return
@@ -62,40 +62,70 @@
     const referenceEl = cellInput.closest(".cell")
     if (!referenceEl) return
 
-    const { x, y, placement, middlewareData } = await computePosition(
-      referenceEl,
-      tooltipEl,
-      {
-        placement: "top",
-        middleware: [
-          offset(8),
-          flip({ fallbackPlacements: ["bottom"] }),
-          shift({ padding: 8 }),
-          arrowMiddleware({ element: arrowEl }),
-        ],
-      },
-    )
+    // Direction-aware fallbacks:
+    // "down" words → never flip below (covers the word), use left/right
+    // "across" words → bottom is safe since word extends horizontally
+    const direction = currentClue?.direction
+    const fallbacks =
+      direction === "down"
+        ? ["right", "left"]
+        : ["bottom"]
 
-    Object.assign(tooltipEl.style, {
-      left: `${x}px`,
-      top: `${y}px`,
-    })
+    computePosition(referenceEl, tooltipEl, {
+      placement: "top",
+      strategy: "absolute",
+      middleware: [
+        offset(ARROW_SIZE + 4),
+        flip({ fallbackPlacements: fallbacks }),
+        shift({ padding: 8 }),
+        arrowMiddleware({ element: arrowEl, padding: 6 }),
+      ],
+    }).then(({ x, y, placement, middlewareData }) => {
+      if (!tooltipEl) return
 
-    if (middlewareData.arrow && arrowEl) {
-      const { x: arrowX } = middlewareData.arrow
-      const isTop = placement === "top"
-
-      Object.assign(arrowEl.style, {
-        left: arrowX != null ? `${arrowX}px` : "",
-        top: isTop ? "" : "-5px",
-        bottom: isTop ? "-5px" : "",
+      Object.assign(tooltipEl.style, {
+        left: `${x}px`,
+        top: `${y}px`,
       })
-    }
+
+      if (middlewareData.arrow && arrowEl) {
+        const { x: arrowX, y: arrowY } = middlewareData.arrow
+        const side = {
+          top: "bottom",
+          right: "left",
+          bottom: "top",
+          left: "right",
+        }[placement]
+
+        Object.assign(arrowEl.style, {
+          left: arrowX != null ? `${arrowX}px` : "",
+          top: arrowY != null ? `${arrowY}px` : "",
+          right: "",
+          bottom: "",
+          [side]: `${-ARROW_SIZE / 2}px`,
+        })
+      }
+    })
   }
+
+  const schedulePosition = async () => {
+    await tick()
+    requestAnimationFrame(positionTooltip)
+  }
+
+  const handleResize = () => positionTooltip()
+
+  onMount(() => {
+    window.addEventListener("resize", handleResize)
+  })
+
+  onDestroy(() => {
+    window.removeEventListener("resize", handleResize)
+  })
 
   $: wordStartCell = getWordStartCell(selectedWordCells)
   $: if (currentClue && wordStartCell && !blurred) {
-    updateTooltipPosition()
+    schedulePosition()
   }
   $: directionLabel =
     currentClue?.direction === "across"
@@ -291,11 +321,10 @@
 
   .tooltip-arrow {
     position: absolute;
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid #67686e;
+    width: 8px;
+    height: 8px;
+    background: #67686e;
+    transform: rotate(45deg);
   }
 
   .cell {

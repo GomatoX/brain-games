@@ -10,6 +10,9 @@ node_modules
 dist
 .next
 .svelte-kit
+app/public/play/
+app/public/crossword-engine.iife.js
+app/public/word-game-engine.iife.js
 
 # SQLite data
 app/data/

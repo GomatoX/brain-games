@@ -29,17 +29,52 @@ cmd_install() {
 }
 
 cmd_dev() {
-  echo -e "${GREEN}▸ Starting app (Next.js) & games (Vite) in parallel...${NC}"
+  echo -e "${GREEN}▸ Building game engines before starting dev...${NC}"
+  (cd "$ROOT_DIR/games" && yarn build:all)
+  sync_games
+
+  echo -e "${GREEN}▸ Starting all dev servers + game watcher...${NC}"
   (cd "$ROOT_DIR/app" && yarn dev) &
   APP_PID=$!
+
+  # Vite dev server for games (HMR at :5173)
   (cd "$ROOT_DIR/games" && yarn dev) &
   GAMES_PID=$!
 
-  trap "kill $APP_PID $GAMES_PID 2>/dev/null; exit" INT TERM
+  # Watch mode: rebuild game engines on changes and sync to app/public
+  watch_games &
+  WATCH_PID=$!
+
+  trap "kill $APP_PID $GAMES_PID $WATCH_PID 2>/dev/null; exit" INT TERM
   echo -e "${CYAN}  app   → http://localhost:3000${NC}"
   echo -e "${CYAN}  games → http://localhost:5173${NC}"
-  echo -e "${YELLOW}  Press Ctrl+C to stop both.${NC}"
+  echo -e "${GREEN}  ✔ Game engine rebuilds are watched and synced automatically.${NC}"
+  echo -e "${YELLOW}  Press Ctrl+C to stop all.${NC}"
   wait
+}
+
+sync_games() {
+  cp -f "$ROOT_DIR/games/dist/crossword-engine.iife.js" "$ROOT_DIR/app/public/crossword-engine.iife.js" 2>/dev/null || true
+  cp -f "$ROOT_DIR/games/dist/word-game-engine.iife.js" "$ROOT_DIR/app/public/word-game-engine.iife.js" 2>/dev/null || true
+  rm -rf "$ROOT_DIR/app/public/play"
+  cp -r "$ROOT_DIR/games/dist/play" "$ROOT_DIR/app/public/play" 2>/dev/null || true
+}
+
+watch_games() {
+  local LAST_HASH=""
+  while true; do
+    sleep 3
+    # Hash all source files to detect changes
+    local CURRENT_HASH
+    CURRENT_HASH=$(find "$ROOT_DIR/games/src" -type f -name '*.svelte' -o -name '*.js' -o -name '*.css' | sort | xargs cat 2>/dev/null | shasum)
+    if [ "$CURRENT_HASH" != "$LAST_HASH" ] && [ -n "$LAST_HASH" ]; then
+      echo -e "${YELLOW}▸ Game source changed — rebuilding...${NC}"
+      (cd "$ROOT_DIR/games" && yarn build:all 2>&1 | tail -3)
+      sync_games
+      echo -e "${GREEN}✔ Game engines rebuilt and synced.${NC}"
+    fi
+    LAST_HASH="$CURRENT_HASH"
+  done
 }
 
 cmd_build() {

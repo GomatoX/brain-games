@@ -1069,7 +1069,7 @@
           {/if}
         </div>
 
-        {#if isPreviewMode}
+        {#if isPreviewMode && !hasServerLayout}
           <div class="action-row preview-actions">
             <button
               class="action-btn"
