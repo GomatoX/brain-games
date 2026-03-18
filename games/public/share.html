@@ -192,106 +192,27 @@
     </script>
   </head>
   <body>
-    <div class="share-card" id="card">
-      <noscript>
-        <p class="error-msg">
-          JavaScript is required to view this page.
-        </p>
-      </noscript>
-    </div>
+    <div id="card"></div>
 
     <script>
       ;(function () {
         var params = new URLSearchParams(window.location.search)
-        var lang = params.get("lang") || "lt"
-        var card = document.getElementById("card")
-
-        var i18n = {
-          lt: {
-            title: "Kryžiažodis išspręstas!",
-            subtitle: "Jūsų draugas išsprendė kryžiažodį. Pabandykite ir jūs!",
-            timeLabel: "Laikas:",
-            cta: "Spręsti kryžiažodį →",
-            redirecting: "Nukreipiama per {0} sek...",
-            error: "Neteisinga nuoroda.",
-          },
-          en: {
-            title: "Crossword solved!",
-            subtitle: "Your friend solved this crossword. Try it yourself!",
-            timeLabel: "Time:",
-            cta: "Solve the crossword →",
-            redirecting: "Redirecting in {0} sec...",
-            error: "Invalid share link.",
-          },
-        }
-
-        var t = i18n[lang] || i18n.lt
 
         // Decode data param
         var dataParam = params.get("data")
-        if (!dataParam) {
-          card.innerHTML = '<p class="error-msg">' + t.error + "</p>"
-          return
-        }
+        if (!dataParam) return
 
         var data
         try {
           data = JSON.parse(atob(dataParam))
         } catch (e) {
-          card.innerHTML = '<p class="error-msg">' + t.error + "</p>"
           return
         }
 
-        var timeSeconds = data.t || 0
         var redirectUrl = data.redirect || ""
-
-        if (!redirectUrl) {
-          card.innerHTML = '<p class="error-msg">' + t.error + "</p>"
-          return
+        if (redirectUrl) {
+          window.location.replace(redirectUrl)
         }
-
-        // Format time as MM:SS
-        var minutes = String(Math.floor(timeSeconds / 60)).padStart(2, "0")
-        var seconds = String(timeSeconds % 60).padStart(2, "0")
-        var timeStr = minutes + ":" + seconds
-
-        // Apply custom title/subtitle from URL params if provided
-        var customTitle = params.get("title")
-        var customDesc = params.get("desc")
-        var displayTitle = customTitle || t.title
-        var displaySubtitle = customDesc || t.subtitle
-
-        // Build the card
-        card.innerHTML =
-          '<div class="share-icon">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">' +
-          '<path d="M170.83,101.17a4,4,0,0,1,0,5.66l-56,56a4,4,0,0,1-5.66,0l-24-24a4,4,0,0,1,5.66-5.66L112,154.34l53.17-53.17A4,4,0,0,1,170.83,101.17ZM228,128A100,100,0,1,1,128,28,100.11,100.11,0,0,1,228,128Zm-8,0a92,92,0,1,0-92,92A92.1,92.1,0,0,0,220,128Z"></path>' +
-          "</svg></div>" +
-          "<h1>" + displayTitle + "</h1>" +
-          '<p class="subtitle">' + displaySubtitle + "</p>" +
-          '<div class="time-badge">' +
-          '<span class="time-label">' + t.timeLabel + "</span>" +
-          '<span class="time-value">' + timeStr + "</span></div>" +
-          '<a class="cta-btn" href="' + redirectUrl + '">' + t.cta + "</a>" +
-          '<p class="redirect-note" id="countdown">' +
-          t.redirecting.replace("{0}", "3") +
-          "</p>"
-
-        // Auto-redirect countdown
-        var remaining = 3
-        var countdownEl = document.getElementById("countdown")
-        var interval = setInterval(function () {
-          remaining--
-          if (remaining <= 0) {
-            clearInterval(interval)
-            window.location.href = redirectUrl
-          } else {
-            countdownEl.textContent = t.redirecting.replace(
-              "{0}",
-              String(remaining),
-            )
-          }
-        }, 1000)
       })()
     </script>
   </body>
