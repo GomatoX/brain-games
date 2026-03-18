@@ -279,14 +279,23 @@
     sharePageUrl.searchParams.set("data", shareData)
     if (lang) sharePageUrl.searchParams.set("lang", lang)
 
-    // Include org share config if available
+    // Include org share config if available, processing template variables
     const shareConfig = puzzle?.share
     if (shareConfig?.image_url)
       sharePageUrl.searchParams.set("img", shareConfig.image_url)
+
+    // Format time for template replacement
+    const mins = String(Math.floor(elapsedTime / 60)).padStart(2, "0")
+    const secs = String(elapsedTime % 60).padStart(2, "0")
+    const timeStr = `${mins}:${secs}`
+
+    const processTemplate = (str) =>
+      str.replace(/\{\{time\}\}/gi, timeStr)
+
     if (shareConfig?.title)
-      sharePageUrl.searchParams.set("title", shareConfig.title)
+      sharePageUrl.searchParams.set("title", processTemplate(shareConfig.title))
     if (shareConfig?.description)
-      sharePageUrl.searchParams.set("desc", shareConfig.description)
+      sharePageUrl.searchParams.set("desc", processTemplate(shareConfig.description))
 
     shareUrl = sharePageUrl.toString()
   }

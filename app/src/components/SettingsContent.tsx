@@ -266,7 +266,7 @@ export default function SettingsContent({
                 id="share-title"
                 value={shareTitle}
                 onChange={(e) => setShareTitle(e.target.value)}
-                placeholder="e.g. Kryžiažodis — rezultatas"
+                placeholder="e.g. Kryžiažodis — {{time}}"
                 disabled={!isOwner}
               />
               <Input
@@ -274,10 +274,17 @@ export default function SettingsContent({
                 id="share-description"
                 value={shareDescription}
                 onChange={(e) => setShareDescription(e.target.value)}
-                placeholder="e.g. Mano draugas išsprendė kryžiažodį!"
+                placeholder="e.g. Išspręsta per {{time}}!"
                 disabled={!isOwner}
               />
             </div>
+            <p className="text-xs text-[#94a3b8]">
+              Available variables:{" "}
+              <code className="bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
+                {"{{time}}"}
+              </code>{" "}
+              — solver&apos;s time (MM:SS)
+            </p>
           </div>
 
           {isOwner && (
