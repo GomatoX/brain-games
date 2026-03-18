@@ -31,6 +31,8 @@ COPY app/ .
 COPY --from=games-build /games/dist/play ./public/play/
 COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/play/dist/crossword-engine.iife.js
 COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/play/dist/word-game-engine.iife.js
+COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/crossword-engine.iife.js
+COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/word-game-engine.iife.js
 
 # Read version from package.json — single source of truth
 RUN VERSION=$(node -p "require('./package.json').version") && \
@@ -57,6 +59,8 @@ COPY --from=app-build /app/public ./public
 COPY --from=games-build /games/dist/play ./public/play/
 COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/play/dist/crossword-engine.iife.js
 COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/play/dist/word-game-engine.iife.js
+COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/crossword-engine.iife.js
+COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/word-game-engine.iife.js
 
 # Verify game SPA exists (fail build if missing)
 RUN ls -la public/play/index.html

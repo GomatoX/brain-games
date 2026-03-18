@@ -11,7 +11,7 @@ type ShareData = {
 const decodeShareData = (data: string | null): ShareData | null => {
   if (!data) return null
   try {
-    return JSON.parse(Buffer.from(data, "base64").toString("utf-8"))
+    return JSON.parse(decodeURIComponent(Buffer.from(data, "base64").toString("utf-8")))
   } catch {
     return null
   }

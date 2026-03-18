@@ -288,7 +288,7 @@
     if (shareConfig.title) payload.title = processTemplate(shareConfig.title)
     if (shareConfig.description) payload.desc = processTemplate(shareConfig.description)
 
-    const shareData = btoa(JSON.stringify(payload))
+    const shareData = btoa(encodeURIComponent(JSON.stringify(payload)))
 
     // Build share page URL — Next.js route on apiUrl
     const sharePageUrl = new URL("/share", apiUrl || window.location.origin)
