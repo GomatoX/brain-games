@@ -64,11 +64,14 @@
     const tooltipWidth = 200
     const padding = 8
 
-    // Calculate tooltip left-edge in viewport space, clamped to bounds
+    // Use grid container width for clamping (not window.innerWidth which is wrong in embeds)
+    const containerRight = gridRect.left + gridRect.width
+
+    // Calculate tooltip left-edge in viewport space, clamped to grid bounds
     let tooltipLeftViewport = anchorViewportX - tooltipWidth / 2
-    tooltipLeftViewport = Math.max(padding, tooltipLeftViewport)
+    tooltipLeftViewport = Math.max(gridRect.left + padding, tooltipLeftViewport)
     tooltipLeftViewport = Math.min(
-      window.innerWidth - padding - tooltipWidth,
+      containerRight - padding - tooltipWidth,
       tooltipLeftViewport,
     )
 

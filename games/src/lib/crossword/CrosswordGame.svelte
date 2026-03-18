@@ -274,8 +274,8 @@
       }),
     )
 
-    // Build share page URL — relative to the games engine base
-    const sharePageUrl = new URL("/play/share.html", window.location.origin)
+    // Build share page URL — use apiUrl (games engine origin), not window.location
+    const sharePageUrl = new URL("/play/share.html", apiUrl || window.location.origin)
     sharePageUrl.searchParams.set("data", shareData)
     if (lang) sharePageUrl.searchParams.set("lang", lang)
 
