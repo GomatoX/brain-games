@@ -53,6 +53,10 @@
   let resultMode = false;
   let resultData = null;
   let shareUrl = "";
+  let fromSharedLink = false;
+
+  // Guard: prevents double-processing of keystrokes (keydown + input)
+  let inputHandledByKeyDown = false;
 
   function formatTime(seconds) {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -134,15 +138,15 @@
     }
 
     if (resultId) {
-      // Shared result link: just load the puzzle normally (let them play)
-      // The share page already showed the sharer's time
-      resultId = ""
+      // Shared result link: load puzzle normally but hide timer/friend message
+      fromSharedLink = true;
+      resultId = "";
       if (latestMode) {
-        fetchLatest()
+        fetchLatest();
       } else if (puzzleId) {
-        fetchPuzzle()
+        fetchPuzzle();
       }
-      startTimer()
+      // Timer starts on first interaction (see startTimerOnInteraction)
     } else if (latestMode) {
       fetchLatest();
       startTimer();
@@ -473,10 +477,19 @@
     hasServerLayout = true;
   }
 
+  // Lazy timer start for shared link visitors
+  function startTimerOnInteraction() {
+    if (fromSharedLink && !timerRunning && !mainWordComplete) {
+      startTimer();
+    }
+  }
+
   function handleCellClick(event) {
     const { row: rowIndex, col: colIndex } = event.detail;
     const cell = grid[rowIndex][colIndex];
     if (cell.isBlocked) return;
+
+    startTimerOnInteraction();
 
     const words = puzzle?._layoutWords || puzzle?.words || [];
 
@@ -515,10 +528,28 @@
   }
 
   function handleCellInput(event) {
+    // Skip if already handled by keydown (prevents letter duplication at intersections)
+    if (inputHandledByKeyDown) {
+      inputHandledByKeyDown = false;
+      // Still need to sync the input element's value with our state
+      const { event: inputEvent, row: rowIndex, col: colIndex } = event.detail;
+      const cellKey = `${rowIndex},${colIndex}`;
+      inputEvent.target.value = cellInputs[cellKey] || "";
+      return;
+    }
+
     const { event: inputEvent, row: rowIndex, col: colIndex } = event.detail;
     if (lockedCells.has(`${rowIndex},${colIndex}`)) return;
-    const value = inputEvent.target.value.toUpperCase().slice(-1);
+
+    startTimerOnInteraction();
+
+    // Extract only the last character (handles Android composition input)
+    const rawValue = inputEvent.target.value || "";
+    const value = rawValue.toUpperCase().slice(-1);
     const key = `${rowIndex},${colIndex}`;
+
+    // Reset the input to single character (clears composition artifacts)
+    inputEvent.target.value = value;
 
     if (cellInputs[key] !== value) {
       cellInputs[key] = value;
@@ -540,6 +571,7 @@
 
     if (key.length === 1 && key.match(/[a-zA-Z\u0100-\u017F]/)) {
       keyEvent.preventDefault();
+      inputHandledByKeyDown = true;
       if (!cellLocked) {
         const cellKey = `${rowIndex},${colIndex}`;
         const newValue = key.toUpperCase();
@@ -999,6 +1031,8 @@
       if (!mainWordComplete) {
         mainWordComplete = true;
         stopTimer();
+        // Auto-generate share URL immediately so it's ready for Facebook/Messenger
+        shareResult();
       }
     }
   }
@@ -1093,10 +1127,11 @@
             {mainWordProgress}
             {elapsedTime}
             mainWord={puzzle.main_word}
+            hideTimer={fromSharedLink}
           />
         {/if}
 
-        {#if mainWordComplete}
+        {#if mainWordComplete && !fromSharedLink}
           <CelebrationOverlay {elapsedTime} {shareUrl} on:share={shareResult} />
         {/if}
 

@@ -5,6 +5,7 @@
   export let mainWordData = null;
   export let elapsedTime = 0;
   export let mainWord = "";
+  export let hideTimer = false;
 
   function formatTime(seconds) {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -32,10 +33,12 @@
         </div>
       {/each}
     </div>
-    <div class="timer-badge">
-      <span class="timer-label">{$t("crossword.yourTime")}</span>
-      <span class="timer-value">{formatTime(elapsedTime)}</span>
-    </div>
+    {#if !hideTimer}
+      <div class="timer-badge">
+        <span class="timer-label">{$t("crossword.yourTime")}</span>
+        <span class="timer-value">{formatTime(elapsedTime)}</span>
+      </div>
+    {/if}
   </div>
 {/if}
 

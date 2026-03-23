@@ -77,7 +77,7 @@
       middleware: [
         offset(ARROW_SIZE + 4),
         flip({ fallbackPlacements: fallbacks }),
-        shift({ padding: 8 }),
+        shift({ padding: 8, crossAxis: true }),
         arrowMiddleware({ element: arrowEl, padding: 6 }),
       ],
     }).then(({ x, y, placement, middlewareData }) => {
@@ -167,7 +167,8 @@
           {#if !cell.isBlocked}
             <input
               type="text"
-              maxlength="1"
+              inputmode="text"
+              enterkeyhint="next"
               data-cell="{rowIndex},{colIndex}"
               value={cellInputs[cellKey] || ""}
               on:input={(e) => handleCellInput(e, rowIndex, colIndex)}
@@ -267,6 +268,7 @@
     top: 0;
     left: 0;
     width: max-content;
+    max-width: min(200px, calc(100vw - 32px));
   }
 
   .tooltip-body {
@@ -317,6 +319,8 @@
     line-height: 12px;
     color: #fff;
     text-align: center;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .tooltip-arrow {
