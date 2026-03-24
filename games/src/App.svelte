@@ -2,11 +2,12 @@
   import CrosswordGame from "./lib/crossword/CrosswordGame.svelte";
   import WordGame from "./lib/WordGame.svelte";
   import SudokuGame from "./lib/SudokuGame.svelte";
+  import WordSearchGame from "./lib/WordSearchGame.svelte";
 
   const urlParams = new URLSearchParams(window.location.search);
   let puzzleId = urlParams.get("id") || "";
   let userId = urlParams.get("user") || "";
-  let gameType = urlParams.get("type") || "crossword"; // 'crossword' | 'word' | 'sudoku'
+  let gameType = urlParams.get("type") || "crossword"; // 'crossword' | 'word' | 'sudoku' | 'wordsearch'
   let isPreview = urlParams.get("preview") === "true";
   let theme = urlParams.get("theme") || "light";
   let resultId = urlParams.get("result") || "";
@@ -37,12 +38,14 @@
     crossword: "grid_on",
     word: "spellcheck",
     sudoku: "grid_4x4",
+    wordsearch: "search",
   };
 
   const typeLabels = {
     crossword: "Crossword",
     word: "Word Game",
     sudoku: "Sudoku",
+    wordsearch: "Word Search",
   };
 </script>
 
@@ -52,6 +55,8 @@
     <WordGame gameId={puzzleId} {theme} apiUrl={apiBase} {lang} {userId} />
   {:else if gameType === "sudoku"}
     <SudokuGame gameId={puzzleId} {theme} apiUrl={apiBase} {userId} />
+  {:else if gameType === "wordsearch"}
+    <WordSearchGame puzzleId={puzzleId} {theme} apiUrl={apiBase} {lang} {userId} />
   {:else}
     <CrosswordGame
       {puzzleId}
@@ -328,6 +333,11 @@
   .card-icon.sudoku {
     background: #faf5ff;
     color: #a855f7;
+  }
+
+  .card-icon.wordsearch {
+    background: #fdf2f8;
+    color: #ec4899;
   }
 
   .card-description {

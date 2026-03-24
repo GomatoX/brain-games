@@ -1,8 +1,8 @@
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku } from "@/db/schema";
+import { crosswords, wordgames, sudoku, wordsearches } from "@/db/schema";
 import { eq, and, lte, sql } from "drizzle-orm";
 
-const tables = { crosswords, wordgames, sudoku } as const;
+const tables = { crosswords, wordgames, sudoku, wordsearches } as const;
 type Collection = keyof typeof tables;
 
 /**

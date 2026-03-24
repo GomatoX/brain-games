@@ -167,3 +167,34 @@ export const sudoku = sqliteTable("sudoku", {
     .notNull()
     .default(sql`(datetime('now'))`),
 });
+
+// ─── Word Searches ──────────────────────────────────────
+export const wordsearches = sqliteTable("wordsearches", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("draft"),
+  title: text("title").notNull(),
+  difficulty: text("difficulty").default("Medium"),
+  words: text("words", { mode: "json" }).$type<
+    { word: string; hint?: string }[]
+  >(),
+  grid: text("grid", { mode: "json" }).$type<string[][]>(),
+  gridSize: integer("grid_size"),
+  scheduledDate: text("scheduled_date"),
+  brandingId: text("branding_id").references(() => branding.id, {
+    onDelete: "set null",
+  }),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});

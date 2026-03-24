@@ -39,5 +39,13 @@
     "pressEnter": "Spauskite <strong>Enter</strong>, kad pateiktumėte spėjimą",
     "pressBackspace": "Spauskite <strong>Backspace</strong>, kad ištrintumėte raidę",
     "gameNotFound": "Žaidimas nerastas. Nustatykite <code>game-id</code> atributą."
+  },
+  "wordsearch": {
+    "loading": "Kraunamas galvosūkis…",
+    "wordsToFind": "Raskite žodžius",
+    "found": "rasta",
+    "congratulations": "Puiku!",
+    "foundAllWords": "Radote visus {0} žodžius!",
+    "playAgain": "Žaisti iš naujo"
   }
 }

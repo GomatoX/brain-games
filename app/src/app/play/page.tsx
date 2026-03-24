@@ -5,6 +5,7 @@ import {
   crosswords,
   wordgames,
   sudoku,
+  wordsearches,
   organizations,
 } from "@/db/schema"
 import { eq, desc, and } from "drizzle-orm"
@@ -18,6 +19,7 @@ const typeIcons: Record<string, string> = {
   crossword: "grid_on",
   word: "spellcheck",
   sudoku: "grid_4x4",
+  wordsearch: "search",
 }
 
 const typeLabels: Record<string, Record<string, string>> = {
@@ -25,11 +27,13 @@ const typeLabels: Record<string, Record<string, string>> = {
     crossword: "Crossword",
     word: "Word Game",
     sudoku: "Sudoku",
+    wordsearch: "Word Search",
   },
   lt: {
     crossword: "Kryžiažodis",
     word: "Žodžių žaidimas",
     sudoku: "Sudoku",
+    wordsearch: "Žodžių paieška",
   },
 }
 
@@ -135,7 +139,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
   }
 
   // Fetch published games for this org
-  const [cw, wg, sd] = await Promise.all([
+  const [cw, wg, sd, ws] = await Promise.all([
     db
       .select({
         id: crosswords.id,
@@ -181,12 +185,28 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
       )
       .orderBy(desc(sudoku.createdAt))
       .limit(50),
+    db
+      .select({
+        id: wordsearches.id,
+        title: wordsearches.title,
+        createdAt: wordsearches.createdAt,
+      })
+      .from(wordsearches)
+      .where(
+        and(
+          eq(wordsearches.orgId, org.id),
+          eq(wordsearches.status, "published"),
+        ),
+      )
+      .orderBy(desc(wordsearches.createdAt))
+      .limit(50),
   ])
 
   const games = [
     ...cw.map((g) => ({ ...g, type: "crossword" as const })),
     ...wg.map((g) => ({ ...g, type: "word" as const })),
     ...sd.map((g) => ({ ...g, type: "sudoku" as const })),
+    ...ws.map((g) => ({ ...g, type: "wordsearch" as const })),
   ].sort(
     (a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -202,6 +222,9 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
       : []),
     ...(sd.length > 0
       ? [{ type: "sudoku" as const, apiType: "sudoku" as const }]
+      : []),
+    ...(ws.length > 0
+      ? [{ type: "wordsearch" as const, apiType: "wordsearches" as const }]
       : []),
   ]
 
@@ -283,7 +306,9 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                             ? "bg-blue-50 text-blue-500"
                             : type === "word"
                               ? "bg-green-50 text-green-500"
-                              : "bg-purple-50 text-purple-500"
+                              : type === "wordsearch"
+                                ? "bg-pink-50 text-pink-500"
+                                : "bg-purple-50 text-purple-500"
                         }`}
                       >
                         <span className="material-symbols-outlined text-xl">
@@ -339,7 +364,9 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                             ? "bg-blue-50 text-blue-500"
                             : game.type === "word"
                               ? "bg-green-50 text-green-500"
-                              : "bg-purple-50 text-purple-500"
+                              : game.type === "wordsearch"
+                                ? "bg-pink-50 text-pink-500"
+                                : "bg-purple-50 text-purple-500"
                         }`}
                       >
                         <span className="material-symbols-outlined text-lg">
@@ -391,7 +418,9 @@ async function getOrgIdFromGame(
       ? crosswords
       : gameType === "word" || gameType === "wordgames"
         ? wordgames
-        : sudoku
+        : gameType === "wordsearch" || gameType === "wordsearches"
+          ? wordsearches
+          : sudoku
   const [game] = await db
     .select({ orgId: table.orgId })
     .from(table)

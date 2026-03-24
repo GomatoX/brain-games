@@ -4,15 +4,16 @@ import {
   crosswords,
   wordgames,
   sudoku,
+  wordsearches,
   branding,
   organizations,
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
 
-type GameType = "crosswords" | "wordgames" | "sudoku";
+type GameType = "crosswords" | "wordgames" | "sudoku" | "wordsearches";
 
-const tables = { crosswords, wordgames, sudoku } as const;
+const tables = { crosswords, wordgames, sudoku, wordsearches } as const;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -179,7 +180,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Type-specific fields
-    if ("words" in game) {
+    if ("words" in game && "layout" in game) {
       gameData.difficulty = game.difficulty;
 
       // Use pre-computed layout if available (anti-cheat: no answers sent)
@@ -201,12 +202,12 @@ export async function GET(request: NextRequest) {
               }
             : undefined,
         };
-        gameData.main_word = game.mainWord;
+        gameData.main_word = (game as any).mainWord;
       } else if (game.words && game.words.length > 0) {
         // Compute layout on-the-fly for old crosswords without pre-computed layout
         const computed = computeCrosswordLayout(
-          game.words,
-          game.mainWord || null,
+          game.words as any,
+          (game as any).mainWord || null,
         );
 
         // Auto-save for future requests (fire-and-forget)
@@ -232,7 +233,7 @@ export async function GET(request: NextRequest) {
               }
             : undefined,
         };
-        gameData.main_word = game.mainWord;
+        gameData.main_word = (game as any).mainWord;
       }
     }
     if ("word" in game) {
@@ -244,6 +245,20 @@ export async function GET(request: NextRequest) {
       gameData.puzzle = game.puzzle;
       gameData.solution = game.solution;
       gameData.difficulty = game.difficulty;
+    }
+    // Word search fields
+    if ("grid" in game && "gridSize" in game) {
+      gameData.grid = game.grid;
+      gameData.grid_size = game.gridSize;
+      gameData.difficulty = game.difficulty;
+      // Send words with hints but WITHOUT placement positions
+      if (game.words && Array.isArray(game.words)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        gameData.words = (game.words as any[]).map((w: any) => ({
+          word: w.word,
+          hint: w.hint,
+        }));
+      }
     }
 
     // Wrap in { data: ... } to match Directus response shape

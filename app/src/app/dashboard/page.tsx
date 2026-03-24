@@ -4,6 +4,7 @@ import {
   crosswords,
   wordgames,
   sudoku,
+  wordsearches,
   users,
   organizations,
 } from "@/db/schema"
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
   // Auto-promote any scheduled games whose time has passed
   await promoteScheduledGames()
 
-  const [cw, wg, sd, orgRow] = await Promise.all([
+  const [cw, wg, sd, ws, orgRow] = await Promise.all([
     db
       .select({
         id: crosswords.id,
@@ -85,6 +86,28 @@ export default async function DashboardPage() {
       .where(eq(sudoku.orgId, user.orgId))
       .orderBy(desc(sudoku.createdAt)),
     db
+      .select({
+        id: wordsearches.id,
+        status: wordsearches.status,
+        title: wordsearches.title,
+        difficulty: wordsearches.difficulty,
+        words: wordsearches.words,
+        gridSize: wordsearches.gridSize,
+        scheduledDate: wordsearches.scheduledDate,
+        brandingId: wordsearches.brandingId,
+        userId: wordsearches.userId,
+        orgId: wordsearches.orgId,
+        createdAt: wordsearches.createdAt,
+        updatedAt: wordsearches.updatedAt,
+        creatorFirstName: users.firstName,
+        creatorLastName: users.lastName,
+        creatorEmail: users.email,
+      })
+      .from(wordsearches)
+      .innerJoin(users, eq(users.id, wordsearches.userId))
+      .where(eq(wordsearches.orgId, user.orgId))
+      .orderBy(desc(wordsearches.createdAt)),
+    db
       .select({ language: organizations.defaultLanguage })
       .from(organizations)
       .where(eq(organizations.id, user.orgId))
@@ -97,6 +120,7 @@ export default async function DashboardPage() {
     crosswords: cw.map(mapGame),
     wordgames: wg.map(mapGame),
     sudoku: sd.map(mapGame),
+    wordsearches: ws.map(mapGame),
   };
 
   const initialLang = orgRow?.language || "lt"
@@ -129,6 +153,7 @@ function mapGame(row: any) {
     max_attempts: row.maxAttempts,
     puzzle: row.puzzle,
     solution: row.solution,
+    grid_size: row.gridSize,
     scheduled_date: row.scheduledDate,
     branding: row.brandingId,
     user_created: row.userId,

@@ -39,5 +39,13 @@
     "pressEnter": "Press <strong>Enter</strong> to submit your guess",
     "pressBackspace": "Press <strong>Backspace</strong> to delete a letter",
     "gameNotFound": "Game not found. Set the <code>game-id</code> attribute."
+  },
+  "wordsearch": {
+    "loading": "Loading puzzle…",
+    "wordsToFind": "Words to Find",
+    "found": "found",
+    "congratulations": "Congratulations!",
+    "foundAllWords": "You found all {0} words!",
+    "playAgain": "Play Again"
   }
 }

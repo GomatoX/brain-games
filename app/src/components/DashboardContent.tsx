@@ -30,9 +30,10 @@ interface Games {
   crosswords: Game[];
   wordgames: Game[];
   sudoku: Game[];
+  wordsearches: Game[];
 }
 
-type GameType = "crosswords" | "wordgames" | "sudoku";
+type GameType = "crosswords" | "wordgames" | "sudoku" | "wordsearches";
 
 interface ModalState {
   open: boolean;
@@ -85,6 +86,10 @@ export default function DashboardContent({
       sudoku: {
         tag: "sudoku-game",
         script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
+      },
+      wordsearches: {
+        tag: "word-search-game",
+        script: `${PLAY_BASE}/dist/word-search-engine.iife.js`,
       },
     };
     const { tag, script } = tagMap[gameType];
@@ -186,7 +191,7 @@ export default function DashboardContent({
     URL.revokeObjectURL(url);
   };
 
-  const allGames = games ? [...games.crosswords, ...games.wordgames] : [];
+  const allGames = games ? [...games.crosswords, ...games.wordgames, ...games.wordsearches] : [];
 
   const totalGames = allGames.length;
 
@@ -281,6 +286,29 @@ export default function DashboardContent({
           onDelete={(id) => setDeleteConfirm({ type: "wordgames", id })}
           onToggleStatus={handleToggleStatus}
           onShowCode={(g) => setEmbedPopover({ game: g, type: "wordgames" })}
+          lang={lang}
+          orgId={orgId}
+        />
+        <GameSection
+          title="Word Search"
+          icon="search"
+          iconColor="purple"
+          games={games?.wordsearches || []}
+          type="wordsearches"
+          onAdd={() =>
+            setModal({ open: true, mode: "create", type: "wordsearches" })
+          }
+          onEdit={(g) =>
+            setModal({
+              open: true,
+              mode: "edit",
+              type: "wordsearches",
+              game: g,
+            })
+          }
+          onDelete={(id) => setDeleteConfirm({ type: "wordsearches", id })}
+          onToggleStatus={handleToggleStatus}
+          onShowCode={(g) => setEmbedPopover({ game: g, type: "wordsearches" })}
           lang={lang}
           orgId={orgId}
         />
@@ -583,7 +611,7 @@ function GameSection({
                   </button>
                 )}
                 <a
-                  href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : "sudoku"}&id=${game.id}&lang=${lang}&org=${orgId}&preview=true`}
+                  href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : type === "wordsearches" ? "wordsearch" : "sudoku"}&id=${game.id}&lang=${lang}&org=${orgId}&preview=true`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 text-[#64748b] hover:text-blue-600 transition-colors rounded-lg hover:bg-slate-100"
@@ -868,6 +896,10 @@ function GameModal({
         tag: "sudoku-game",
         script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
       },
+      wordsearches: {
+        tag: "word-search-game",
+        script: `${PLAY_BASE}/dist/word-search-engine.iife.js`,
+      },
     };
     const { tag, script } = tagMap[type];
     return `<script src="${script}"><\/script>
@@ -937,6 +969,19 @@ function GameModal({
         baseData.word = word.toUpperCase();
         baseData.definition = definition;
         baseData.max_attempts = maxAttempts;
+      } else if (type === "wordsearches") {
+        if (mode === "create" && wordsList.length < 3) {
+          setError("Add at least 3 words for the word search");
+          setSaving(false);
+          return;
+        }
+        baseData.difficulty = difficulty;
+        if (wordsList.length > 0) {
+          baseData.words = wordsList.map((w) => ({
+            word: w.word,
+            clue: w.clue,
+          }));
+        }
       } else if (type === "sudoku") {
         baseData.difficulty = difficulty;
       }
@@ -971,6 +1016,7 @@ function GameModal({
     crosswords: "Crossword",
     wordgames: "Word Game",
     sudoku: "Sudoku",
+    wordsearches: "Word Search",
   };
 
   // Success view with embed code
@@ -1130,8 +1176,8 @@ function GameModal({
             </div>
           )}
 
-          {/* Difficulty (crosswords / sudoku) */}
-          {(type === "crosswords" || type === "sudoku") && (
+          {/* Difficulty (crosswords / sudoku / wordsearches) */}
+          {(type === "crosswords" || type === "sudoku" || type === "wordsearches") && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
                 Difficulty
@@ -1141,9 +1187,9 @@ function GameModal({
                 onChange={(e) => setDifficulty(e.target.value)}
                 className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
               >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
               </select>
             </div>
           )}
@@ -1624,6 +1670,119 @@ function GameModal({
                     })()}
                   </div>
                 )}
+              </div>
+            </>
+          )}
+
+          {/* Word Game fields */}
+          {/* Word Search fields */}
+          {type === "wordsearches" && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Words to Find
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={wordsInput}
+                    onChange={(e) => setWordsInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const w = wordsInput.trim().toUpperCase();
+                        if (w && !wordsList.some((entry) => entry.word === w)) {
+                          setWordsList([
+                            ...wordsList,
+                            { word: w, clue: clueInput.trim() || "" },
+                          ]);
+                          setWordsInput("");
+                          setClueInput("");
+                        }
+                      }
+                    }}
+                    className="w-36 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                    placeholder="Word"
+                    aria-label="Word to add"
+                    tabIndex={0}
+                  />
+                  <input
+                    type="text"
+                    value={clueInput}
+                    onChange={(e) => setClueInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const w = wordsInput.trim().toUpperCase();
+                        if (w && !wordsList.some((entry) => entry.word === w)) {
+                          setWordsList([
+                            ...wordsList,
+                            { word: w, clue: clueInput.trim() || "" },
+                          ]);
+                          setWordsInput("");
+                          setClueInput("");
+                        }
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                    placeholder="Hint (optional)"
+                    aria-label="Hint for the word"
+                    tabIndex={0}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const w = wordsInput.trim().toUpperCase();
+                      if (w && !wordsList.some((entry) => entry.word === w)) {
+                        setWordsList([
+                          ...wordsList,
+                          { word: w, clue: clueInput.trim() || "" },
+                        ]);
+                        setWordsInput("");
+                        setClueInput("");
+                      }
+                    }}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
+                    aria-label="Add word"
+                    tabIndex={0}
+                  >
+                    Add
+                  </button>
+                </div>
+                {wordsList.length > 0 && (
+                  <div className="border border-[#e2e8f0] rounded-lg divide-y divide-[#e2e8f0] mb-2">
+                    {wordsList.map((entry, idx) => (
+                      <div key={idx} className="px-3 py-2 flex items-center gap-3">
+                        <span className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 uppercase">
+                          {entry.word}
+                        </span>
+                        <span className="text-xs text-[#64748b] flex-1 truncate">
+                          {entry.clue || "—"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setWordsList(wordsList.filter((_, i) => i !== idx))}
+                          className="text-[#94a3b8] hover:text-red-500 transition-colors shrink-0"
+                          aria-label={`Remove word ${entry.word}`}
+                          tabIndex={0}
+                        >
+                          <span className="material-symbols-outlined text-sm">
+                            close
+                          </span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-[#64748b]">
+                  {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
+                  added
+                  {mode === "create" && wordsList.length < 3 && (
+                    <span className="text-amber-600 ml-1">
+                      (min 3 required)
+                    </span>
+                  )}
+                </p>
               </div>
             </>
           )}

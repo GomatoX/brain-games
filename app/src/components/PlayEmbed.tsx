@@ -30,7 +30,7 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
     // Map game type to IIFE script and element tag
     const engineMap: Record<
       string,
-      { script: string; tag: string; idAttr: string }
+      { script: string; tag: string; idAttr: string; css?: string }
     > = {
       crosswords: {
         script: "/crossword-engine.iife.js",
@@ -42,11 +42,31 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
         tag: "word-game",
         idAttr: "game-id",
       },
+      wordsearch: {
+        script: "/word-search-engine.iife.js",
+        tag: "word-search-game",
+        idAttr: "puzzle-id",
+        css: "/word-search-engine.css",
+      },
+      wordsearches: {
+        script: "/word-search-engine.iife.js",
+        tag: "word-search-game",
+        idAttr: "puzzle-id",
+        css: "/word-search-engine.css",
+      },
       // sudoku: when IIFE is added
     };
 
     const engine = engineMap[gameType];
     if (!engine) return;
+
+    // Load CSS if engine has one
+    if (engine.css && !document.querySelector(`link[href="${engine.css}"]`)) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = engine.css;
+      document.head.appendChild(link);
+    }
 
     // Load the IIFE script if not already loaded
     const existingScript = document.querySelector(

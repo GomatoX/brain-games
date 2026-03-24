@@ -3,7 +3,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => {
-  const isLibBuild = mode === "lib" || mode === "wordgame";
+  const isLibBuild = mode === "lib" || mode === "wordgame" || mode === "wordsearch";
 
   // Determine which game to build
   const gameConfigs = {
@@ -16,6 +16,11 @@ export default defineConfig(({ command, mode }) => {
       entry: "src/word-game-engine.js",
       name: "WordGameEngine",
       fileName: "word-game-engine",
+    },
+    wordsearch: {
+      entry: "src/word-search-engine.js",
+      name: "WordSearchEngine",
+      fileName: "word-search-engine",
     },
   };
 

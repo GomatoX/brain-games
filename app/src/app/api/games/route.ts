@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { crosswords, wordgames, sudoku, branding, users } from "@/db/schema"
+import { crosswords, wordgames, sudoku, wordsearches, branding, users } from "@/db/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { requireAuth } from "@/lib/api-auth"
 import { computeCrosswordLayout } from "@/lib/crossword-layout-server"
+import { generateWordSearchGrid } from "@/lib/word-search-engine"
 import { promoteScheduledGames } from "@/lib/schedule-publisher"
 
-type Collection = "crosswords" | "wordgames" | "sudoku";
+type Collection = "crosswords" | "wordgames" | "sudoku" | "wordsearches";
 
-const collections = { crosswords, wordgames, sudoku } as const;
+const collections = { crosswords, wordgames, sudoku, wordsearches } as const;
 
 export async function GET() {
   const result = await requireAuth();
@@ -19,7 +20,7 @@ export async function GET() {
     // Auto-promote any scheduled games whose time has passed
     await promoteScheduledGames()
 
-    const [cw, wg, sd] = await Promise.all([
+    const [cw, wg, sd, ws] = await Promise.all([
       db
         .select({
           id: crosswords.id,
@@ -86,12 +87,35 @@ export async function GET() {
         .innerJoin(users, eq(users.id, sudoku.userId))
         .where(eq(sudoku.orgId, orgId))
         .orderBy(desc(sudoku.createdAt)),
+      db
+        .select({
+          id: wordsearches.id,
+          status: wordsearches.status,
+          title: wordsearches.title,
+          difficulty: wordsearches.difficulty,
+          words: wordsearches.words,
+          gridSize: wordsearches.gridSize,
+          scheduledDate: wordsearches.scheduledDate,
+          brandingId: wordsearches.brandingId,
+          userId: wordsearches.userId,
+          orgId: wordsearches.orgId,
+          createdAt: wordsearches.createdAt,
+          updatedAt: wordsearches.updatedAt,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+          creatorEmail: users.email,
+        })
+        .from(wordsearches)
+        .innerJoin(users, eq(users.id, wordsearches.userId))
+        .where(eq(wordsearches.orgId, orgId))
+        .orderBy(desc(wordsearches.createdAt)),
     ]);
 
     return NextResponse.json({
       crosswords: cw.map(mapGame),
       wordgames: wg.map(mapGame),
       sudoku: sd.map(mapGame),
+      wordsearches: ws.map(mapGame),
     });
   } catch {
     return NextResponse.json(
@@ -125,6 +149,15 @@ export async function POST(request: NextRequest) {
       const layout = computeCrosswordLayout(data.words, data.main_word || null);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (insertData as any).layout = layout;
+    }
+
+    // Auto-compute grid for word searches
+    if (collection === "wordsearches" && data.words?.length > 0) {
+      const wsLayout = generateWordSearchGrid(data.words, data.difficulty || "Medium");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (insertData as any).grid = wsLayout.grid;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (insertData as any).gridSize = wsLayout.gridSize;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -163,6 +196,15 @@ export async function PATCH(request: NextRequest) {
       const layout = computeCrosswordLayout(data.words, data.main_word || null);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (updateData as any).layout = layout;
+    }
+
+    // Auto-recompute grid for word searches when words change
+    if (collection === "wordsearches" && data.words?.length > 0) {
+      const wsLayout = generateWordSearchGrid(data.words, data.difficulty || "Medium");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (updateData as any).grid = wsLayout.grid;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (updateData as any).gridSize = wsLayout.gridSize;
     }
 
     // Any org member can edit games
@@ -240,6 +282,7 @@ function mapGame(row: any) {
     max_attempts: row.maxAttempts,
     puzzle: row.puzzle,
     solution: row.solution,
+    grid_size: row.gridSize,
     scheduled_date: row.scheduledDate,
     branding: row.brandingId,
     user_created: row.userId,
@@ -268,6 +311,7 @@ function mapToDb(data: Record<string, any>, userId?: string, orgId?: string) {
   if (data.max_attempts !== undefined) mapped.maxAttempts = data.max_attempts;
   if (data.puzzle !== undefined) mapped.puzzle = data.puzzle;
   if (data.solution !== undefined) mapped.solution = data.solution;
+  if (data.grid_size !== undefined) mapped.gridSize = data.grid_size;
   if (data.scheduled_date !== undefined)
     mapped.scheduledDate = data.scheduled_date;
   if (data.branding !== undefined) {

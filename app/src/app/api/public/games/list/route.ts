@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/db"
-import { crosswords, wordgames, sudoku } from "@/db/schema"
+import { crosswords, wordgames, sudoku, wordsearches } from "@/db/schema"
 import { eq, desc, or, and, lte } from "drizzle-orm"
 import { promoteScheduledGames } from "@/lib/schedule-publisher"
 
@@ -23,7 +23,7 @@ export async function GET() {
     // Auto-promote scheduled games whose time has passed
     await promoteScheduledGames()
 
-    const publishedOrDue = (table: typeof crosswords | typeof wordgames | typeof sudoku) =>
+    const publishedOrDue = (table: typeof crosswords | typeof wordgames | typeof sudoku | typeof wordsearches) =>
       or(
         eq(table.status, "published"),
         and(
@@ -32,7 +32,7 @@ export async function GET() {
         ),
       )
 
-    const [cw, wg, sd] = await Promise.all([
+    const [cw, wg, sd, ws] = await Promise.all([
       db
         .select({
           id: crosswords.id,
@@ -63,12 +63,23 @@ export async function GET() {
         .where(publishedOrDue(sudoku))
         .orderBy(desc(sudoku.createdAt))
         .limit(50),
+      db
+        .select({
+          id: wordsearches.id,
+          title: wordsearches.title,
+          createdAt: wordsearches.createdAt,
+        })
+        .from(wordsearches)
+        .where(publishedOrDue(wordsearches))
+        .orderBy(desc(wordsearches.createdAt))
+        .limit(50),
     ])
 
     const games = [
       ...cw.map((g) => ({ ...g, type: "crossword" as const })),
       ...wg.map((g) => ({ ...g, type: "word" as const })),
       ...sd.map((g) => ({ ...g, type: "sudoku" as const })),
+      ...ws.map((g) => ({ ...g, type: "wordsearch" as const })),
     ].sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
