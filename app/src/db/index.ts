@@ -123,6 +123,22 @@ if (isPostgres) {
       created_at TEXT NOT NULL DEFAULT now(),
       updated_at TEXT NOT NULL DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS wordsearches (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'draft',
+      title TEXT NOT NULL,
+      difficulty TEXT DEFAULT 'Medium',
+      words JSONB,
+      grid JSONB,
+      grid_size INTEGER DEFAULT 10,
+      scheduled_date TEXT,
+      branding_id TEXT REFERENCES branding(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL DEFAULT now(),
+      updated_at TEXT NOT NULL DEFAULT now()
+    );
   `);
 
   // TODO: PG auto-migration for orgs (similar to SQLite below)
@@ -248,6 +264,22 @@ if (isPostgres) {
       difficulty TEXT DEFAULT 'Medium',
       puzzle TEXT,
       solution TEXT,
+      scheduled_date TEXT,
+      branding_id TEXT REFERENCES branding(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS wordsearches (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'draft',
+      title TEXT NOT NULL,
+      difficulty TEXT DEFAULT 'Medium',
+      words TEXT,
+      grid TEXT,
+      grid_size INTEGER DEFAULT 10,
       scheduled_date TEXT,
       branding_id TEXT REFERENCES branding(id) ON DELETE SET NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
