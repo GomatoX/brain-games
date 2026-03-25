@@ -1,4 +1,4 @@
-CREATE TABLE `branding` (
+CREATE TABLE IF NOT EXISTS `branding` (
 	`id` text PRIMARY KEY NOT NULL,
 	`org_id` text NOT NULL,
 	`name` text NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE `branding` (
 	FOREIGN KEY (`org_id`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `crosswords` (
+CREATE TABLE IF NOT EXISTS `crosswords` (
 	`id` text PRIMARY KEY NOT NULL,
 	`org_id` text NOT NULL,
 	`user_id` text NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE `crosswords` (
 	FOREIGN KEY (`branding_id`) REFERENCES `branding`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE TABLE `organizations` (
+CREATE TABLE IF NOT EXISTS `organizations` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`api_token` text,
@@ -62,8 +62,8 @@ CREATE TABLE `organizations` (
 	`created_at` text DEFAULT (datetime('now')) NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `organizations_api_token_unique` ON `organizations` (`api_token`);--> statement-breakpoint
-CREATE TABLE `sudoku` (
+CREATE UNIQUE INDEX IF NOT EXISTS `organizations_api_token_unique` ON `organizations` (`api_token`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `sudoku` (
 	`id` text PRIMARY KEY NOT NULL,
 	`org_id` text NOT NULL,
 	`user_id` text NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE `sudoku` (
 	FOREIGN KEY (`branding_id`) REFERENCES `branding`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`email` text NOT NULL,
 	`password_hash` text NOT NULL,
@@ -96,9 +96,9 @@ CREATE TABLE `users` (
 	FOREIGN KEY (`org_id`) REFERENCES `organizations`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);--> statement-breakpoint
-CREATE UNIQUE INDEX `users_invite_token_unique` ON `users` (`invite_token`);--> statement-breakpoint
-CREATE TABLE `wordgames` (
+CREATE UNIQUE INDEX IF NOT EXISTS `users_email_unique` ON `users` (`email`);--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `users_invite_token_unique` ON `users` (`invite_token`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `wordgames` (
 	`id` text PRIMARY KEY NOT NULL,
 	`org_id` text NOT NULL,
 	`user_id` text NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE `wordgames` (
 	FOREIGN KEY (`branding_id`) REFERENCES `branding`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE TABLE `wordsearches` (
+CREATE TABLE IF NOT EXISTS `wordsearches` (
 	`id` text PRIMARY KEY NOT NULL,
 	`org_id` text NOT NULL,
 	`user_id` text NOT NULL,
