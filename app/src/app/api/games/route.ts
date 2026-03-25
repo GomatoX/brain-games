@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
       (insertData as any).layout = layout;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [created] = await db
       .insert(table)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .values(insertData as any)
       .returning();
     return NextResponse.json(mapGame(created));

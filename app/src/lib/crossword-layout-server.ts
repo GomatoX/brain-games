@@ -508,7 +508,7 @@ const generateLayout = (words: WordEntry[], seed = 1): LayoutResult => {
   placed.push({ ...first, x: 0, y: 0, direction: startDir });
 
   const remaining = shuffled.slice(1);
-  const deadline = Date.now() + 800;
+  const deadline = Date.now() + 400;
   const btOk = solve(grid, refs, remaining, 0, placed, deadline);
 
   if (!btOk) {
@@ -559,7 +559,7 @@ const generateLayoutOptimized = (
 ): LayoutResult => {
   let bestLayout: LayoutResult | null = null;
   let bestScore = -Infinity;
-  const overallDeadline = Date.now() + 10000;
+  const overallDeadline = Date.now() + 1000;
 
   for (let i = 0; i < attempts; i++) {
     if (Date.now() > overallDeadline) break;

@@ -211,6 +211,7 @@ export async function GET(request: NextRequest) {
 
         // Auto-save for future requests (fire-and-forget)
         db.update(crosswords)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .set({ layout: computed } as any)
           .where(eq(crosswords.id, game.id))
           .then(() =>
