@@ -1,5 +1,6 @@
 <script>
   import "../app.css"
+  import { onMount } from "svelte"
   import { locale, t } from "./i18n.js"
   import CelebrationOverlay from "./crossword/CelebrationOverlay.svelte"
 
@@ -28,7 +29,7 @@
   let selectionStart = null
   let selectionEnd = null
   let selectionCells = []
-  let foundHighlights = [] // Array of { cells, colorIndex }
+  let foundHighlights = [] // Array of { cells }
   let timer = 0
   let timerInterval = null
   let gameComplete = false
@@ -37,29 +38,17 @@
   // Touch support
   let touchStartCell = null
 
-  const HIGHLIGHT_COLORS = [
-    "rgba(194, 94, 64, 0.3)",   // rust
-    "rgba(59, 130, 246, 0.3)",  // blue
-    "rgba(34, 197, 94, 0.3)",   // green
-    "rgba(168, 85, 247, 0.3)",  // purple
-    "rgba(234, 179, 8, 0.3)",   // yellow
-    "rgba(236, 72, 153, 0.3)",  // pink
-    "rgba(20, 184, 166, 0.3)",  // teal
-    "rgba(249, 115, 22, 0.3)",  // orange
-  ]
-
   $: cellSize = gridSize <= 10 ? 40 : gridSize <= 14 ? 34 : 28
-  $: fontSize = gridSize <= 10 ? "1rem" : gridSize <= 14 ? "0.875rem" : "0.75rem"
+  $: fontSize = gridSize <= 10 ? "24px" : gridSize <= 14 ? "20px" : "16px"
   $: totalWords = words.length
   $: foundCount = foundWords.size
-  $: progress = totalWords > 0 ? Math.round((foundCount / totalWords) * 100) : 0
 
   // Reactive highlight map — rebuilds whenever foundHighlights changes
   $: cellHighlightMap = (() => {
     const map = {}
     for (const highlight of foundHighlights) {
       for (const c of highlight.cells) {
-        map[`${c.row},${c.col}`] = HIGHLIGHT_COLORS[highlight.colorIndex]
+        map[`${c.row},${c.col}`] = true
       }
     }
     return map
@@ -67,6 +56,17 @@
 
   // Reactive selection set — rebuilds whenever selectionCells changes
   $: cellSelectionSet = new Set(selectionCells.map((c) => `${c.row},${c.col}`))
+
+  onMount(() => {
+    // Load Source Sans Pro for LRT design
+    if (!document.querySelector('link[href*="Source+Sans+Pro"]')) {
+      const link = document.createElement("link")
+      link.rel = "stylesheet"
+      link.href =
+        "https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap"
+      document.head.appendChild(link)
+    }
+  })
 
   async function fetchGame() {
     loading = true
@@ -124,9 +124,9 @@
   }
 
   function formatTime(seconds) {
-    const m = Math.floor(seconds / 60)
-    const s = seconds % 60
-    return `${m}:${String(s).padStart(2, "0")}`
+    const m = String(Math.floor(seconds / 60)).padStart(2, "0")
+    const s = String(seconds % 60).padStart(2, "0")
+    return `${m}:${s}`
   }
 
   // ─── Selection Logic ──────────────────────────────────
@@ -199,10 +199,7 @@
         foundWords = new Set([...foundWords, match.word])
         foundHighlights = [
           ...foundHighlights,
-          {
-            cells: [...selectionCells],
-            colorIndex: foundHighlights.length % HIGHLIGHT_COLORS.length,
-          },
+          { cells: [...selectionCells] },
         ]
 
         // Check completion
@@ -255,8 +252,6 @@
     handlePointerUp()
   }
 
-
-
   function handleRestart() {
     foundWords = new Set()
     foundHighlights = []
@@ -305,344 +300,466 @@
 >
   {#if loading}
     <div class="loading-state">
-      <span class="material-symbols-outlined spinning">progress_activity</span>
+      <div class="spinner"></div>
       <p>{$t("wordsearch.loading")}</p>
     </div>
   {:else if error}
     <div class="error-state">
-      <span class="material-symbols-outlined">error</span>
-      <p>{error}</p>
+      <p>⚠️ {error}</p>
     </div>
   {:else}
-    <!-- Header -->
-    <div class="game-header">
-      <div class="game-title-row">
-        <h2 class="game-title font-serif">{title}</h2>
-        {#if difficulty}
-          <span class="difficulty-badge">{difficulty}</span>
+    <div class="game-layout">
+      <!-- Sidebar: Word List (reuses crossword CluesSidebar pattern) -->
+      <div class="clues-section">
+        <div class="clue-box">
+          <h4>{$t("wordsearch.wordsToFind")}</h4>
+          <ul>
+            {#each words as w, i}
+              <li
+                class="clue-item"
+                class:solved={foundWords.has(w.word)}
+                title={w.hint || ""}
+              >
+                <span class="clue-num"
+                  >{String(i + 1).padStart(2, "0")}.</span
+                >
+                <span class="clue-text">{w.word}</span>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Main Content: Grid Section (reuses crossword grid-section pattern) -->
+      <div class="grid-section">
+        <!-- Header banner (reuses crossword ClueBanner pattern) -->
+        <div class="clue-banner">
+          <div class="clue-banner-content">
+            <span class="clue-banner-text font-serif">{title}</span>
+            <div class="content-meta">
+              <div class="meta-item">
+                <span class="material-symbols-outlined meta-icon"
+                  >timer</span
+                >
+                <span>{formatTime(timer)}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label"
+                  >{$t("wordsearch.found")}:</span
+                >
+                <span class="meta-count"
+                  >{foundCount} / {totalWords}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid area -->
+        <div class="grid-area">
+          <div
+            class="grid-wrapper"
+            on:mousedown={handlePointerDown}
+            on:mousemove={handlePointerMove}
+            on:mouseup={handlePointerUp}
+            on:mouseleave={handlePointerUp}
+            on:touchstart={handleTouchStart}
+            on:touchmove={handleTouchMove}
+            on:touchend={handleTouchEnd}
+            role="grid"
+            aria-label="Word search grid"
+            tabindex="0"
+          >
+            <div
+              class="grid"
+              style="grid-template-columns: repeat({gridSize}, {cellSize}px); grid-template-rows: repeat({grid.length}, {cellSize}px);"
+            >
+              {#each grid as row, rowIdx}
+                {#each row as letter, colIdx}
+                  {@const cellKey = `${rowIdx},${colIdx}`}
+                  {@const isFound = cellHighlightMap[cellKey] || false}
+                  {@const isSelecting = cellSelectionSet.has(cellKey)}
+                  <div
+                    class="cell"
+                    class:selecting={isSelecting}
+                    class:found={isFound}
+                    data-row={rowIdx}
+                    data-col={colIdx}
+                    style="width: {cellSize}px; height: {cellSize}px; font-size: {fontSize};"
+                    role="gridcell"
+                    aria-label="Letter {letter}"
+                  >
+                    <span class="cell-letter">{letter}</span>
+                  </div>
+                {/each}
+              {/each}
+            </div>
+          </div>
+        </div>
+
+        <!-- Completion Section — OUTSIDE gray zone, below grid -->
+        {#if gameComplete}
+          <CelebrationOverlay
+            elapsedTime={timer}
+            {shareUrl}
+            titleText={$t("wordsearch.congratulations")}
+            messageText={$t("wordsearch.foundAllWords").replace(
+              "{0}",
+              String(totalWords),
+            )}
+            on:share={generateShareUrl}
+          />
+          <div class="restart-row">
+            <button
+              class="restart-btn"
+              on:click={handleRestart}
+              aria-label={$t("wordsearch.playAgain")}
+              tabindex="0"
+            >
+              <span class="material-symbols-outlined" style="font-size: 16px"
+                >replay</span
+              >
+              {$t("wordsearch.playAgain")}
+            </button>
+          </div>
         {/if}
       </div>
-      <div class="game-meta">
-        <span class="timer">
-          <span class="material-symbols-outlined" style="font-size: 16px">timer</span>
-          {formatTime(timer)}
-        </span>
-        <span class="progress-label">{foundCount}/{totalWords} {$t("wordsearch.found")}</span>
-      </div>
-      <!-- Progress bar -->
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: {progress}%"></div>
-      </div>
     </div>
-
-    <div class="game-body">
-      <!-- Grid -->
-      <div
-        class="grid-wrapper"
-        on:mousedown={handlePointerDown}
-        on:mousemove={handlePointerMove}
-        on:mouseup={handlePointerUp}
-        on:mouseleave={handlePointerUp}
-        on:touchstart={handleTouchStart}
-        on:touchmove={handleTouchMove}
-        on:touchend={handleTouchEnd}
-        role="grid"
-        aria-label="Word search grid"
-        tabindex="0"
-      >
-        <div
-          class="grid"
-          style="grid-template-columns: repeat({gridSize}, {cellSize}px); grid-template-rows: repeat({gridSize}, {cellSize}px);"
-        >
-          {#each grid as row, rowIdx}
-            {#each row as letter, colIdx}
-              {@const cellKey = `${rowIdx},${colIdx}`}
-              {@const highlightColor = cellHighlightMap[cellKey] || null}
-              {@const isSelecting = cellSelectionSet.has(cellKey)}
-              <div
-                class="cell"
-                class:selecting={isSelecting}
-                class:found={highlightColor !== null}
-                data-row={rowIdx}
-                data-col={colIdx}
-                style="
-                  width: {cellSize}px;
-                  height: {cellSize}px;
-                  font-size: {fontSize};
-                  {highlightColor ? `background-color: ${highlightColor};` : ''}
-                "
-                role="gridcell"
-                aria-label="Letter {letter}"
-              >
-                <span class="cell-letter font-serif">{letter}</span>
-              </div>
-            {/each}
-          {/each}
-        </div>
-      </div>
-
-      <!-- Word List -->
-      <div class="word-list">
-        <h3 class="word-list-title">{$t("wordsearch.wordsToFind")}</h3>
-        <div class="words">
-          {#each words as w}
-            <div
-              class="word-item"
-              class:found={foundWords.has(w.word)}
-              title={w.hint || ""}
-            >
-              <span class="word-text">{w.word}</span>
-              {#if foundWords.has(w.word)}
-                <span class="material-symbols-outlined check-icon">check_circle</span>
-              {/if}
-              {#if w.hint && !foundWords.has(w.word)}
-                <span class="hint-text">{w.hint}</span>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      </div>
-    </div>
-
-    <!-- Celebration (reusing crossword component) -->
-    {#if gameComplete}
-      <CelebrationOverlay
-        elapsedTime={timer}
-        {shareUrl}
-        titleText={$t("wordsearch.congratulations")}
-        messageText={$t("wordsearch.foundAllWords").replace("{0}", String(totalWords))}
-        on:share={generateShareUrl}
-      />
-      <div class="restart-row">
-        <button class="restart-btn" on:click={handleRestart} aria-label={$t("wordsearch.playAgain")} tabindex="0">
-          <span class="material-symbols-outlined" style="font-size: 16px">replay</span>
-          {$t("wordsearch.playAgain")}
-        </button>
-      </div>
-    {/if}
   {/if}
 </div>
 
 <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ─── Container ─────────────────────────────────────── */
   .word-search-container {
+    /* Override for CelebrationOverlay */
+    --correct: #007a3c;
+    --correct-light: #e2f3ea;
+    --correct-hover: #005c2d;
+
     font-family: var(--font-sans);
-    color: var(--text-main);
-    max-width: 900px;
+    padding: 0;
     margin: 0 auto;
-    padding: 1rem;
+    max-width: 1440px;
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-primary, #0f172a);
     user-select: none;
     -webkit-user-select: none;
   }
 
-  /* Loading & Error */
+  /* ─── Loading & Error ───────────────────────────────── */
   .loading-state,
   .error-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    gap: 0.75rem;
-    color: var(--text-muted);
+    text-align: center;
+    padding: 48px;
   }
-  .error-state { color: #ef4444; }
-  .spinning {
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color, #e2e8f0);
+    border-top-color: #64748b;
+    border-radius: 50%;
     animation: spin 1s linear infinite;
-    font-size: 2rem;
+    margin: 0 auto 16px;
   }
+
   @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* Header */
-  .game-header {
-    margin-bottom: 1.25rem;
-  }
-  .game-title-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-  }
-  .game-title {
-    font-size: 1.375rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 0;
-  }
-  .difficulty-badge {
-    font-size: 0.6875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.125rem 0.5rem;
-    border-radius: 999px;
-    background: var(--primary-light);
-    color: var(--primary);
-  }
-  .game-meta {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  .timer {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-  }
-  .progress-label {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--primary);
-  }
-  .progress-bar {
-    height: 4px;
-    background: var(--border-light);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: var(--primary);
-    border-radius: 999px;
-    transition: width 0.4s ease;
-  }
-
-  /* Game Body */
-  .game-body {
-    display: flex;
-    gap: 1.5rem;
-    align-items: flex-start;
-  }
-
-  @media (max-width: 640px) {
-    .game-body {
-      flex-direction: column;
+    to {
+      transform: rotate(360deg);
     }
   }
 
-  /* Grid */
-  .grid-wrapper {
+  .error-state {
+    color: #ef4444;
+  }
+
+  /* ─── Game Layout (matches crossword) ───────────────── */
+  .game-layout {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  /* ─── Sidebar (reuses crossword CluesSidebar pattern) ─ */
+  .clues-section {
+    flex: 0 0 35%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 260px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    position: sticky;
+    top: 16px;
+  }
+
+  .clues-section::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .clues-section::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .clues-section::-webkit-scrollbar-thumb {
+    background-color: var(--border-color, #e2e8f0);
+    border-radius: 3px;
+  }
+
+  .clue-box {
+    background: var(--bg-primary, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .clue-box h4 {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 12px;
+    letter-spacing: 0.2px;
+    color: var(--text-secondary, #64748b);
+    margin: 0 0 6px;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .clue-box ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .clue-item {
+    display: flex;
+    gap: 8px;
+    padding: 9px 10px;
+    cursor: default;
+    transition: all 0.15s ease;
+  }
+
+  .clue-item:hover {
+    background: var(--bg-secondary, #f3f4f6);
+  }
+
+  /* Solved = green highlight + strikethrough (matches crossword) */
+  .clue-item.solved {
+    background: var(--correct-light, #e2f3ea);
+    border-left: 1px solid var(--correct, #007a3c);
+  }
+
+  .clue-item.solved .clue-text {
+    text-decoration: line-through;
+    color: var(--text-secondary, #64748b);
+  }
+
+  .clue-item.solved .clue-num {
+    color: var(--correct, #007a3c);
+  }
+
+  .clue-num {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 14px;
+    letter-spacing: 0.3px;
+    color: var(--text-secondary, #64748b);
+    min-width: 28px;
     flex-shrink: 0;
+  }
+
+  .clue-text {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-primary, #0f172a);
+  }
+
+  /* ─── Grid Section (matches crossword) ──────────────── */
+  .grid-section {
+    flex: 1 1 65%;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  /* ─── Banner Header (reuses crossword ClueBanner pattern) */
+  .clue-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--cell-highlighted, #fcece8);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px 12px 0 0;
+    padding: 8px 16px;
+    min-height: 52px;
+  }
+
+  .clue-banner-content {
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .clue-banner-text {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text-primary, #0f172a);
+  }
+
+  .content-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 12px;
+    color: var(--text-secondary, #64748b);
+  }
+
+  .meta-icon {
+    font-size: 16px !important;
+  }
+
+  .meta-label {
+    font-weight: 400;
+  }
+
+  .meta-count {
+    font-weight: 400;
+  }
+
+  /* ─── Grid Area (gray zone) ─────────────────────────── */
+  .grid-area {
+    background: var(--bg-secondary, #f3f4f6);
+    display: flex;
+    justify-content: center;
+    padding: 16px;
     cursor: crosshair;
     touch-action: none;
   }
+
+  .grid-wrapper {
+    cursor: crosshair;
+  }
+
   .grid {
     display: grid;
     gap: 1px;
-    background: var(--border-light);
-    border: 2px solid var(--grid-black);
-    border-radius: var(--radius-sm);
+    background: var(--cell-blocked, #1a1a1a);
+    border-radius: 8px;
     overflow: hidden;
+    padding: 1px;
   }
+
   .cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--surface);
-    transition: background-color 0.15s ease;
+    background: var(--cell-bg, #ffffff);
     cursor: crosshair;
-  }
-  .cell:hover {
-    background-color: rgba(194, 94, 64, 0.08);
-  }
-  .cell.selecting {
-    background-color: rgba(194, 94, 64, 0.2) !important;
-  }
-  .cell-letter {
-    font-weight: 700;
-    pointer-events: none;
-    line-height: 1;
+    transition: background-color 0.1s ease;
+    position: relative;
   }
 
-  /* Word List */
-  .word-list {
-    flex: 1;
-    min-width: 0;
+  /* Fix: hover uses a subtle highlight, not black */
+  .cell:hover:not(.found):not(.selecting) {
+    background-color: var(--cell-highlighted, #fcece8);
   }
-  .word-list-title {
-    font-size: 0.8125rem;
+
+  .cell.selecting {
+    background-color: #e6e8ff;
+  }
+
+  .cell.selecting .cell-letter {
+    color: #2f357d;
+  }
+
+  .cell.found {
+    background-color: var(--correct-light, #e2f3ea);
+  }
+
+  .cell.found .cell-letter {
+    color: var(--correct, #007a3c);
+  }
+
+  .cell-letter {
+    font-family: var(--font-sans);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-    margin-bottom: 0.75rem;
-  }
-  .words {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-  }
-  .word-item {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-light);
-    background: var(--surface);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-  }
-  .word-item.found {
-    background: var(--primary-light);
-    border-color: var(--primary);
-    text-decoration: line-through;
-    opacity: 0.7;
-  }
-  .word-text {
-    font-family: var(--font-serif);
-    letter-spacing: 0.05em;
-  }
-  .check-icon {
-    font-size: 16px;
-    color: var(--primary);
-  }
-  .hint-text {
-    font-size: 0.6875rem;
-    color: var(--text-muted);
-    font-weight: 400;
-    font-style: italic;
+    pointer-events: none;
+    line-height: 20px;
+    letter-spacing: 0.4px;
+    color: var(--text-primary, #0f172a);
   }
 
-  /* Restart row */
+  /* ─── Restart ───────────────────────────────────────── */
   .restart-row {
     display: flex;
     justify-content: center;
     margin-top: 12px;
   }
+
   .restart-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     padding: 8px 16px;
     background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border-light);
+    color: var(--text-secondary, #64748b);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 8px;
-    font-size: 0.8125rem;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
     font-family: var(--font-sans);
   }
+
   .restart-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: var(--correct, #007a3c);
+    color: var(--correct, #007a3c);
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes scaleIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+  /* ─── Responsive (matches crossword breakpoint) ─────── */
+  @media (max-width: 1024px) {
+    .game-layout {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .grid-section {
+      max-width: 100%;
+      order: -1;
+      flex: 1;
+      flex-grow: 1;
+      width: 100%;
+    }
+
+    .clues-section {
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 100%;
+      position: static;
+      max-height: none;
+      overflow-y: visible;
+      min-width: 0;
+    }
   }
 </style>
