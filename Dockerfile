@@ -10,7 +10,7 @@ RUN yarn install --frozen-lockfile
 COPY games/ .
 
 # Build the SPA (served at /play/) and all IIFE bundles
-RUN yarn build:app && yarn build && yarn build:wordgame
+RUN yarn build:app && yarn build && yarn build:wordgame && yarn build:wordsearch
 
 # ─── Stage 2: Build dashboard (Next.js) ──────────────────
 FROM node:20-alpine AS app-deps
@@ -31,8 +31,12 @@ COPY app/ .
 COPY --from=games-build /games/dist/play ./public/play/
 COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/play/dist/crossword-engine.iife.js
 COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/play/dist/word-game-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.iife.js ./public/play/dist/word-search-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.css ./public/play/dist/word-search-engine.css
 COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/crossword-engine.iife.js
 COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/word-game-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.iife.js ./public/word-search-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.css ./public/word-search-engine.css
 
 # Read version from package.json — single source of truth
 RUN VERSION=$(node -p "require('./package.json').version") && \
@@ -59,8 +63,12 @@ COPY --from=app-build /app/public ./public
 COPY --from=games-build /games/dist/play ./public/play/
 COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/play/dist/crossword-engine.iife.js
 COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/play/dist/word-game-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.iife.js ./public/play/dist/word-search-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.css ./public/play/dist/word-search-engine.css
 COPY --from=games-build /games/dist/crossword-engine.iife.js ./public/crossword-engine.iife.js
 COPY --from=games-build /games/dist/word-game-engine.iife.js ./public/word-game-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.iife.js ./public/word-search-engine.iife.js
+COPY --from=games-build /games/dist/word-search-engine.css ./public/word-search-engine.css
 
 # Verify game SPA exists (fail build if missing)
 RUN ls -la public/play/index.html

@@ -8,8 +8,9 @@
     "dev": "vite",
     "build": "vite build --mode lib",
     "build:wordgame": "vite build --mode wordgame",
+    "build:wordsearch": "vite build --mode wordsearch",
     "build:app": "vite build",
-    "build:all": "vite build && vite build --mode wordgame && vite build --mode lib",
+    "build:all": "vite build && vite build --mode wordgame && vite build --mode wordsearch && vite build --mode lib",
     "preview": "vite preview"
   },
   "devDependencies": {
