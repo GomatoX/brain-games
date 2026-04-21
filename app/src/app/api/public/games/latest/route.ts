@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { crosswords, wordgames, sudoku, branding, organizations } from "@/db/schema"
+import { crosswords, wordgames, sudoku, wordsearches, branding, organizations } from "@/db/schema"
 import { eq, desc, and, sql, or, lte } from "drizzle-orm"
 import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
 
-type GameType = "crosswords" | "wordgames" | "sudoku";
+type GameType = "crosswords" | "wordgames" | "sudoku" | "wordsearches";
 
-const tables = { crosswords, wordgames, sudoku } as const;
+const tables = { crosswords, wordgames, sudoku, wordsearches } as const;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -232,6 +232,20 @@ export async function GET(request: NextRequest) {
       gameData.puzzle = game.puzzle;
       gameData.solution = game.solution;
       gameData.difficulty = game.difficulty;
+    }
+    // Word search fields
+    if ("grid" in game && "gridSize" in game) {
+      gameData.grid = game.grid;
+      gameData.grid_size = game.gridSize;
+      gameData.difficulty = game.difficulty;
+      // Send words with hints but WITHOUT placement positions
+      if (game.words && Array.isArray(game.words)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        gameData.words = (game.words as any[]).map((w: any) => ({
+          word: w.word,
+          hint: w.hint,
+        }))
+      }
     }
 
     return NextResponse.json(

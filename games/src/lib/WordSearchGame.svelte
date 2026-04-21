@@ -35,6 +35,11 @@
   let gameComplete = false
   let shareUrl = ""
 
+  // Latest/history mode — supports both puzzle-id="latest" and empty puzzleId with userId
+  let latestMode = puzzleId === "latest" || (!puzzleId && !!userId)
+  let historyOffset = 0
+  let historyMeta = null // { current, total, hasNewer, hasOlder }
+
   // Touch support
   let touchStartCell = null
 
@@ -101,6 +106,61 @@
       error = err.message || "Failed to load game"
     } finally {
       loading = false
+    }
+  }
+
+  async function fetchLatest(offset = 0) {
+    loading = true
+    error = ""
+    try {
+      const base = apiUrl || window.location.origin
+      const url = `${base}/api/public/games/latest?type=wordsearches&org=${userId}&offset=${offset}`
+      const headers = {}
+      if (token) headers["Authorization"] = `Bearer ${token}`
+
+      const res = await fetch(url, { headers })
+      if (!res.ok) throw new Error("No published games found")
+
+      const json = await res.json()
+      const data = json.data || json
+      historyMeta = json.meta || null
+      historyOffset = offset
+
+      grid = data.grid || []
+      gridSize = data.grid_size || grid.length
+      title = data.title || ""
+      difficulty = data.difficulty || ""
+      branding = data.branding || null
+
+      words = (data.words || []).map((w) => ({
+        word: w.word?.toUpperCase() || "",
+        hint: w.hint || "",
+      }))
+
+      // Reset game state for new puzzle
+      foundWords = new Set()
+      foundHighlights = []
+      selectionCells = []
+      selectionStart = null
+      selectionEnd = null
+      gameComplete = false
+      selecting = false
+      shareUrl = ""
+
+      applyBranding()
+      startTimer()
+    } catch (err) {
+      error = err.message || "Failed to load game"
+    } finally {
+      loading = false
+    }
+  }
+
+  const navigateHistory = (direction) => {
+    if (direction === "older" && historyMeta?.hasOlder) {
+      fetchLatest(historyOffset + 1)
+    } else if (direction === "newer" && historyMeta?.hasNewer) {
+      fetchLatest(historyOffset - 1)
     }
   }
 
@@ -287,7 +347,9 @@
   }
 
   // Initialize
-  if (puzzleId) {
+  if (latestMode) {
+    fetchLatest()
+  } else if (puzzleId) {
     fetchGame()
   }
 </script>
@@ -334,6 +396,17 @@
       <div class="grid-section">
         <!-- Header banner (reuses crossword ClueBanner pattern) -->
         <div class="clue-banner">
+          {#if latestMode && historyMeta}
+            <button
+              class="nav-arrow"
+              disabled={!historyMeta.hasOlder}
+              on:click={() => navigateHistory("older")}
+              aria-label="Older puzzle"
+              tabindex="0"
+            >
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+          {/if}
           <div class="clue-banner-content">
             <span class="clue-banner-text font-serif">{title}</span>
             <div class="content-meta">
@@ -353,6 +426,17 @@
               </div>
             </div>
           </div>
+          {#if latestMode && historyMeta}
+            <button
+              class="nav-arrow"
+              disabled={!historyMeta.hasNewer}
+              on:click={() => navigateHistory("newer")}
+              aria-label="Newer puzzle"
+              tabindex="0"
+            >
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          {/if}
         </div>
 
         <!-- Grid area -->
@@ -643,6 +727,37 @@
 
   .meta-count {
     font-weight: 400;
+  }
+
+  /* ─── History Navigation Arrows ────────────────────── */
+  .nav-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-secondary, #64748b);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  .nav-arrow:hover:not(:disabled) {
+    border-color: var(--primary, #c25e40);
+    color: var(--primary, #c25e40);
+  }
+
+  .nav-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .nav-arrow .material-symbols-outlined {
+    font-size: 20px;
   }
 
   /* ─── Grid Area (gray zone) ─────────────────────────── */
