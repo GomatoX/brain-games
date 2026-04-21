@@ -74,7 +74,7 @@ export default function KeysContent({
   lang="${lang}"
   theme="light"></crossword-game>`;
 
-  const wordGameEmbed = `<script src="${PLAY_BASE}/dist/word-game.iife.js"><\/script>
+  const wordGameEmbed = `<script src="${PLAY_BASE}/dist/word-game-engine.iife.js"><\/script>
 
 <word-game
   puzzle-id="latest"
@@ -82,6 +82,16 @@ export default function KeysContent({
   userid="${orgId}"
   lang="${lang}"
   theme="light"></word-game>`;
+
+  const wordSearchEmbed = `<link rel="stylesheet" href="${PLAY_BASE}/dist/word-search-engine.css" />
+<script src="${PLAY_BASE}/dist/word-search-engine.iife.js"><\/script>
+
+<word-search-game
+  puzzle-id="latest"
+  api-url="${API_URL}"
+  user-id="${orgId}"
+  lang="${lang}"
+  theme="light"></word-search-game>`;
 
   return (
     <div>
@@ -155,6 +165,14 @@ export default function KeysContent({
           icon="spellcheck"
           iconColor="bg-green-50 text-green-600"
           code={wordGameEmbed}
+          copied={copied}
+          onCopy={copyToClipboard}
+        />
+        <EmbedCard
+          title="Word Search"
+          icon="search"
+          iconColor="bg-pink-50 text-pink-600"
+          code={wordSearchEmbed}
           copied={copied}
           onCopy={copyToClipboard}
         />
