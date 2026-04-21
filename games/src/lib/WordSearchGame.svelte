@@ -2,6 +2,7 @@
   import "../app.css"
   import { onMount } from "svelte"
   import { locale, t } from "./i18n.js"
+  import { applyBrandingFromData } from "./clientThemes.js"
   import CelebrationOverlay from "./crossword/CelebrationOverlay.svelte"
 
   export let puzzleId = ""
@@ -13,6 +14,8 @@
   export let lang = "lt"
 
   $: locale.set(lang)
+
+  let containerEl
 
   let grid = []
   let gridSize = 0
@@ -100,7 +103,7 @@
         hint: w.hint || "",
       }))
 
-      applyBranding()
+      applyBrandingFromData(containerEl, branding)
       startTimer()
     } catch (err) {
       error = err.message || "Failed to load game"
@@ -147,7 +150,7 @@
       selecting = false
       shareUrl = ""
 
-      applyBranding()
+      applyBrandingFromData(containerEl, branding)
       startTimer()
     } catch (err) {
       error = err.message || "Failed to load game"
@@ -164,16 +167,7 @@
     }
   }
 
-  function applyBranding() {
-    if (!branding) return
-    const el = document.querySelector("word-search-game") || document.body
-    if (branding.accent_color) el.style.setProperty("--primary", branding.accent_color)
-    if (branding.bg_primary_color) el.style.setProperty("--surface", branding.bg_primary_color)
-    if (branding.text_primary_color) el.style.setProperty("--text-main", branding.text_primary_color)
-    if (branding.border_color) el.style.setProperty("--border-light", branding.border_color)
-    if (branding.font_sans) el.style.setProperty("--font-sans", branding.font_sans)
-    if (branding.font_serif) el.style.setProperty("--font-serif", branding.font_serif)
-  }
+
 
   function startTimer() {
     if (timerInterval) clearInterval(timerInterval)
@@ -359,6 +353,7 @@
   class:dark={theme === "dark"}
   role="application"
   aria-label="Word Search Game"
+  bind:this={containerEl}
 >
   {#if loading}
     <div class="loading-state">
@@ -396,17 +391,6 @@
       <div class="grid-section">
         <!-- Header banner (reuses crossword ClueBanner pattern) -->
         <div class="clue-banner">
-          {#if latestMode && historyMeta}
-            <button
-              class="nav-arrow"
-              disabled={!historyMeta.hasOlder}
-              on:click={() => navigateHistory("older")}
-              aria-label="Older puzzle"
-              tabindex="0"
-            >
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-          {/if}
           <div class="clue-banner-content">
             <span class="clue-banner-text font-serif">{title}</span>
             <div class="content-meta">
@@ -426,17 +410,6 @@
               </div>
             </div>
           </div>
-          {#if latestMode && historyMeta}
-            <button
-              class="nav-arrow"
-              disabled={!historyMeta.hasNewer}
-              on:click={() => navigateHistory("newer")}
-              aria-label="Newer puzzle"
-              tabindex="0"
-            >
-              <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-          {/if}
         </div>
 
         <!-- Grid area -->
@@ -507,6 +480,32 @@
             </button>
           </div>
         {/if}
+
+        {#if latestMode && historyMeta}
+          <div class="history-nav">
+            <button
+              class="history-btn"
+              disabled={!historyMeta.hasOlder}
+              on:click={() => navigateHistory("older")}
+              aria-label="Older puzzle"
+              tabindex="0"
+            >
+              ← {$t("wordsearch.older")}
+            </button>
+            <span class="history-count">
+              {historyMeta.current + 1} / {historyMeta.total}
+            </span>
+            <button
+              class="history-btn"
+              disabled={!historyMeta.hasNewer}
+              on:click={() => navigateHistory("newer")}
+              aria-label="Newer puzzle"
+              tabindex="0"
+            >
+              {$t("wordsearch.newer")} →
+            </button>
+          </div>
+        {/if}
       </div>
     </div>
   {/if}
@@ -519,7 +518,18 @@
 
   /* ─── Container ─────────────────────────────────────── */
   .word-search-container {
-    /* Override for CelebrationOverlay */
+    /* Theme Colors (matching crossword light-theme) */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f4f6;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --cell-bg: #ffffff;
+    --cell-blocked: #1a1a1a;
+    --cell-highlighted: #fcece8;
+    --accent: #c25e40;
+    --accent-hover: #a0492d;
+    --accent-light: #fcece8;
     --correct: #007a3c;
     --correct-light: #e2f3ea;
     --correct-hover: #005c2d;
@@ -528,8 +538,8 @@
     padding: 0;
     margin: 0 auto;
     max-width: 1440px;
-    background: var(--bg-primary, #ffffff);
-    color: var(--text-primary, #0f172a);
+    background: var(--bg-primary);
+    color: var(--text-primary);
     user-select: none;
     -webkit-user-select: none;
   }
@@ -678,8 +688,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: var(--cell-highlighted, #fcece8);
-    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--cell-highlighted);
+    border: 1px solid var(--border-color);
     border-radius: 12px 12px 0 0;
     padding: 8px 16px;
     min-height: 52px;
@@ -698,7 +708,7 @@
   .clue-banner-text {
     display: block;
     font-size: 0.95rem;
-    color: var(--text-primary, #0f172a);
+    color: var(--text-primary);
   }
 
   .content-meta {
@@ -714,7 +724,7 @@
     font-family: var(--font-sans);
     font-size: 12px;
     line-height: 12px;
-    color: var(--text-secondary, #64748b);
+    color: var(--text-secondary);
   }
 
   .meta-icon {
@@ -729,35 +739,48 @@
     font-weight: 400;
   }
 
-  /* ─── History Navigation Arrows ────────────────────── */
-  .nav-arrow {
+  /* ─── History Navigation (bottom, matching crossword) ── */
+  .history-nav {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: 8px;
-    background: var(--bg-primary, #ffffff);
-    color: var(--text-secondary, #64748b);
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 8px;
+  }
+
+  .history-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
     cursor: pointer;
     transition: all 0.15s ease;
-    flex-shrink: 0;
-    padding: 0;
   }
 
-  .nav-arrow:hover:not(:disabled) {
-    border-color: var(--primary, #c25e40);
-    color: var(--primary, #c25e40);
+  .history-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
-  .nav-arrow:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+  .history-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
 
-  .nav-arrow .material-symbols-outlined {
-    font-size: 20px;
+  .history-count {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
   }
 
   /* ─── Grid Area (gray zone) ─────────────────────────── */

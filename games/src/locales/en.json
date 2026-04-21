@@ -46,6 +46,8 @@
     "found": "found",
     "congratulations": "Congratulations!",
     "foundAllWords": "You found all {0} words!",
-    "playAgain": "Play Again"
+    "playAgain": "Play Again",
+    "older": "Older",
+    "newer": "Newer"
   }
 }

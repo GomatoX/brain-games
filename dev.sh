@@ -56,6 +56,8 @@ cmd_dev() {
 sync_games() {
   cp -f "$ROOT_DIR/games/dist/crossword-engine.iife.js" "$ROOT_DIR/app/public/crossword-engine.iife.js" 2>/dev/null || true
   cp -f "$ROOT_DIR/games/dist/word-game-engine.iife.js" "$ROOT_DIR/app/public/word-game-engine.iife.js" 2>/dev/null || true
+  cp -f "$ROOT_DIR/games/dist/word-search-engine.iife.js" "$ROOT_DIR/app/public/word-search-engine.iife.js" 2>/dev/null || true
+  cp -f "$ROOT_DIR/games/dist/word-search-engine.css" "$ROOT_DIR/app/public/word-search-engine.css" 2>/dev/null || true
   rm -rf "$ROOT_DIR/app/public/play"
   cp -r "$ROOT_DIR/games/dist/play" "$ROOT_DIR/app/public/play" 2>/dev/null || true
 }
@@ -82,8 +84,7 @@ cmd_build() {
   (cd "$ROOT_DIR/games" && yarn build:all)
 
   echo -e "${GREEN}▸ Syncing IIFE bundles to app/public...${NC}"
-  cp -f "$ROOT_DIR/games/dist/crossword-engine.iife.js" "$ROOT_DIR/app/public/crossword-engine.iife.js" 2>/dev/null || true
-  cp -f "$ROOT_DIR/games/dist/word-game-engine.iife.js" "$ROOT_DIR/app/public/word-game-engine.iife.js" 2>/dev/null || true
+  sync_games
 
   echo -e "${GREEN}▸ Building app...${NC}"
   (cd "$ROOT_DIR/app" && yarn build)

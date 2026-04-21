@@ -46,6 +46,8 @@
     "found": "rasta",
     "congratulations": "Puiku!",
     "foundAllWords": "Radote visus {0} žodžius!",
-    "playAgain": "Žaisti iš naujo"
+    "playAgain": "Žaisti iš naujo",
+    "older": "Ankstesnis",
+    "newer": "Naujausias"
   }
 }
