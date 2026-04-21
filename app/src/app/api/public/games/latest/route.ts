@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
       },
     }
 
-    if ("words" in game) {
+    if ("mainWord" in game) {
       gameData.difficulty = game.difficulty;
 
       // Use pre-computed layout if available (anti-cheat: no answers sent)
