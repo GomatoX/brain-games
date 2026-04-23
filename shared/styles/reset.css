@@ -1,0 +1,11 @@
+/* shared/styles/reset.css
+ * Minimal cross-package baseline. Kept deliberately small — both app/ and
+ * games/ have their own existing resets; this file is for anything that
+ * should be uniform across both.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
