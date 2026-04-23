@@ -68,7 +68,7 @@ watch_games() {
     sleep 3
     # Hash all source files to detect changes
     local CURRENT_HASH
-    CURRENT_HASH=$(find "$ROOT_DIR/games/src" -type f -name '*.svelte' -o -name '*.js' -o -name '*.css' | sort | xargs cat 2>/dev/null | shasum)
+    CURRENT_HASH=$(find "$ROOT_DIR/games/src" "$ROOT_DIR/shared" -type f \( -name '*.svelte' -o -name '*.js' -o -name '*.css' \) | sort | xargs cat 2>/dev/null | shasum)
     if [ "$CURRENT_HASH" != "$LAST_HASH" ] && [ -n "$LAST_HASH" ]; then
       echo -e "${YELLOW}▸ Game source changed — rebuilding...${NC}"
       (cd "$ROOT_DIR/games" && yarn build:all 2>&1 | tail -3)
