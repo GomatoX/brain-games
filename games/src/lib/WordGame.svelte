@@ -91,7 +91,7 @@
         applyBrandingFromData(containerEl, game.branding);
       }
     } catch (err) {
-      error = err.message;
+      error = `Failed to load game: ${err.status ?? "unknown"}`;
     } finally {
       loading = false;
     }
