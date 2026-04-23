@@ -1,7 +1,7 @@
 <script>
   import { createEventDispatcher, tick, onMount, onDestroy } from "svelte"
   import { computePosition, offset, flip, shift, arrow as arrowMiddleware } from "@floating-ui/dom"
-  import { t } from "../i18n.js"
+  import { t } from "../../../../shared/game-lib/i18n/index.js"
 
   export let grid = []
   export let selectedCell = null

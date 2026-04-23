@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { applyBrandingFromData } from "./clientThemes.js";
-  import { locale, t } from "./i18n.js";
+  import { locale, t } from "../../../shared/game-lib/i18n/index.js";
 
   // Props
   export let gameId = "";

@@ -1,5 +1,5 @@
 <script>
-  import { t } from "../i18n.js";
+  import { t } from "../../../../shared/game-lib/i18n/index.js";
 
   export let mainWordProgress = [];
   export let mainWordData = null;
