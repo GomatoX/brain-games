@@ -8,6 +8,7 @@ RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 RUN yarn install --frozen-lockfile
 
 COPY games/ .
+COPY shared/ /shared/
 
 # Build the SPA (served at /play/) and all IIFE bundles
 RUN yarn build:app && yarn build && yarn build:wordgame && yarn build:wordsearch
@@ -26,6 +27,7 @@ WORKDIR /app
 
 COPY --from=app-deps /app/node_modules ./node_modules
 COPY app/ .
+COPY shared/ /shared/
 
 # Copy game engine outputs into Next.js public directory
 COPY --from=games-build /games/dist/play ./public/play/
