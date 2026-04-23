@@ -53,3 +53,22 @@ Follow these rules when you write code:
   - Use the imperative mood in the subject line.
   - Use the body to explain what and why you have done something. In most cases, you can leave out details about how a change has been made.
   - The commit message should be structured as follows: `<type>[optional scope]: <description>`
+
+## Shared UI layer (2026-04)
+
+A top-level `shared/` directory holds CSS tokens and BEM-lite component classes
+consumed by both `app/` and `games/`. See `shared/README.md`.
+
+**In `app/`:**
+- For primitives that exist in `shared/styles/components.css` (currently `.btn`,
+  `.modal`, `.input`, `.field-label`), prefer shared classes over bespoke
+  Tailwind utility chains.
+- Tailwind utilities remain first choice for dashboard-specific layout,
+  spacing, typography, and one-off visual details.
+
+**In `shared/`:**
+- Nothing in `shared/` may import from `app/` or `games/`. `shared/` is a leaf.
+
+**When adding a new shared class:** put the styles in
+`shared/styles/components.css`, use semantic tokens (`var(--color-primary)`,
+etc.) — never raw hex — and verify the class renders identically in both packages.
