@@ -4,8 +4,8 @@
     generateLayout,
     generateLayoutOptimized,
   } from "../crosswordLayout.js";
-  import { applyBrandingFromData } from "../clientThemes.js";
-  import { locale, t } from "../i18n.js";
+  import { applyBrandingFromData } from "../../../../shared/game-lib/branding.js";
+  import { locale, t } from "../../../../shared/game-lib/i18n/index.js";
   import CluesSidebar from "./CluesSidebar.svelte";
   import ClueBanner from "./ClueBanner.svelte";
   import CrosswordGrid from "./CrosswordGrid.svelte";

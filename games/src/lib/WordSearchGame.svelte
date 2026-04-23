@@ -1,8 +1,8 @@
 <script>
   import "../app.css"
   import { onMount } from "svelte"
-  import { locale, t } from "./i18n.js"
-  import { applyBrandingFromData } from "./clientThemes.js"
+  import { locale, t } from "../../../shared/game-lib/i18n/index.js"
+  import { applyBrandingFromData } from "../../../shared/game-lib/branding.js"
   import CelebrationOverlay from "./crossword/CelebrationOverlay.svelte"
 
   export let puzzleId = ""

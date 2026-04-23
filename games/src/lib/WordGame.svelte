@@ -1,7 +1,8 @@
 <script>
   import { onMount } from "svelte";
-  import { applyBrandingFromData } from "./clientThemes.js";
-  import { locale, t } from "./i18n.js";
+  import { applyBrandingFromData } from "../../../shared/game-lib/branding.js";
+  import { locale, t } from "../../../shared/game-lib/i18n/index.js";
+  import { createApiClient } from "../../../shared/game-lib/api-client.js";
 
   // Props
   export let gameId = "";
@@ -46,6 +47,9 @@
   // Track used letters and their states
   let letterStates = {}; // { 'A': 'correct' | 'present' | 'absent' }
 
+  // Shared API client (reactive so changes to apiUrl/token propagate if a parent rebinds props)
+  $: api = apiUrl ? createApiClient({ apiUrl, token }) : null;
+
   onMount(() => {
     // Check if in preview mode
     const urlParams = new URLSearchParams(window.location.search);
@@ -56,9 +60,9 @@
     }
 
     // Fetch platform config for "Powered by" branding
-    if (apiUrl) {
-      fetch(`${apiUrl}/api/public/config`)
-        .then((r) => r.json())
+    if (api) {
+      api
+        .fetchPublicConfig()
         .then((cfg) => {
           platformName = cfg.name || "";
           platformUrl = cfg.url || "";
@@ -72,17 +76,14 @@
   });
 
   async function fetchGame() {
+    if (!api) {
+      error = "API URL not configured";
+      loading = false;
+      return;
+    }
     try {
       loading = true;
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await fetch(
-        `${apiUrl}/api/public/games?type=wordgames&id=${gameId}`,
-        {
-          headers,
-        },
-      );
-      if (!response.ok) throw new Error("Failed to fetch game");
-      const data = await response.json();
+      const data = await api.fetchGame("wordgames", gameId);
       game = data.data;
 
       // Apply branding if assigned
@@ -90,7 +91,7 @@
         applyBrandingFromData(containerEl, game.branding);
       }
     } catch (err) {
-      error = err.message;
+      error = `Failed to load game: ${err.status ?? "unknown"}`;
     } finally {
       loading = false;
     }
