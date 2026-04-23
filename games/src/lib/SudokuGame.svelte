@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from "svelte";
-  import { applyBrandingFromData } from "./clientThemes.js";
+  import { applyBrandingFromData } from "../../../shared/game-lib/branding.js";
 
   // Props
   export let gameId = "";
