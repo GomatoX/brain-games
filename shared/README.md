@@ -24,9 +24,11 @@ leaf. Enforced by convention and code review.
 - `app/src/app/globals.css` imports `../../../shared/tokens.css` and
   `../../../shared/styles/components.css`. Tailwind v4's `@theme inline` block
   re-exposes selected semantic tokens so utilities like `bg-primary` work.
-- `games/src/app.css` imports `../../shared/tokens.css` and
-  `../../shared/styles/components.css`.
-- Svelte files in `games/src/` import from `../../shared/game-lib/...` directly.
+- `games/src/app.css` imports `../../shared/tokens.css`. The
+  `../../shared/styles/components.css` import is deferred to Plan B, when
+  Svelte game components begin consuming shared classes.
+- Svelte files in `games/src/` will import from `../../shared/game-lib/...`
+  directly (Plan B).
 
 ## Build / deploy
 
