@@ -72,11 +72,10 @@ export async function PATCH(request: NextRequest, ctx: { params: Promise<{ id: s
     updatedAt: new Date().toISOString(),
   }
 
-  if (existing) {
-    await db.update(brandingDrafts).set(values).where(eq(brandingDrafts.id, existing.id))
-  } else {
-    await db.insert(brandingDrafts).values(values)
-  }
+  await db
+    .insert(brandingDrafts)
+    .values(values)
+    .onConflictDoUpdate({ target: brandingDrafts.brandingId, set: values })
 
   const [draft] = await db
     .select()
