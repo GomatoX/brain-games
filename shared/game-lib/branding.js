@@ -9,6 +9,18 @@
  * Mapping from branding field names to CSS custom property names.
  * Each entry maps a branding API field → one or more CSS variables.
  */
+const SCALE_VARS = {
+  compact: { "--text-sm": "0.8125rem", "--text-base": "0.9375rem", "--text-lg": "1.0625rem", "--text-xl": "1.25rem" },
+  default: { "--text-sm": "0.875rem",  "--text-base": "1rem",      "--text-lg": "1.125rem",  "--text-xl": "1.375rem" },
+  relaxed: { "--text-sm": "0.9375rem", "--text-base": "1.0625rem", "--text-lg": "1.1875rem", "--text-xl": "1.5rem"  },
+};
+
+const DENSITY_VARS = {
+  compact:     { "--space-1": "0.125rem", "--space-2": "0.25rem", "--space-3": "0.5rem",  "--space-4": "0.75rem", "--space-6": "1rem" },
+  cozy:        { "--space-1": "0.25rem",  "--space-2": "0.5rem",  "--space-3": "0.75rem", "--space-4": "1rem",    "--space-6": "1.5rem" },
+  comfortable: { "--space-1": "0.375rem", "--space-2": "0.75rem", "--space-3": "1rem",    "--space-4": "1.5rem",  "--space-6": "2rem" },
+};
+
 const BRANDING_FIELD_MAP = {
   primary: ["--primary", "--accent"],
   "primary-hover": ["--primary-hover", "--accent-hover"],
@@ -63,6 +75,12 @@ export function applyBrandingFromData(element, brandingData) {
     element.style.setProperty("--font-serif", typography.fontSerif);
     loadGoogleFont(typography.fontSerif);
   }
+  const scaleVars = SCALE_VARS[typography.scale];
+  if (scaleVars) {
+    for (const [k, v] of Object.entries(scaleVars)) {
+      element.style.setProperty(k, v);
+    }
+  }
 
   const spacing = brandingData.spacing;
   if (spacing && typeof spacing.radius === "number") {
@@ -70,6 +88,12 @@ export function applyBrandingFromData(element, brandingData) {
     element.style.setProperty("--radius-md", `${spacing.radius}px`);
     element.style.setProperty("--radius-lg", `${spacing.radius * 1.5}px`);
     element.style.setProperty("--radius-xl", `${spacing.radius * 2}px`);
+  }
+  const densityVars = spacing && DENSITY_VARS[spacing.density];
+  if (densityVars) {
+    for (const [k, v] of Object.entries(densityVars)) {
+      element.style.setProperty(k, v);
+    }
   }
 
   if (brandingData.orgId) {
