@@ -64,14 +64,32 @@ const STATUS_SAVING = "saving" as const
 const STATUS_DRAFT = "draft" as const
 type Status = typeof STATUS_SAVED | typeof STATUS_SAVING | typeof STATUS_DRAFT
 
+const DEFAULT_TOKENS: BrandingTokens = {
+  primary: "#c25e40",
+  surface: "#ffffff",
+  text: "#0f172a",
+  overrides: {},
+}
+const DEFAULT_TYPOGRAPHY: BrandingTypography = {
+  fontSans: null,
+  fontSerif: null,
+  scale: "default",
+}
+const DEFAULT_SPACING: BrandingSpacing = { density: "cozy", radius: 8 }
+const DEFAULT_COMPONENTS: BrandingComponents = {
+  button: { variant: "solid", shadow: "subtle" },
+  input: { variant: "outlined" },
+  card: { elevation: "subtle" },
+}
+
 export default function BrandingEditor({ brandingId, live, initialDraft }: Props) {
   const startState: DraftState = useMemo(() => {
     const src = initialDraft ?? live
     return {
-      tokens: src.tokens as BrandingTokens,
-      typography: src.typography as BrandingTypography,
-      spacing: src.spacing as BrandingSpacing,
-      components: src.components as BrandingComponents,
+      tokens: (src.tokens as BrandingTokens | null) ?? DEFAULT_TOKENS,
+      typography: (src.typography as BrandingTypography | null) ?? DEFAULT_TYPOGRAPHY,
+      spacing: (src.spacing as BrandingSpacing | null) ?? DEFAULT_SPACING,
+      components: (src.components as BrandingComponents | null) ?? DEFAULT_COMPONENTS,
       logoPath: src.logoPath,
       logoDarkPath: src.logoDarkPath,
       faviconPath: src.faviconPath,
