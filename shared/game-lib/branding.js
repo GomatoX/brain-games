@@ -10,30 +10,29 @@
  * Each entry maps a branding API field → one or more CSS variables.
  */
 const BRANDING_FIELD_MAP = {
-  accent_color: ["--accent"],
-  accent_hover_color: ["--accent-hover"],
-  accent_light_color: ["--accent-light"],
-  selection_color: ["--cell-selected-bg", "--cell-selected"],
-  selection_ring_color: ["--cell-selected-ring"],
-  highlight_color: ["--cell-highlighted", "--cell-related"],
-  correct_color: ["--correct"],
-  correct_light_color: ["--correct-light"],
-  present_color: ["--present"],
-  absent_color: ["--absent"],
-  bg_primary_color: ["--bg-primary"],
-  bg_secondary_color: ["--bg-secondary"],
-  text_primary_color: ["--text-primary"],
-  text_secondary_color: ["--text-secondary"],
-  border_color: ["--border-color"],
-  cell_bg_color: ["--cell-bg"],
-  cell_blocked_color: ["--cell-blocked"],
-  sidebar_active_color: ["--sidebar-active"],
-  sidebar_active_bg_color: ["--sidebar-active-bg"],
-  grid_border_color: ["--grid-border"],
-  main_word_marker_color: ["--main-word-marker"],
-  font_sans: ["--font-sans"],
-  font_serif: ["--font-serif"],
-  border_radius: ["--radius-md", "--radius-lg", "--radius-xl"],
+  primary: ["--primary", "--accent"],
+  "primary-hover": ["--primary-hover", "--accent-hover"],
+  "primary-light": ["--primary-light", "--accent-light"],
+  "primary-foreground": ["--primary-foreground"],
+  surface: ["--surface", "--bg-primary"],
+  "surface-elevated": ["--surface-elevated", "--bg-secondary"],
+  "surface-muted": ["--surface-muted"],
+  text: ["--text", "--text-primary"],
+  "text-muted": ["--text-muted", "--text-secondary"],
+  border: ["--border", "--border-color"],
+  correct: ["--correct"],
+  "correct-light": ["--correct-light"],
+  present: ["--present"],
+  absent: ["--absent"],
+  selection: ["--selection", "--cell-selected", "--cell-selected-bg"],
+  "selection-ring": ["--selection-ring", "--cell-selected-ring"],
+  highlight: ["--highlight", "--cell-highlighted", "--cell-related"],
+  "cell-bg": ["--cell-bg"],
+  "cell-blocked": ["--cell-blocked"],
+  "grid-border": ["--grid-border"],
+  "main-word-marker": ["--main-word-marker"],
+  "sidebar-active": ["--sidebar-active"],
+  "sidebar-active-bg": ["--sidebar-active-bg"],
 };
 
 /**
@@ -46,18 +45,31 @@ const BRANDING_FIELD_MAP = {
 export function applyBrandingFromData(element, brandingData) {
   if (!brandingData || !element) return;
 
-  for (const [field, cssVars] of Object.entries(BRANDING_FIELD_MAP)) {
-    const value = brandingData[field];
-    if (value) {
-      for (const cssVar of cssVars) {
-        element.style.setProperty(cssVar, value);
-      }
-
-      // Dynamically load Google Font for font fields
-      if (field === "font_sans" || field === "font_serif") {
-        loadGoogleFont(value);
-      }
+  const tokens = brandingData.tokens || {};
+  for (const [tokenName, cssVars] of Object.entries(BRANDING_FIELD_MAP)) {
+    const value = tokens[tokenName];
+    if (!value) continue;
+    for (const cssVar of cssVars) {
+      element.style.setProperty(cssVar, value);
     }
+  }
+
+  const typography = brandingData.typography || {};
+  if (typography.fontSans) {
+    element.style.setProperty("--font-sans", typography.fontSans);
+    loadGoogleFont(typography.fontSans);
+  }
+  if (typography.fontSerif) {
+    element.style.setProperty("--font-serif", typography.fontSerif);
+    loadGoogleFont(typography.fontSerif);
+  }
+
+  const spacing = brandingData.spacing;
+  if (spacing && typeof spacing.radius === "number") {
+    element.style.setProperty("--radius-sm", `${spacing.radius * 0.5}px`);
+    element.style.setProperty("--radius-md", `${spacing.radius}px`);
+    element.style.setProperty("--radius-lg", `${spacing.radius * 1.5}px`);
+    element.style.setProperty("--radius-xl", `${spacing.radius * 2}px`);
   }
 }
 
