@@ -1,5 +1,11 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import type {
+  BrandingTokens,
+  BrandingTypography,
+  BrandingSpacing,
+  BrandingComponents,
+} from "@/lib/branding/tokens";
 
 // ─── Organizations ──────────────────────────────────────
 export const organizations = sqliteTable("organizations", {
@@ -78,26 +84,10 @@ export const branding = sqliteTable("branding", {
   fontSans: text("font_sans"),
   fontSerif: text("font_serif"),
   borderRadius: text("border_radius"),
-  tokens: text("tokens", { mode: "json" }).$type<{
-    primary: string;
-    surface: string;
-    text: string;
-    overrides: Record<string, string>;
-  }>(),
-  typography: text("typography", { mode: "json" }).$type<{
-    fontSans: string | null;
-    fontSerif: string | null;
-    scale: "compact" | "default" | "relaxed";
-  }>(),
-  spacing: text("spacing", { mode: "json" }).$type<{
-    density: "compact" | "cozy" | "comfortable";
-    radius: number;
-  }>(),
-  components: text("components", { mode: "json" }).$type<{
-    button: { variant: "solid" | "outline" | "ghost-fill"; shadow: "none" | "subtle" | "pronounced" };
-    input: { variant: "outlined" | "filled" | "underlined" };
-    card: { elevation: "flat" | "subtle" | "lifted" };
-  }>(),
+  tokens: text("tokens", { mode: "json" }).$type<BrandingTokens>(),
+  typography: text("typography", { mode: "json" }).$type<BrandingTypography>(),
+  spacing: text("spacing", { mode: "json" }).$type<BrandingSpacing>(),
+  components: text("components", { mode: "json" }).$type<BrandingComponents>(),
   logoPath: text("logo_path"),
   logoDarkPath: text("logo_dark_path"),
   faviconPath: text("favicon_path"),
@@ -121,26 +111,10 @@ export const brandingDrafts = sqliteTable("branding_drafts", {
     .notNull()
     .unique()
     .references(() => branding.id, { onDelete: "cascade" }),
-  tokens: text("tokens", { mode: "json" }).$type<{
-    primary: string;
-    surface: string;
-    text: string;
-    overrides: Record<string, string>;
-  }>(),
-  typography: text("typography", { mode: "json" }).$type<{
-    fontSans: string | null;
-    fontSerif: string | null;
-    scale: "compact" | "default" | "relaxed";
-  }>(),
-  spacing: text("spacing", { mode: "json" }).$type<{
-    density: "compact" | "cozy" | "comfortable";
-    radius: number;
-  }>(),
-  components: text("components", { mode: "json" }).$type<{
-    button: { variant: "solid" | "outline" | "ghost-fill"; shadow: "none" | "subtle" | "pronounced" };
-    input: { variant: "outlined" | "filled" | "underlined" };
-    card: { elevation: "flat" | "subtle" | "lifted" };
-  }>(),
+  tokens: text("tokens", { mode: "json" }).$type<BrandingTokens>(),
+  typography: text("typography", { mode: "json" }).$type<BrandingTypography>(),
+  spacing: text("spacing", { mode: "json" }).$type<BrandingSpacing>(),
+  components: text("components", { mode: "json" }).$type<BrandingComponents>(),
   logoPath: text("logo_path"),
   logoDarkPath: text("logo_dark_path"),
   faviconPath: text("favicon_path"),

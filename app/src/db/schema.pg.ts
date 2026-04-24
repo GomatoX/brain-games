@@ -1,5 +1,11 @@
 import { pgTable, text, integer, jsonb, boolean } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type {
+  BrandingTokens,
+  BrandingTypography,
+  BrandingSpacing,
+  BrandingComponents,
+} from "@/lib/branding/tokens";
 
 // ─── Organizations ──────────────────────────────────────
 export const organizations = pgTable("organizations", {
@@ -78,26 +84,10 @@ export const branding = pgTable("branding", {
   fontSans: text("font_sans"),
   fontSerif: text("font_serif"),
   borderRadius: text("border_radius"),
-  tokens: jsonb("tokens").$type<{
-    primary: string;
-    surface: string;
-    text: string;
-    overrides: Record<string, string>;
-  }>(),
-  typography: jsonb("typography").$type<{
-    fontSans: string | null;
-    fontSerif: string | null;
-    scale: "compact" | "default" | "relaxed";
-  }>(),
-  spacing: jsonb("spacing").$type<{
-    density: "compact" | "cozy" | "comfortable";
-    radius: number;
-  }>(),
-  components: jsonb("components").$type<{
-    button: { variant: "solid" | "outline" | "ghost-fill"; shadow: "none" | "subtle" | "pronounced" };
-    input: { variant: "outlined" | "filled" | "underlined" };
-    card: { elevation: "flat" | "subtle" | "lifted" };
-  }>(),
+  tokens: jsonb("tokens").$type<BrandingTokens>(),
+  typography: jsonb("typography").$type<BrandingTypography>(),
+  spacing: jsonb("spacing").$type<BrandingSpacing>(),
+  components: jsonb("components").$type<BrandingComponents>(),
   logoPath: text("logo_path"),
   logoDarkPath: text("logo_dark_path"),
   faviconPath: text("favicon_path"),
@@ -121,26 +111,10 @@ export const brandingDrafts = pgTable("branding_drafts", {
     .notNull()
     .unique()
     .references(() => branding.id, { onDelete: "cascade" }),
-  tokens: jsonb("tokens").$type<{
-    primary: string;
-    surface: string;
-    text: string;
-    overrides: Record<string, string>;
-  }>(),
-  typography: jsonb("typography").$type<{
-    fontSans: string | null;
-    fontSerif: string | null;
-    scale: "compact" | "default" | "relaxed";
-  }>(),
-  spacing: jsonb("spacing").$type<{
-    density: "compact" | "cozy" | "comfortable";
-    radius: number;
-  }>(),
-  components: jsonb("components").$type<{
-    button: { variant: "solid" | "outline" | "ghost-fill"; shadow: "none" | "subtle" | "pronounced" };
-    input: { variant: "outlined" | "filled" | "underlined" };
-    card: { elevation: "flat" | "subtle" | "lifted" };
-  }>(),
+  tokens: jsonb("tokens").$type<BrandingTokens>(),
+  typography: jsonb("typography").$type<BrandingTypography>(),
+  spacing: jsonb("spacing").$type<BrandingSpacing>(),
+  components: jsonb("components").$type<BrandingComponents>(),
   logoPath: text("logo_path"),
   logoDarkPath: text("logo_dark_path"),
   faviconPath: text("favicon_path"),
