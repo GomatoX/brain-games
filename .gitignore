@@ -31,3 +31,6 @@ Thumbs.db
 docker-compose.override.yml
 mocks/*
 clients
+
+# Superpowers brainstorming sessions
+.superpowers/
