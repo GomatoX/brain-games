@@ -41,4 +41,27 @@ describe("sanitizeCss", () => {
     const out = sanitizeCss(".foo { color: red }")
     expect(out.bytes).toBe(out.css.length)
   })
+
+  it("strips expression() even when split by CSS comments (postcss tokenization)", () => {
+    const out = sanitizeCss(".x { width: expr/**/ession(alert(1)) }")
+    expect(out.css).not.toMatch(/expression/i)
+  })
+
+  it("strips javascript: even when obscured with CSS unicode escapes", () => {
+    const out = sanitizeCss(".x { background: url(\\6A avascript:alert(1)) }")
+    expect(out.css).not.toMatch(/javascript\s*:/i)
+  })
+
+  it("does not corrupt adjacent rules when removing behavior:", () => {
+    const out = sanitizeCss(".a { behavior: url(x.htc); color: red } .b { color: blue }")
+    expect(out.css).toContain(".b")
+    expect(out.css).toContain("color: blue")
+    expect(out.css).not.toContain("behavior")
+  })
+
+  it("uses UTF-8 byte count, not character length, for the size limit", () => {
+    expect(() => sanitizeCss("a".repeat(16385))).toThrow(/too large/i)
+    const fourByteEmoji = "\u{1F600}"
+    expect(() => sanitizeCss(fourByteEmoji.repeat(4097))).toThrow(/too large/i)
+  })
 })
