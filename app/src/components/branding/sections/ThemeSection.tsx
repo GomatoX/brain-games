@@ -1,17 +1,54 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
+import { PRESETS } from "@/lib/branding/presets"
 
 type Props = {
   draft: DraftState
   update: <K extends keyof DraftState>(key: K, val: DraftState[K]) => void
 }
 
-export default function ThemeSection({ draft: _draft, update: _update }: Props) {
+export default function ThemeSection({ draft, update }: Props) {
+  const setSeed = (k: "primary" | "surface" | "text", v: string) =>
+    update("tokens", { ...draft.tokens, [k]: v })
+
+  const applyPreset = (id: string) => {
+    const p = PRESETS.find((x) => x.id === id)
+    if (p) update("tokens", { ...p.tokens, overrides: draft.tokens.overrides })
+  }
+
   return (
     <details open className="mb-4">
       <summary className="font-semibold cursor-pointer">Theme</summary>
-      <div className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
-        Stub — implementation in Task 21.
+      <div className="mt-3 space-y-3">
+        <label className="block text-sm">
+          <span className="block mb-1">Preset</span>
+          <select
+            className="border rounded px-2 py-1 w-full"
+            onChange={(e) => applyPreset(e.target.value)}
+            value=""
+          >
+            <option value="" disabled>Pick a preset…</option>
+            {PRESETS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </label>
+        {(["primary", "surface", "text"] as const).map((k) => (
+          <label key={k} className="block text-sm">
+            <span className="block mb-1 capitalize">{k}</span>
+            <div className="flex gap-2 items-center">
+              <input
+                type="color"
+                value={draft.tokens[k]}
+                onChange={(e) => setSeed(k, e.target.value)}
+              />
+              <input
+                type="text"
+                className="border rounded px-2 py-1 flex-1"
+                value={draft.tokens[k]}
+                onChange={(e) => setSeed(k, e.target.value)}
+              />
+            </div>
+          </label>
+        ))}
       </div>
     </details>
   )
