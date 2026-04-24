@@ -26,6 +26,121 @@ if (isPostgres) {
     migrationsFolder: path.join(process.cwd(), "drizzle", "pg"),
   })
     .then(() => console.log("[migrate] ✅ PG migrations applied"))
+    .then(async () => {
+      // ─── Branding backfill: flat columns → JSON tokens ───────
+      // Idempotent: skips rows where `tokens` is already populated.
+      try {
+        const tokensColCheck = await pool.query(
+          "SELECT column_name FROM information_schema.columns WHERE table_name='branding' AND column_name='tokens'",
+        )
+        if (tokensColCheck.rowCount === 0) return
+
+        const accentColCheck = await pool.query(
+          "SELECT column_name FROM information_schema.columns WHERE table_name='branding' AND column_name='accent_color'",
+        )
+        if (accentColCheck.rowCount === 0) return
+
+        const { rows } = await pool.query(
+          "SELECT * FROM branding WHERE tokens IS NULL",
+        )
+
+        if (rows.length === 0) return
+
+        console.log(`[migrate] backfilling ${rows.length} branding rows`)
+
+        const PLATFORM_DEFAULTS = {
+          primary: process.env.PLATFORM_ACCENT || "#c25e40",
+          surface: "#ffffff",
+          text: "#0f172a",
+        }
+
+        const OVERRIDE_FIELD_MAP: Record<string, string> = {
+          accent_hover_color: "primary-hover",
+          accent_light_color: "primary-light",
+          selection_color: "selection",
+          selection_ring_color: "selection-ring",
+          highlight_color: "highlight",
+          correct_color: "correct",
+          correct_light_color: "correct-light",
+          present_color: "present",
+          absent_color: "absent",
+          bg_secondary_color: "surface-elevated",
+          text_secondary_color: "text-muted",
+          border_color: "border",
+          cell_bg_color: "cell-bg",
+          cell_blocked_color: "cell-blocked",
+          sidebar_active_color: "sidebar-active",
+          sidebar_active_bg_color: "sidebar-active-bg",
+          grid_border_color: "grid-border",
+          main_word_marker_color: "main-word-marker",
+        }
+
+        const TYPOGRAPHY_DEFAULT = {
+          fontSans: null as string | null,
+          fontSerif: null as string | null,
+          scale: "default" as const,
+        }
+        const SPACING_DEFAULT = { density: "cozy" as const, radius: 8 }
+        const COMPONENTS_DEFAULT = {
+          button: { variant: "solid", shadow: "subtle" },
+          input: { variant: "outlined" },
+          card: { elevation: "subtle" },
+        }
+
+        const client = await pool.connect()
+        try {
+          await client.query("BEGIN")
+          for (const row of rows) {
+            const overrides: Record<string, string> = {}
+            for (const [oldKey, newKey] of Object.entries(OVERRIDE_FIELD_MAP)) {
+              const v = row[oldKey]
+              if (v) overrides[newKey] = v as string
+            }
+
+            const tokens = {
+              primary: row.accent_color || PLATFORM_DEFAULTS.primary,
+              surface: row.bg_primary_color || PLATFORM_DEFAULTS.surface,
+              text: row.text_primary_color || PLATFORM_DEFAULTS.text,
+              overrides,
+            }
+
+            const typography = {
+              ...TYPOGRAPHY_DEFAULT,
+              fontSans: row.font_sans,
+              fontSerif: row.font_serif,
+            }
+
+            const radius = row.border_radius
+              ? Number.parseInt(
+                  String(row.border_radius).replace(/[^\d]/g, ""),
+                  10,
+                ) || 8
+              : 8
+            const spacing = { ...SPACING_DEFAULT, radius }
+
+            await client.query(
+              "UPDATE branding SET tokens = $1::jsonb, typography = $2::jsonb, spacing = $3::jsonb, components = $4::jsonb, updated_at = now() WHERE id = $5",
+              [
+                JSON.stringify(tokens),
+                JSON.stringify(typography),
+                JSON.stringify(spacing),
+                JSON.stringify(COMPONENTS_DEFAULT),
+                row.id,
+              ],
+            )
+          }
+          await client.query("COMMIT")
+          console.log(`[migrate] ✅ backfilled ${rows.length} branding rows`)
+        } catch (err) {
+          await client.query("ROLLBACK")
+          throw err
+        } finally {
+          client.release()
+        }
+      } catch (err) {
+        console.error("[migrate] ❌ branding backfill failed:", err)
+      }
+    })
     .catch((err: unknown) =>
       console.error("[migrate] ❌ PG migration failed:", err),
     )
@@ -184,6 +299,135 @@ if (isPostgres) {
     } catch (err) {
       console.error("[migrate] invite columns may already exist:", err)
     }
+  }
+
+  // ─── Branding backfill: flat columns → JSON tokens ───────────
+  // Idempotent: skips rows where `tokens` is already populated.
+  try {
+    const brandingCols = sqlite
+      .pragma("table_info(branding)")
+      .map((c: { name: string }) => c.name)
+
+    if (brandingCols.includes("tokens") && brandingCols.includes("accent_color")) {
+      interface OldBranding {
+        id: string
+        accent_color: string | null
+        accent_hover_color: string | null
+        accent_light_color: string | null
+        selection_color: string | null
+        selection_ring_color: string | null
+        highlight_color: string | null
+        correct_color: string | null
+        correct_light_color: string | null
+        present_color: string | null
+        absent_color: string | null
+        bg_primary_color: string | null
+        bg_secondary_color: string | null
+        text_primary_color: string | null
+        text_secondary_color: string | null
+        border_color: string | null
+        cell_bg_color: string | null
+        cell_blocked_color: string | null
+        sidebar_active_color: string | null
+        sidebar_active_bg_color: string | null
+        grid_border_color: string | null
+        main_word_marker_color: string | null
+        font_sans: string | null
+        font_serif: string | null
+        border_radius: string | null
+        tokens: string | null
+      }
+
+      const rows = sqlite
+        .prepare("SELECT * FROM branding WHERE tokens IS NULL")
+        .all() as OldBranding[]
+
+      if (rows.length > 0) {
+        console.log(`[migrate] backfilling ${rows.length} branding rows`)
+
+        const PLATFORM_DEFAULTS = {
+          primary: process.env.PLATFORM_ACCENT || "#c25e40",
+          surface: "#ffffff",
+          text: "#0f172a",
+        }
+
+        const OVERRIDE_FIELD_MAP: Record<string, string> = {
+          accent_hover_color: "primary-hover",
+          accent_light_color: "primary-light",
+          selection_color: "selection",
+          selection_ring_color: "selection-ring",
+          highlight_color: "highlight",
+          correct_color: "correct",
+          correct_light_color: "correct-light",
+          present_color: "present",
+          absent_color: "absent",
+          bg_secondary_color: "surface-elevated",
+          text_secondary_color: "text-muted",
+          border_color: "border",
+          cell_bg_color: "cell-bg",
+          cell_blocked_color: "cell-blocked",
+          sidebar_active_color: "sidebar-active",
+          sidebar_active_bg_color: "sidebar-active-bg",
+          grid_border_color: "grid-border",
+          main_word_marker_color: "main-word-marker",
+        }
+
+        const update = sqlite.prepare(
+          "UPDATE branding SET tokens = ?, typography = ?, spacing = ?, components = ?, updated_at = datetime('now') WHERE id = ?",
+        )
+
+        const TYPOGRAPHY_DEFAULT = {
+          fontSans: null,
+          fontSerif: null,
+          scale: "default" as const,
+        }
+        const SPACING_DEFAULT = { density: "cozy" as const, radius: 8 }
+        const COMPONENTS_DEFAULT = {
+          button: { variant: "solid", shadow: "subtle" },
+          input: { variant: "outlined" },
+          card: { elevation: "subtle" },
+        }
+
+        sqlite.exec("BEGIN TRANSACTION")
+        for (const row of rows) {
+          const overrides: Record<string, string> = {}
+          for (const [oldKey, newKey] of Object.entries(OVERRIDE_FIELD_MAP)) {
+            const v = row[oldKey as keyof OldBranding]
+            if (v) overrides[newKey] = v as string
+          }
+
+          const tokens = {
+            primary: row.accent_color || PLATFORM_DEFAULTS.primary,
+            surface: row.bg_primary_color || PLATFORM_DEFAULTS.surface,
+            text: row.text_primary_color || PLATFORM_DEFAULTS.text,
+            overrides,
+          }
+
+          const typography = {
+            ...TYPOGRAPHY_DEFAULT,
+            fontSans: row.font_sans,
+            fontSerif: row.font_serif,
+          }
+
+          const radius = row.border_radius
+            ? Number.parseInt(row.border_radius.replace(/[^\d]/g, ""), 10) || 8
+            : 8
+          const spacing = { ...SPACING_DEFAULT, radius }
+
+          update.run(
+            JSON.stringify(tokens),
+            JSON.stringify(typography),
+            JSON.stringify(spacing),
+            JSON.stringify(COMPONENTS_DEFAULT),
+            row.id,
+          )
+        }
+        sqlite.exec("COMMIT")
+        console.log(`[migrate] ✅ backfilled ${rows.length} branding rows`)
+      }
+    }
+  } catch (err) {
+    console.error("[migrate] ❌ branding backfill failed:", err)
   }
 
   db = sqliteDb
