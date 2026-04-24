@@ -10,6 +10,13 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { computeCrosswordLayout } from "@/lib/crossword-layout-server";
+import { deriveTokens } from "@/lib/branding/derive";
+import type {
+  BrandingTokens,
+  BrandingTypography,
+  BrandingSpacing,
+  BrandingComponents,
+} from "@/lib/branding/tokens";
 
 type GameType = "crosswords" | "wordgames" | "sudoku" | "wordsearches";
 
@@ -125,31 +132,19 @@ export async function GET(request: NextRequest) {
 
       if (b) {
         brandingData = {
-          id: b.id,
-          name: b.name,
-          accent_color: b.accentColor,
-          accent_hover_color: b.accentHoverColor,
-          accent_light_color: b.accentLightColor,
-          selection_color: b.selectionColor,
-          selection_ring_color: b.selectionRingColor,
-          highlight_color: b.highlightColor,
-          correct_color: b.correctColor,
-          correct_light_color: b.correctLightColor,
-          present_color: b.presentColor,
-          absent_color: b.absentColor,
-          bg_primary_color: b.bgPrimaryColor,
-          bg_secondary_color: b.bgSecondaryColor,
-          text_primary_color: b.textPrimaryColor,
-          text_secondary_color: b.textSecondaryColor,
-          border_color: b.borderColor,
-          cell_bg_color: b.cellBgColor,
-          cell_blocked_color: b.cellBlockedColor,
-          sidebar_active_color: b.sidebarActiveColor,
-          sidebar_active_bg_color: b.sidebarActiveBgColor,
-          grid_border_color: b.gridBorderColor,
-          font_sans: b.fontSans,
-          font_serif: b.fontSerif,
-          border_radius: b.borderRadius,
+          tokens: deriveTokens(
+            (b.tokens as BrandingTokens) ?? {
+              primary: "#c25e40",
+              surface: "#ffffff",
+              text: "#0f172a",
+              overrides: {},
+            },
+          ),
+          typography: (b.typography as BrandingTypography) ?? null,
+          spacing: (b.spacing as BrandingSpacing) ?? null,
+          components: (b.components as BrandingComponents) ?? null,
+          logoPath: b.logoPath ?? null,
+          customCssGames: b.customCssGames ?? null,
         };
       }
     }
