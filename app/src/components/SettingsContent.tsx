@@ -139,7 +139,7 @@ export default function SettingsContent({
       <div className="space-y-8">
         {/* Organization Settings Card */}
         <Panel>
-          <div className="p-8 space-y-8">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-8">
             <Input
               label="Organization Name"
               id="org-name"
@@ -210,7 +210,7 @@ export default function SettingsContent({
 
           {/* Save Footer */}
           {isOwner && (
-            <div className="px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
               {saved && (
                 <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
                   <span className="material-symbols-outlined text-base">
@@ -226,7 +226,7 @@ export default function SettingsContent({
           )}
 
           {!isOwner && (
-            <div className="px-8 py-4 border-t border-[#f1f5f9]">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9]">
               <p className="text-sm text-[#94a3b8] flex items-center gap-2">
                 <span className="material-symbols-outlined text-base">
                   lock
@@ -242,7 +242,7 @@ export default function SettingsContent({
 
         {/* Social Sharing */}
         <Panel>
-          <div className="p-8 space-y-6">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="border-b border-[#f1f5f9] pb-4">
               <h2 className="text-lg font-semibold text-navy-900">
                 Social Sharing
@@ -292,7 +292,7 @@ export default function SettingsContent({
           </div>
 
           {isOwner && (
-            <div className="px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
               {saved && (
                 <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
                   <span className="material-symbols-outlined text-base">
@@ -364,7 +364,7 @@ function PasswordSection() {
 
   return (
     <Panel>
-      <div className="p-8 pt-6 space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 pt-6 space-y-6">
         <div className="border-b border-[#f1f5f9] pb-4">
           <h2 className="text-lg font-semibold text-navy-900">
             Security & Access

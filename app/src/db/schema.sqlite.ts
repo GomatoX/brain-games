@@ -1,5 +1,11 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import type {
+  BrandingTokens,
+  BrandingTypography,
+  BrandingSpacing,
+  BrandingComponents,
+} from "@/lib/branding/tokens";
 
 // ─── Organizations ──────────────────────────────────────
 export const organizations = sqliteTable("organizations", {
@@ -35,6 +41,9 @@ export const users = sqliteTable("users", {
   orgRole: text("org_role").notNull().default("member"),
   inviteToken: text("invite_token").unique(),
   inviteExpiresAt: text("invite_expires_at"),
+  usePlatformChrome: integer("use_platform_chrome", { mode: "boolean" })
+    .notNull()
+    .default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
@@ -75,6 +84,63 @@ export const branding = sqliteTable("branding", {
   fontSans: text("font_sans"),
   fontSerif: text("font_serif"),
   borderRadius: text("border_radius"),
+  tokens: text("tokens", { mode: "json" }).$type<BrandingTokens>(),
+  typography: text("typography", { mode: "json" }).$type<BrandingTypography>(),
+  spacing: text("spacing", { mode: "json" }).$type<BrandingSpacing>(),
+  components: text("components", { mode: "json" }).$type<BrandingComponents>(),
+  logoPath: text("logo_path"),
+  logoDarkPath: text("logo_dark_path"),
+  faviconPath: text("favicon_path"),
+  backgroundPath: text("background_path"),
+  ogImagePath: text("og_image_path"),
+  customCssGames: text("custom_css_games"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+// ─── Branding Drafts ────────────────────────────────────
+export const brandingDrafts = sqliteTable("branding_drafts", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  brandingId: text("branding_id")
+    .notNull()
+    .unique()
+    .references(() => branding.id, { onDelete: "cascade" }),
+  tokens: text("tokens", { mode: "json" }).$type<BrandingTokens>(),
+  typography: text("typography", { mode: "json" }).$type<BrandingTypography>(),
+  spacing: text("spacing", { mode: "json" }).$type<BrandingSpacing>(),
+  components: text("components", { mode: "json" }).$type<BrandingComponents>(),
+  logoPath: text("logo_path"),
+  logoDarkPath: text("logo_dark_path"),
+  faviconPath: text("favicon_path"),
+  backgroundPath: text("background_path"),
+  ogImagePath: text("og_image_path"),
+  customCssGames: text("custom_css_games"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+// ─── Uploaded Files ─────────────────────────────────────
+export const uploadedFiles = sqliteTable("uploaded_files", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  path: text("path").notNull(),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  sha256: text("sha256").notNull(),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn lint)",
+      "Bash(yarn test)",
+      "Bash(yarn test *)",
+      "Bash(yarn test:watch)",
+      "Bash(yarn db:studio)",
+      "Bash(yarn db:generate)",
+      "Bash(yarn db:push)",
+      "Bash(yarn db:seed *)"
+    ]
+  }
+}

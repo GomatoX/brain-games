@@ -1,5 +1,11 @@
-import { pgTable, text, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, jsonb, boolean } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type {
+  BrandingTokens,
+  BrandingTypography,
+  BrandingSpacing,
+  BrandingComponents,
+} from "@/lib/branding/tokens";
 
 // ─── Organizations ──────────────────────────────────────
 export const organizations = pgTable("organizations", {
@@ -35,6 +41,9 @@ export const users = pgTable("users", {
   orgRole: text("org_role").notNull().default("member"),
   inviteToken: text("invite_token").unique(),
   inviteExpiresAt: text("invite_expires_at"),
+  usePlatformChrome: boolean("use_platform_chrome")
+    .notNull()
+    .default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),
@@ -75,6 +84,63 @@ export const branding = pgTable("branding", {
   fontSans: text("font_sans"),
   fontSerif: text("font_serif"),
   borderRadius: text("border_radius"),
+  tokens: jsonb("tokens").$type<BrandingTokens>(),
+  typography: jsonb("typography").$type<BrandingTypography>(),
+  spacing: jsonb("spacing").$type<BrandingSpacing>(),
+  components: jsonb("components").$type<BrandingComponents>(),
+  logoPath: text("logo_path"),
+  logoDarkPath: text("logo_dark_path"),
+  faviconPath: text("favicon_path"),
+  backgroundPath: text("background_path"),
+  ogImagePath: text("og_image_path"),
+  customCssGames: text("custom_css_games"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`now()`),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`now()`),
+});
+
+// ─── Branding Drafts ────────────────────────────────────
+export const brandingDrafts = pgTable("branding_drafts", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  brandingId: text("branding_id")
+    .notNull()
+    .unique()
+    .references(() => branding.id, { onDelete: "cascade" }),
+  tokens: jsonb("tokens").$type<BrandingTokens>(),
+  typography: jsonb("typography").$type<BrandingTypography>(),
+  spacing: jsonb("spacing").$type<BrandingSpacing>(),
+  components: jsonb("components").$type<BrandingComponents>(),
+  logoPath: text("logo_path"),
+  logoDarkPath: text("logo_dark_path"),
+  faviconPath: text("favicon_path"),
+  backgroundPath: text("background_path"),
+  ogImagePath: text("og_image_path"),
+  customCssGames: text("custom_css_games"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`now()`),
+});
+
+// ─── Uploaded Files ─────────────────────────────────────
+export const uploadedFiles = pgTable("uploaded_files", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  path: text("path").notNull(),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  sha256: text("sha256").notNull(),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),

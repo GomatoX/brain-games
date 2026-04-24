@@ -8,6 +8,13 @@
       "when": 1774382144415,
       "tag": "0000_graceful_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777038954022,
+      "tag": "0001_outstanding_dreadnoughts",
+      "breakpoints": true
     }
   ]
 }

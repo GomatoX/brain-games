@@ -31,3 +31,18 @@ Thumbs.db
 docker-compose.override.yml
 mocks/*
 clients
+
+# Superpowers brainstorming sessions
+.superpowers/
+
+# Playwright MCP scratch
+.playwright-mcp/
+
+# Viewport screenshots (kept locally, not tracked)
+/branding-*.png
+/dashboard-*.png
+/games-*.png
+/keys-*.png
+/settings-*.png
+/team-*.png
+/wordsearch-*.png

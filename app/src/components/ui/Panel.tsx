@@ -23,7 +23,7 @@ interface PanelHeaderProps {
 
 export const PanelHeader = ({ title, count, action }: PanelHeaderProps) => {
   return (
-    <div className="px-6 py-4 border-b border-[#f1f5f9] flex items-center gap-3">
+    <div className="px-4 sm:px-6 py-4 border-b border-[#f1f5f9] flex items-center gap-3">
       <h2 className="text-[15px] font-semibold text-navy-900">{title}</h2>
       {count !== undefined &&
         (typeof count === "number" || typeof count === "string" ? (

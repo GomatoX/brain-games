@@ -504,7 +504,7 @@ export default function BrandingContent({
       >
         <form
           onSubmit={handleSave}
-          className="p-6 overflow-y-auto flex-1 flex flex-col gap-5"
+          className="p-4 sm:p-6 flex flex-col gap-5"
         >
           {/* Name */}
           <div>
@@ -531,7 +531,7 @@ export default function BrandingContent({
                   {group.title}
                 </label>
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {group.fields.map((f) =>
                   f.type === "color" ? (
                     <div
@@ -622,7 +622,7 @@ export default function BrandingContent({
             </p>
           )}
 
-          <div className="flex gap-3 justify-end pt-2">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
             <Button variant="outline" onClick={closeModal}>
               Cancel
             </Button>
@@ -639,14 +639,14 @@ export default function BrandingContent({
         onClose={() => setDeleteConfirm(null)}
         size="sm"
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
             Delete Preset
           </h3>
           <p className="text-sm text-[#64748b] mb-6">
             Are you sure? Games using this preset will lose their branding.
           </p>
-          <div className="flex gap-3 justify-end">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
               Cancel
             </Button>
