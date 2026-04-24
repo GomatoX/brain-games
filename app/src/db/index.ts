@@ -2,6 +2,7 @@ import path from "path"
 import fs from "fs"
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 import type * as SqliteSchema from "./schema.sqlite"
+import { backfillRow, type OldBrandingRow } from "@/lib/branding/backfill"
 
 const isPostgres = !!process.env.DATABASE_URL
 
@@ -309,40 +310,11 @@ if (isPostgres) {
       .map((c: { name: string }) => c.name)
 
     if (brandingCols.includes("tokens") && brandingCols.includes("accent_color")) {
-      interface OldBranding {
-        id: string
-        accent_color: string | null
-        accent_hover_color: string | null
-        accent_light_color: string | null
-        selection_color: string | null
-        selection_ring_color: string | null
-        highlight_color: string | null
-        correct_color: string | null
-        correct_light_color: string | null
-        present_color: string | null
-        absent_color: string | null
-        bg_primary_color: string | null
-        bg_secondary_color: string | null
-        text_primary_color: string | null
-        text_secondary_color: string | null
-        border_color: string | null
-        cell_bg_color: string | null
-        cell_blocked_color: string | null
-        sidebar_active_color: string | null
-        sidebar_active_bg_color: string | null
-        grid_border_color: string | null
-        main_word_marker_color: string | null
-        font_sans: string | null
-        font_serif: string | null
-        border_radius: string | null
-        tokens: string | null
-      }
-
       const rows = sqlite
         .prepare(
-          "SELECT id, accent_color, accent_hover_color, accent_light_color, selection_color, selection_ring_color, highlight_color, correct_color, correct_light_color, present_color, absent_color, bg_primary_color, bg_secondary_color, text_primary_color, text_secondary_color, border_color, cell_bg_color, cell_blocked_color, sidebar_active_color, sidebar_active_bg_color, grid_border_color, main_word_marker_color, font_sans, font_serif, border_radius, tokens FROM branding WHERE tokens IS NULL",
+          "SELECT id, accent_color, accent_hover_color, accent_light_color, selection_color, selection_ring_color, highlight_color, correct_color, correct_light_color, present_color, absent_color, bg_primary_color, bg_secondary_color, text_primary_color, text_secondary_color, border_color, cell_bg_color, cell_blocked_color, sidebar_active_color, sidebar_active_bg_color, grid_border_color, main_word_marker_color, font_sans, font_serif, border_radius FROM branding WHERE tokens IS NULL",
         )
-        .all() as OldBranding[]
+        .all() as OldBrandingRow[]
 
       if (rows.length > 0) {
         console.log(`[migrate] backfilling ${rows.length} branding rows`)
@@ -353,76 +325,23 @@ if (isPostgres) {
           text: "#0f172a",
         }
 
-        const OVERRIDE_FIELD_MAP: Record<string, string> = {
-          accent_hover_color: "primary-hover",
-          accent_light_color: "primary-light",
-          selection_color: "selection",
-          selection_ring_color: "selection-ring",
-          highlight_color: "highlight",
-          correct_color: "correct",
-          correct_light_color: "correct-light",
-          present_color: "present",
-          absent_color: "absent",
-          bg_secondary_color: "surface-elevated",
-          text_secondary_color: "text-muted",
-          border_color: "border",
-          cell_bg_color: "cell-bg",
-          cell_blocked_color: "cell-blocked",
-          sidebar_active_color: "sidebar-active",
-          sidebar_active_bg_color: "sidebar-active-bg",
-          grid_border_color: "grid-border",
-          main_word_marker_color: "main-word-marker",
-        }
-
         const update = sqlite.prepare(
           "UPDATE branding SET tokens = ?, typography = ?, spacing = ?, components = ?, updated_at = datetime('now') WHERE id = ?",
         )
 
-        const TYPOGRAPHY_DEFAULT = {
-          fontSans: null,
-          fontSerif: null,
-          scale: "default" as const,
-        }
-        const SPACING_DEFAULT = { density: "cozy" as const, radius: 8 }
-        const COMPONENTS_DEFAULT = {
-          button: { variant: "solid", shadow: "subtle" },
-          input: { variant: "outlined" },
-          card: { elevation: "subtle" },
-        }
-
         sqlite.exec("BEGIN TRANSACTION")
         try {
           for (const row of rows) {
-            const overrides: Record<string, string> = {}
-            for (const [oldKey, newKey] of Object.entries(OVERRIDE_FIELD_MAP)) {
-              const v = row[oldKey as keyof OldBranding]
-              if (v) overrides[newKey] = v as string
-            }
-
-            const tokens = {
-              primary: row.accent_color || PLATFORM_DEFAULTS.primary,
-              surface: row.bg_primary_color || PLATFORM_DEFAULTS.surface,
-              text: row.text_primary_color || PLATFORM_DEFAULTS.text,
-              overrides,
-            }
-
-            const typography = {
-              ...TYPOGRAPHY_DEFAULT,
-              fontSans: row.font_sans,
-              fontSerif: row.font_serif,
-            }
-
-            const radius = row.border_radius
-              ? Number.parseInt(row.border_radius.replace(/[^\d]/g, ""), 10) ||
-                8
-              : 8
-            const spacing = { ...SPACING_DEFAULT, radius }
+            const { tokens, typography, spacing, components } = backfillRow(
+              row,
+              PLATFORM_DEFAULTS,
+            )
 
             update.run(
               JSON.stringify(tokens),
               JSON.stringify(typography),
               JSON.stringify(spacing),
-              JSON.stringify(COMPONENTS_DEFAULT),
+              JSON.stringify(components),
               row.id,
             )
           }
