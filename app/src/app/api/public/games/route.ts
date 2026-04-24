@@ -132,6 +132,7 @@ export async function GET(request: NextRequest) {
 
       if (b) {
         brandingData = {
+          orgId: b.orgId,
           tokens: deriveTokens(
             (b.tokens as BrandingTokens) ?? {
               primary: "#c25e40",

@@ -71,6 +71,20 @@ export function applyBrandingFromData(element, brandingData) {
     element.style.setProperty("--radius-lg", `${spacing.radius * 1.5}px`);
     element.style.setProperty("--radius-xl", `${spacing.radius * 2}px`);
   }
+
+  if (brandingData.orgId) {
+    element.setAttribute("data-org-id", brandingData.orgId);
+  }
+
+  if (brandingData.customCssGames) {
+    let styleEl = element.querySelector("style[data-branding-custom-css]");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.setAttribute("data-branding-custom-css", "");
+      element.insertBefore(styleEl, element.firstChild);
+    }
+    styleEl.textContent = brandingData.customCssGames;
+  }
 }
 
 /**
