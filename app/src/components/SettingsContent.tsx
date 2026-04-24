@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   PageHeader,
   Panel,
@@ -65,6 +66,34 @@ export default function SettingsContent({
   const [usePlatformChrome, setUsePlatformChrome] = useState(
     initialSettings.use_platform_chrome,
   )
+  const [chromeError, setChromeError] = useState("")
+  const [chromePending, setChromePending] = useState(false)
+  const router = useRouter()
+
+  async function handleChromeToggle(next: boolean) {
+    const previous = usePlatformChrome
+    setUsePlatformChrome(next)
+    setChromeError("")
+    setChromePending(true)
+    try {
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usePlatformChrome: next }),
+      })
+      if (!res.ok) {
+        setUsePlatformChrome(previous)
+        setChromeError("Failed to update appearance preference. Please try again.")
+        return
+      }
+      router.refresh()
+    } catch {
+      setUsePlatformChrome(previous)
+      setChromeError("Failed to update appearance preference. Please try again.")
+    } finally {
+      setChromePending(false)
+    }
+  }
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -254,25 +283,17 @@ export default function SettingsContent({
               <input
                 type="checkbox"
                 checked={usePlatformChrome}
-                onChange={async (e) => {
-                  const next = e.target.checked
-                  setUsePlatformChrome(next)
-                  try {
-                    await fetch("/api/user/preferences", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ usePlatformChrome: next }),
-                    })
-                  } catch {
-                    // ignore
-                  }
-                }}
+                disabled={chromePending}
+                onChange={(e) => void handleChromeToggle(e.target.checked)}
                 className="mt-0.5"
               />
               <span>
                 Use the platform default appearance (don&apos;t apply my organization&apos;s brand to the dashboard).
               </span>
             </label>
+            {chromeError && (
+              <p className="text-xs text-red-600">{chromeError}</p>
+            )}
           </div>
         </Panel>
 
