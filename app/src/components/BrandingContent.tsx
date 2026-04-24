@@ -1,664 +1,238 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { PageHeader, Modal, Button, Input } from "@/components/ui";
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { PageHeader, Panel, Modal, Button, Input, Select } from "@/components/ui"
+import { PRESETS } from "@/lib/branding/presets"
+import type { BrandingTokens, BrandingTypography } from "@/lib/branding/tokens"
 
-interface BrandingPreset {
-  id: string;
-  name: string;
-  accent_color: string | null;
-  accent_hover_color: string | null;
-  accent_light_color: string | null;
-  selection_color: string | null;
-  selection_ring_color: string | null;
-  highlight_color: string | null;
-  correct_color: string | null;
-  correct_light_color: string | null;
-  present_color: string | null;
-  absent_color: string | null;
-  bg_primary_color: string | null;
-  bg_secondary_color: string | null;
-  text_primary_color: string | null;
-  text_secondary_color: string | null;
-  border_color: string | null;
-  cell_bg_color: string | null;
-  cell_blocked_color: string | null;
-  sidebar_active_color: string | null;
-  sidebar_active_bg_color: string | null;
-  grid_border_color: string | null;
-  main_word_marker_color: string | null;
-  font_sans: string | null;
-  font_serif: string | null;
-  border_radius: string | null;
+const FALLBACK_PRIMARY = "#c25e40"
+const FALLBACK_SURFACE = "#ffffff"
+const FALLBACK_TEXT = "#0f172a"
+
+export interface BrandingListItem {
+  id: string
+  name: string
+  tokens: BrandingTokens | null
+  typography: BrandingTypography | null
+  logoPath: string | null
 }
-
-interface FieldDef {
-  key: string;
-  label: string;
-  type: "color" | "text" | "select";
-  options?: { value: string; label: string }[];
-  defaultValue?: string;
-}
-
-const SANS_FONT_OPTIONS = [
-  { value: "Inter, sans-serif", label: "Inter" },
-  { value: "Source Sans Pro, sans-serif", label: "Source Sans Pro" },
-  { value: "Roboto, sans-serif", label: "Roboto" },
-  { value: "Open Sans, sans-serif", label: "Open Sans" },
-  { value: "Lato, sans-serif", label: "Lato" },
-  { value: "Nunito, sans-serif", label: "Nunito" },
-  { value: "Poppins, sans-serif", label: "Poppins" },
-  { value: "Montserrat, sans-serif", label: "Montserrat" },
-  { value: "Raleway, sans-serif", label: "Raleway" },
-  { value: "Work Sans, sans-serif", label: "Work Sans" },
-  { value: "DM Sans, sans-serif", label: "DM Sans" },
-  { value: "Outfit, sans-serif", label: "Outfit" },
-];
-
-const SERIF_FONT_OPTIONS = [
-  { value: "Playfair Display, serif", label: "Playfair Display" },
-  { value: "Lora, serif", label: "Lora" },
-  { value: "Merriweather, serif", label: "Merriweather" },
-  { value: "Libre Baskerville, serif", label: "Libre Baskerville" },
-  { value: "EB Garamond, serif", label: "EB Garamond" },
-  { value: "Cormorant Garamond, serif", label: "Cormorant Garamond" },
-  { value: "Crimson Text, serif", label: "Crimson Text" },
-  { value: "PT Serif, serif", label: "PT Serif" },
-  { value: "Source Serif Pro, serif", label: "Source Serif Pro" },
-  { value: "DM Serif Display, serif", label: "DM Serif Display" },
-];
-
-const FIELD_GROUPS: { title: string; icon: string; fields: FieldDef[] }[] = [
-  {
-    title: "Brand Colors",
-    icon: "palette",
-    fields: [
-      {
-        key: "accent_color",
-        label: "Primary Color",
-        type: "color",
-        defaultValue: "#c25e40",
-      },
-      {
-        key: "accent_hover_color",
-        label: "Primary Hover",
-        type: "color",
-        defaultValue: "#a0492d",
-      },
-      {
-        key: "accent_light_color",
-        label: "Primary Light",
-        type: "color",
-        defaultValue: "#fcece8",
-      },
-    ],
-  },
-  {
-    title: "Layout",
-    icon: "format_paint",
-    fields: [
-      {
-        key: "bg_primary_color",
-        label: "Page Background",
-        type: "color",
-        defaultValue: "#ffffff",
-      },
-      {
-        key: "bg_secondary_color",
-        label: "Surface Background",
-        type: "color",
-        defaultValue: "#f3f4f6",
-      },
-      {
-        key: "text_primary_color",
-        label: "Text",
-        type: "color",
-        defaultValue: "#0f172a",
-      },
-      {
-        key: "text_secondary_color",
-        label: "Muted Text",
-        type: "color",
-        defaultValue: "#64748b",
-      },
-      {
-        key: "border_color",
-        label: "Borders",
-        type: "color",
-        defaultValue: "#e2e8f0",
-      },
-    ],
-  },
-  {
-    title: "Game Feedback",
-    icon: "check_circle",
-    fields: [
-      {
-        key: "correct_color",
-        label: "Correct",
-        type: "color",
-        defaultValue: "#007a3c",
-      },
-      {
-        key: "correct_light_color",
-        label: "Correct Light",
-        type: "color",
-        defaultValue: "#e2f3ea",
-      },
-      {
-        key: "present_color",
-        label: "Wrong Position",
-        type: "color",
-        defaultValue: "#b59f3b",
-      },
-      {
-        key: "absent_color",
-        label: "Wrong Letter",
-        type: "color",
-        defaultValue: "#787c7e",
-      },
-    ],
-  },
-  {
-    title: "Crossword Grid",
-    icon: "grid_on",
-    fields: [
-      {
-        key: "cell_bg_color",
-        label: "Cell Background",
-        type: "color",
-        defaultValue: "#ffffff",
-      },
-      {
-        key: "cell_blocked_color",
-        label: "Blocked Cell",
-        type: "color",
-        defaultValue: "#1a1a1a",
-      },
-      {
-        key: "selection_color",
-        label: "Selected Cell",
-        type: "color",
-        defaultValue: "#fcece8",
-      },
-      {
-        key: "selection_ring_color",
-        label: "Selection Ring",
-        type: "color",
-        defaultValue: "#c25e40",
-      },
-      {
-        key: "highlight_color",
-        label: "Word Highlight",
-        type: "color",
-        defaultValue: "#fcece8",
-      },
-      {
-        key: "grid_border_color",
-        label: "Grid Lines",
-        type: "color",
-        defaultValue: "#e2e8f0",
-      },
-      {
-        key: "main_word_marker_color",
-        label: "Main Word Marker",
-        type: "color",
-        defaultValue: "#FFF2CA",
-      },
-    ],
-  },
-  {
-    title: "Clue List",
-    icon: "format_list_numbered",
-    fields: [
-      {
-        key: "sidebar_active_color",
-        label: "Active Clue Text",
-        type: "color",
-        defaultValue: "#c25e40",
-      },
-      {
-        key: "sidebar_active_bg_color",
-        label: "Active Clue Background",
-        type: "color",
-        defaultValue: "#fcece8",
-      },
-    ],
-  },
-  {
-    title: "Typography",
-    icon: "text_fields",
-    fields: [
-      {
-        key: "font_sans",
-        label: "Sans Font",
-        type: "select",
-        options: SANS_FONT_OPTIONS,
-        defaultValue: "Inter, sans-serif",
-      },
-      {
-        key: "font_serif",
-        label: "Serif Font",
-        type: "select",
-        options: SERIF_FONT_OPTIONS,
-        defaultValue: "Playfair Display, serif",
-      },
-      {
-        key: "border_radius",
-        label: "Border Radius",
-        type: "text",
-        defaultValue: "0.75rem",
-      },
-    ],
-  },
-];
-
-const ALL_FIELDS = FIELD_GROUPS.flatMap((g) => g.fields);
-const COLOR_FIELDS = ALL_FIELDS.filter((f) => f.type === "color");
 
 export default function BrandingContent({
   initialPresets,
 }: {
-  initialPresets: BrandingPreset[];
+  initialPresets: BrandingListItem[]
 }) {
-  const [presets, setPresets] = useState<BrandingPreset[]>(initialPresets);
-  const [editing, setEditing] = useState<BrandingPreset | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const router = useRouter()
+  const [presets, setPresets] = useState<BrandingListItem[]>(initialPresets)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createName, setCreateName] = useState("")
+  const [createPresetId, setCreatePresetId] = useState(PRESETS[0]?.id ?? "")
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState("")
 
-  // Form state
-  const [formName, setFormName] = useState("");
-  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const handleOpenCreate = () => {
+    setCreateName("")
+    setCreatePresetId(PRESETS[0]?.id ?? "")
+    setCreateError("")
+    setShowCreateModal(true)
+  }
 
-  async function fetchPresets() {
+  const handleCloseCreate = () => {
+    if (creating) return
+    setShowCreateModal(false)
+  }
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const name = createName.trim()
+    if (!name) {
+      setCreateError("Name is required")
+      return
+    }
+    setCreating(true)
+    setCreateError("")
     try {
-      const res = await fetch("/api/branding");
-      if (res.ok) {
-        const data = await res.json();
-        setPresets(data);
+      const res = await fetch("/api/branding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, presetId: createPresetId }),
+      })
+      if (!res.ok) {
+        setCreateError("Failed to create brand")
+        setCreating(false)
+        return
       }
+      const data = (await res.json()) as { id: string; name: string }
+      router.push(`/dashboard/branding/${data.id}/edit`)
     } catch {
-      // Silently fail
+      setCreateError("Failed to create brand")
+      setCreating(false)
     }
   }
 
-  function openCreate() {
-    setEditing(null);
-    setFormName("");
-    setFormValues({});
-    setCreating(true);
-    setError("");
-  }
-
-  function openEdit(preset: BrandingPreset) {
-    setCreating(false);
-    setEditing(preset);
-    setFormName(preset.name || "");
-    const values: Record<string, string> = {};
-    for (const f of ALL_FIELDS) {
-      const val = preset[f.key as keyof BrandingPreset];
-      if (val) values[f.key] = val as string;
-    }
-    setFormValues(values);
-    setError("");
-  }
-
-  function closeModal() {
-    setCreating(false);
-    setEditing(null);
-    setError("");
-  }
-
-  function setField(key: string, value: string) {
-    setFormValues({ ...formValues, [key]: value });
-  }
-
-  function clearField(key: string) {
-    const updated = { ...formValues };
-    delete updated[key];
-    setFormValues(updated);
-  }
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!formName.trim()) {
-      setError("Name is required");
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-
-    const data: Record<string, unknown> = {
-      name: formName.trim(),
-    };
-    for (const f of ALL_FIELDS) {
-      data[f.key] = formValues[f.key] || null;
-    }
-
+  const handleDelete = async (id: string, name: string) => {
+    const ok = window.confirm(
+      `Delete "${name}"? Games using this brand will lose their styling.`,
+    )
+    if (!ok) return
     try {
-      if (editing) {
-        data.id = editing.id;
-        await fetch("/api/branding", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      } else {
-        await fetch("/api/branding", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      }
-      await fetchPresets();
-      closeModal();
-    } catch {
-      setError("Failed to save preset");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    try {
-      await fetch(`/api/branding?id=${id}`, {
+      const res = await fetch(`/api/branding?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
-      });
-      await fetchPresets();
+      })
+      if (res.ok) {
+        setPresets((prev) => prev.filter((p) => p.id !== id))
+      }
     } catch {
       // ignore
     }
-    setDeleteConfirm(null);
   }
-
-  const isModalOpen = creating || editing !== null;
 
   return (
     <div>
       <PageHeader
         title="Branding"
-        description="Create and manage reusable color presets for your games."
+        description="Create and manage reusable brand presets for your games."
         action={
-          <Button icon="add" onClick={openCreate}>
-            New Preset
+          <Button icon="add" onClick={handleOpenCreate}>
+            New brand
           </Button>
         }
       />
 
-      {/* Presets Grid */}
       {presets.length === 0 ? (
-        <div className="bg-white border border-[#e2e8f0] rounded-[4px] shadow-sharp p-12 text-center">
-          <span className="material-symbols-outlined text-4xl text-[#cbd5e1] mb-3 block">
-            palette
-          </span>
-          <p className="text-sm text-[#64748b] mb-4">
-            No branding presets yet. Create one to customize your games.
-          </p>
-          <Button onClick={openCreate}>Create First Preset</Button>
-        </div>
+        <Panel>
+          <div className="p-12 text-center">
+            <span className="material-symbols-outlined text-4xl text-[#cbd5e1] mb-3 block">
+              palette
+            </span>
+            <p className="text-sm text-[#64748b] mb-4">
+              No brands yet. Create one to start customizing your games.
+            </p>
+            <Button onClick={handleOpenCreate}>Create first brand</Button>
+          </div>
+        </Panel>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {presets.map((preset) => (
-            <div
-              key={preset.id}
-              className="bg-white border border-[#e2e8f0] rounded-[4px] shadow-sharp overflow-hidden hover:shadow-md transition-shadow"
-            >
-              {/* Color Preview Bar */}
-              <div className="h-3 flex">
-                {COLOR_FIELDS.map((f) => (
-                  <div
-                    key={f.key}
-                    className="flex-1"
-                    style={{
-                      backgroundColor:
-                        (preset[f.key as keyof BrandingPreset] as string) ||
-                        "transparent",
-                    }}
-                  />
-                ))}
-              </div>
+          {presets.map((p) => {
+            const primary = p.tokens?.primary ?? FALLBACK_PRIMARY
+            const surface = p.tokens?.surface ?? FALLBACK_SURFACE
+            const text = p.tokens?.text ?? FALLBACK_TEXT
+            const fontSansLabel = p.typography?.fontSans
+              ? p.typography.fontSans.split(",")[0].trim()
+              : null
 
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-[#0f172a]">
-                    {preset.name || "Untitled"}
+            return (
+              <div
+                key={p.id}
+                className="bg-white border border-[#e2e8f0] rounded-[4px] shadow-sharp overflow-hidden flex flex-col"
+              >
+                <div className="flex h-3">
+                  <div className="flex-1" style={{ background: primary }} />
+                  <div className="flex-1" style={{ background: surface }} />
+                  <div className="flex-1" style={{ background: text }} />
+                </div>
+
+                <div className="p-4 flex flex-col gap-3 flex-1">
+                  <h3 className="font-semibold text-[#0f172a] truncate">
+                    {p.name || "Untitled"}
                   </h3>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEdit(preset)}
-                      className="p-1.5 text-[#64748b] hover:text-amber-600 transition-colors rounded-lg hover:bg-slate-100"
-                      title="Edit"
+
+                  <div className="flex items-center gap-2">
+                    <Swatch color={primary} label="Primary" />
+                    <Swatch color={surface} label="Surface" />
+                    <Swatch color={text} label="Text" />
+                  </div>
+
+                  {fontSansLabel && (
+                    <div className="text-[11px] text-[#64748b]">
+                      <span className="font-medium text-[#0f172a]">Font: </span>
+                      {fontSansLabel}
+                    </div>
+                  )}
+
+                  <div className="mt-auto pt-2 flex items-center gap-2">
+                    <Link
+                      href={`/dashboard/branding/${p.id}/edit`}
+                      className="btn btn-secondary btn--sm"
                     >
-                      <span className="material-symbols-outlined text-lg">
+                      <span className="material-symbols-outlined text-sm">
                         edit
                       </span>
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(preset.id)}
-                      className="p-1.5 text-[#64748b] hover:text-red-600 transition-colors rounded-lg hover:bg-slate-100"
-                      title="Delete"
+                      Edit
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon="delete"
+                      onClick={() => handleDelete(p.id, p.name || "Untitled")}
                     >
-                      <span className="material-symbols-outlined text-lg">
-                        delete
-                      </span>
-                    </button>
+                      Delete
+                    </Button>
                   </div>
                 </div>
-
-                {/* Color Swatches */}
-                <div className="flex flex-wrap gap-1.5">
-                  {COLOR_FIELDS.map((f) => {
-                    const color = preset[
-                      f.key as keyof BrandingPreset
-                    ] as string;
-                    if (!color) return null;
-                    return (
-                      <div
-                        key={f.key}
-                        className="flex items-center gap-1.5 bg-slate-50 rounded-md px-2 py-1"
-                        title={f.label}
-                      >
-                        <div
-                          className="w-3.5 h-3.5 rounded-sm border border-slate-200"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-[10px] text-[#64748b] font-medium uppercase">
-                          {f.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Typography info */}
-                {(preset.font_sans || preset.font_serif) && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {preset.font_sans && (
-                      <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md">
-                        Sans: {preset.font_sans.split(",")[0]}
-                      </span>
-                    )}
-                    {preset.font_serif && (
-                      <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md">
-                        Serif: {preset.font_serif.split(",")[0]}
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
-      {/* Create/Edit Modal */}
       <Modal
-        open={isModalOpen}
-        onClose={closeModal}
-        title={editing ? "Edit Preset" : "New Branding Preset"}
+        open={showCreateModal}
+        onClose={handleCloseCreate}
+        title="New brand"
         icon="palette"
-        size="lg"
+        size="md"
       >
-        <form
-          onSubmit={handleSave}
-          className="p-4 sm:p-6 flex flex-col gap-5"
-        >
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
-              Preset Name
-            </label>
-            <input
-              type="text"
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              placeholder="e.g. LRT, Default, Dark theme"
-              className="w-full px-3.5 py-2.5 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-            />
-          </div>
+        <form onSubmit={handleCreate} className="p-4 sm:p-6 flex flex-col gap-4">
+          <Input
+            id="brand-name"
+            label="Name"
+            value={createName}
+            onChange={(e) => setCreateName(e.target.value)}
+            placeholder="e.g. Default, Dark theme, LRT"
+          />
 
-          {/* Grouped Fields */}
-          {FIELD_GROUPS.map((group) => (
-            <div key={group.title}>
-              <div className="flex items-center gap-1.5 mb-2.5">
-                <span className="material-symbols-outlined text-sm text-[#94a3b8]">
-                  {group.icon}
-                </span>
-                <label className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider">
-                  {group.title}
-                </label>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {group.fields.map((f) =>
-                  f.type === "color" ? (
-                    <div
-                      key={f.key}
-                      className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2"
-                    >
-                      <input
-                        type="color"
-                        value={formValues[f.key] || f.defaultValue || "#000000"}
-                        onChange={(e) => setField(f.key, e.target.value)}
-                        className="w-8 h-8 rounded cursor-pointer border border-slate-200 p-0.5"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[#0f172a]">
-                          {f.label}
-                        </p>
-                        <input
-                          type="text"
-                          value={formValues[f.key] || ""}
-                          onChange={(e) => setField(f.key, e.target.value)}
-                          placeholder={f.defaultValue || "#000000"}
-                          className="text-[10px] text-[#64748b] bg-transparent w-full outline-none"
-                        />
-                      </div>
-                      {formValues[f.key] && (
-                        <button
-                          type="button"
-                          onClick={() => clearField(f.key)}
-                          className="p-0.5 text-[#94a3b8] hover:text-red-500 transition-colors"
-                          title="Clear"
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            close
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  ) : f.type === "select" ? (
-                    <div
-                      key={f.key}
-                      className="bg-slate-50 rounded-lg px-3 py-2"
-                    >
-                      <p className="text-xs font-medium text-[#0f172a] mb-1">
-                        {f.label}
-                      </p>
-                      <select
-                        value={formValues[f.key] || ""}
-                        onChange={(e) =>
-                          e.target.value
-                            ? setField(f.key, e.target.value)
-                            : clearField(f.key)
-                        }
-                        className="w-full text-xs text-[#0f172a] bg-white border border-slate-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-rust/30"
-                      >
-                        <option value="">Default</option>
-                        {f.options?.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : (
-                    <div
-                      key={f.key}
-                      className="bg-slate-50 rounded-lg px-3 py-2"
-                    >
-                      <p className="text-xs font-medium text-[#0f172a] mb-1">
-                        {f.label}
-                      </p>
-                      <input
-                        type="text"
-                        value={formValues[f.key] || ""}
-                        onChange={(e) => setField(f.key, e.target.value)}
-                        placeholder="0.75rem"
-                        className="w-full text-xs text-[#0f172a] bg-white border border-slate-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-rust/30"
-                      />
-                    </div>
-                  ),
-                )}
-              </div>
-            </div>
-          ))}
+          <Select
+            id="brand-preset"
+            label="Starter preset"
+            value={createPresetId}
+            onChange={(e) => setCreatePresetId(e.target.value)}
+            options={PRESETS.map((p) => ({ value: p.id, label: p.name }))}
+          />
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-              {error}
+          {createError && (
+            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-[4px]">
+              {createError}
             </p>
           )}
 
           <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
-            <Button variant="outline" onClick={closeModal}>
+            <Button variant="outline" onClick={handleCloseCreate}>
               Cancel
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving…" : editing ? "Save Changes" : "Create Preset"}
+            <Button type="submit" disabled={creating}>
+              {creating ? "Creating…" : "Create brand"}
             </Button>
           </div>
         </form>
       </Modal>
-
-      {/* Delete Confirmation */}
-      <Modal
-        open={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        size="sm"
-      >
-        <div className="p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
-            Delete Preset
-          </h3>
-          <p className="text-sm text-[#64748b] mb-6">
-            Are you sure? Games using this preset will lose their branding.
-          </p>
-          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
-  );
+  )
 }
+
+const Swatch = ({ color, label }: { color: string; label: string }) => (
+  <div
+    className="flex items-center gap-1.5 bg-slate-50 rounded-[4px] px-2 py-1"
+    title={label}
+  >
+    <div
+      className="w-3.5 h-3.5 rounded-sm border border-slate-200"
+      style={{ background: color }}
+    />
+    <span className="text-[10px] text-[#64748b] font-medium uppercase tracking-wide">
+      {label}
+    </span>
+  </div>
+)
