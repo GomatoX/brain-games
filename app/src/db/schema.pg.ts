@@ -1,4 +1,4 @@
-import { pgTable, text, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, jsonb, boolean } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 // ─── Organizations ──────────────────────────────────────
@@ -35,6 +35,9 @@ export const users = pgTable("users", {
   orgRole: text("org_role").notNull().default("member"),
   inviteToken: text("invite_token").unique(),
   inviteExpiresAt: text("invite_expires_at"),
+  usePlatformChrome: boolean("use_platform_chrome")
+    .notNull()
+    .default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),
@@ -75,6 +78,95 @@ export const branding = pgTable("branding", {
   fontSans: text("font_sans"),
   fontSerif: text("font_serif"),
   borderRadius: text("border_radius"),
+  tokens: jsonb("tokens").$type<{
+    primary: string;
+    surface: string;
+    text: string;
+    overrides: Record<string, string>;
+  }>(),
+  typography: jsonb("typography").$type<{
+    fontSans: string | null;
+    fontSerif: string | null;
+    scale: "compact" | "default" | "relaxed";
+  }>(),
+  spacing: jsonb("spacing").$type<{
+    density: "compact" | "cozy" | "comfortable";
+    radius: number;
+  }>(),
+  components: jsonb("components").$type<{
+    button: { variant: "solid" | "outline" | "ghost-fill"; shadow: "none" | "subtle" | "pronounced" };
+    input: { variant: "outlined" | "filled" | "underlined" };
+    card: { elevation: "flat" | "subtle" | "lifted" };
+  }>(),
+  logoPath: text("logo_path"),
+  logoDarkPath: text("logo_dark_path"),
+  faviconPath: text("favicon_path"),
+  backgroundPath: text("background_path"),
+  ogImagePath: text("og_image_path"),
+  customCssGames: text("custom_css_games"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`now()`),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`now()`),
+});
+
+// ─── Branding Drafts ────────────────────────────────────
+export const brandingDrafts = pgTable("branding_drafts", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  brandingId: text("branding_id")
+    .notNull()
+    .unique()
+    .references(() => branding.id, { onDelete: "cascade" }),
+  tokens: jsonb("tokens").$type<{
+    primary: string;
+    surface: string;
+    text: string;
+    overrides: Record<string, string>;
+  }>(),
+  typography: jsonb("typography").$type<{
+    fontSans: string | null;
+    fontSerif: string | null;
+    scale: "compact" | "default" | "relaxed";
+  }>(),
+  spacing: jsonb("spacing").$type<{
+    density: "compact" | "cozy" | "comfortable";
+    radius: number;
+  }>(),
+  components: jsonb("components").$type<{
+    button: { variant: "solid" | "outline" | "ghost-fill"; shadow: "none" | "subtle" | "pronounced" };
+    input: { variant: "outlined" | "filled" | "underlined" };
+    card: { elevation: "flat" | "subtle" | "lifted" };
+  }>(),
+  logoPath: text("logo_path"),
+  logoDarkPath: text("logo_dark_path"),
+  faviconPath: text("favicon_path"),
+  backgroundPath: text("background_path"),
+  ogImagePath: text("og_image_path"),
+  customCssGames: text("custom_css_games"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`now()`),
+});
+
+// ─── Uploaded Files ─────────────────────────────────────
+export const uploadedFiles = pgTable("uploaded_files", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  orgId: text("org_id")
+    .notNull()
+    .references(() => organizations.id, { onDelete: "cascade" }),
+  path: text("path").notNull(),
+  mime: text("mime").notNull(),
+  size: integer("size").notNull(),
+  sha256: text("sha256").notNull(),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   createdAt: text("created_at")
     .notNull()
     .default(sql`now()`),
