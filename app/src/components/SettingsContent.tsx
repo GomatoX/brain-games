@@ -28,6 +28,7 @@ interface SettingsProps {
     share_image_url: string
     share_title: string
     share_description: string
+    use_platform_chrome: boolean
   }
   initialBrandingOptions: { id: string; name: string }[];
 }
@@ -60,6 +61,9 @@ export default function SettingsContent({
   const [shareTitle, setShareTitle] = useState(initialSettings.share_title)
   const [shareDescription, setShareDescription] = useState(
     initialSettings.share_description,
+  )
+  const [usePlatformChrome, setUsePlatformChrome] = useState(
+    initialSettings.use_platform_chrome,
   )
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,6 +239,41 @@ export default function SettingsContent({
               </p>
             </div>
           )}
+        </Panel>
+
+        {/* Appearance (per-user) */}
+        <Panel>
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+            <div className="border-b border-[#f1f5f9] pb-4">
+              <h2 className="text-lg font-semibold text-navy-900">Appearance</h2>
+              <p className="text-sm text-[#94a3b8] mt-1">
+                Controls how the dashboard chrome looks for you.
+              </p>
+            </div>
+            <label className="flex items-start gap-3 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={usePlatformChrome}
+                onChange={async (e) => {
+                  const next = e.target.checked
+                  setUsePlatformChrome(next)
+                  try {
+                    await fetch("/api/user/preferences", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ usePlatformChrome: next }),
+                    })
+                  } catch {
+                    // ignore
+                  }
+                }}
+                className="mt-0.5"
+              />
+              <span>
+                Use the platform default appearance (don&apos;t apply my organization&apos;s brand to the dashboard).
+              </span>
+            </label>
+          </div>
         </Panel>
 
         {/* Security & Access */}
