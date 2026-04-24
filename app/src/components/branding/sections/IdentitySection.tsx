@@ -48,8 +48,9 @@ export default function IdentitySection({ draft, update }: Props) {
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/svg+xml"
                 onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) void handleFile(key, kind, f)
+                  const input = e.target
+                  const f = input.files?.[0]
+                  if (f) void handleFile(key, kind, f).finally(() => { input.value = "" })
                 }}
               />
               {draft[key] && (
