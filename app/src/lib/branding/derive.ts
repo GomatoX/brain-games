@@ -41,18 +41,17 @@ const alphaOf = (hex: string, a: number): string => {
   return formatRgb({ mode: "rgb", r: c.r, g: c.g, b: c.b, alpha: a }) ?? hex
 }
 
-const apcaContrast = (hex: string): number => {
+const oklchLightness = (hex: string): number => {
   const c = toOklch(parse(hex))
   return c?.l ?? 0.5
 }
 
 const pickForeground = (against: string): string => {
-  return apcaContrast(against) < 0.6 ? "#ffffff" : "#0f172a"
+  return oklchLightness(against) < 0.6 ? "#ffffff" : "#0f172a"
 }
 
 const isLight = (hex: string): boolean => {
-  const c = toOklch(parse(hex))
-  return (c?.l ?? 0.5) > 0.6
+  return oklchLightness(hex) > 0.6
 }
 
 export function deriveTokens(t: BrandingTokens): Record<string, string> {

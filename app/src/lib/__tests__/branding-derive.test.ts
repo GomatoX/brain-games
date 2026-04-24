@@ -59,4 +59,12 @@ describe("deriveTokens", () => {
     const out = deriveTokens({ ...SEEDS, overrides: { primary: "#000000" } })
     expect(out["primary"]).toBe("#c25e40")
   })
+
+  it("produces parseable CSS values for all derived tokens given valid seeds", () => {
+    const out = deriveTokens(SEEDS)
+    const VALID_CSS = /^(#[0-9a-f]{6}|rgba?\([^)]+\))$/i
+    for (const [name, value] of Object.entries(out)) {
+      expect(value, `token "${name}" produced invalid CSS value: ${value}`).toMatch(VALID_CSS)
+    }
+  })
 })
