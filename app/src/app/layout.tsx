@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter, IBM_Plex_Sans } from "next/font/google";
 import { platformConfig } from "@/lib/platform";
 import Providers from "@/components/Providers";
@@ -22,6 +22,12 @@ const ibmPlex = IBM_Plex_Sans({
   weight: ["400", "500", "600"],
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export function generateMetadata(): Metadata {
   return {

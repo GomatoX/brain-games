@@ -33,8 +33,8 @@ export default async function DashboardLayout({
       />
 
       {/* Main Content */}
-      <main className="flex-1 ml-[260px] h-screen overflow-y-auto">
-        <div className="w-full max-w-[880px] mx-auto px-10 py-10 pb-24">
+      <main className="flex-1 lg:ml-[260px] pt-14 lg:pt-0 h-screen overflow-y-auto">
+        <div className="w-full max-w-[880px] mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-10 pb-24">
           <SessionGuard>{children}</SessionGuard>
         </div>
       </main>

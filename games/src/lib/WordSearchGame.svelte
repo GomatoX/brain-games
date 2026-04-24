@@ -48,6 +48,7 @@
 
   $: cellSize = gridSize <= 10 ? 40 : gridSize <= 14 ? 34 : 28
   $: fontSize = gridSize <= 10 ? "24px" : gridSize <= 14 ? "20px" : "16px"
+  $: gridStyle = `--grid-cols: ${gridSize}; --cell-size: ${cellSize}px; --cell-font: ${fontSize};`
   $: totalWords = words.length
   $: foundCount = foundWords.size
 
@@ -73,6 +74,12 @@
       link.href =
         "https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap"
       document.head.appendChild(link)
+    }
+
+    if (latestMode) {
+      fetchLatest()
+    } else if (puzzleId) {
+      fetchGame()
     }
   })
 
@@ -340,12 +347,6 @@
     shareUrl = sharePageUrl.toString()
   }
 
-  // Initialize
-  if (latestMode) {
-    fetchLatest()
-  } else if (puzzleId) {
-    fetchGame()
-  }
 </script>
 
 <div
@@ -429,7 +430,7 @@
           >
             <div
               class="grid"
-              style="grid-template-columns: repeat({gridSize}, {cellSize}px); grid-template-rows: repeat({grid.length}, {cellSize}px);"
+              style={gridStyle}
             >
               {#each grid as row, rowIdx}
                 {#each row as letter, colIdx}
@@ -442,7 +443,6 @@
                     class:found={isFound}
                     data-row={rowIdx}
                     data-col={colIdx}
-                    style="width: {cellSize}px; height: {cellSize}px; font-size: {fontSize};"
                     role="gridcell"
                     aria-label="Letter {letter}"
                   >
@@ -795,15 +795,21 @@
 
   .grid-wrapper {
     cursor: crosshair;
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   .grid {
     display: grid;
+    grid-template-columns: repeat(var(--grid-cols, 10), minmax(0, var(--cell-size, 40px)));
     gap: 1px;
     background: var(--cell-blocked, #1a1a1a);
     border-radius: 8px;
     overflow: hidden;
     padding: 1px;
+    width: fit-content;
+    max-width: 100%;
   }
 
   .cell {
@@ -814,6 +820,9 @@
     cursor: crosshair;
     transition: background-color 0.1s ease;
     position: relative;
+    aspect-ratio: 1;
+    min-width: 0;
+    font-size: var(--cell-font, 20px);
   }
 
   /* Fix: hover uses a subtle highlight, not black */
@@ -842,7 +851,7 @@
     font-weight: 600;
     text-transform: uppercase;
     pointer-events: none;
-    line-height: 20px;
+    line-height: 1;
     letter-spacing: 0.4px;
     color: var(--text-primary, #0f172a);
   }
@@ -898,6 +907,29 @@
       max-height: none;
       overflow-y: visible;
       min-width: 0;
+    }
+  }
+
+  /* Phone: let the grid fill available width so it never overflows */
+  @media (max-width: 640px) {
+    .grid-area {
+      padding: 8px;
+    }
+
+    .grid {
+      grid-template-columns: repeat(var(--grid-cols, 10), minmax(0, 1fr));
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .cell {
+      /* Scale font with cell width: viewport minus grid-area padding, divided
+         by column count, scaled down to leave margin for gaps. Capped at the
+         desktop font-size so it doesn't grow on tablets. */
+      font-size: min(
+        var(--cell-font, 20px),
+        calc((100vw - 16px) / var(--grid-cols, 10) * 0.55)
+      );
     }
   }
 </style>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Panel, PanelHeader, Badge, Button, PageHeader } from "@/components/ui";
+import { Panel, PanelHeader, Badge, Button, PageHeader, Modal } from "@/components/ui";
 
 interface Game {
   id: string | number;
@@ -213,7 +213,7 @@ export default function DashboardContent({
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
         <StatCard
           icon="stacks"
           color="blue"
@@ -348,107 +348,96 @@ export default function DashboardContent({
       )}
 
       {/* Delete Confirmation */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-[4px] p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
-              Delete Game
-            </h3>
-            <p className="text-sm text-[#64748b] mb-6">
-              Are you sure? This action cannot be undone.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() =>
-                  handleDelete(deleteConfirm.type, deleteConfirm.id)
-                }
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
+      <Modal
+        open={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        title="Delete Game"
+        size="sm"
+      >
+        <div className="p-4 sm:p-6">
+          <p className="text-sm text-[#64748b] mb-6">
+            Are you sure? This action cannot be undone.
+          </p>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() =>
+                deleteConfirm &&
+                handleDelete(deleteConfirm.type, deleteConfirm.id)
+              }
+              className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Embed Code Popover */}
-      {embedPopover && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-[4px] w-full max-w-lg shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-rust">
-                  code
-                </span>
-                <h2 className="text-lg font-semibold text-[#0f172a]">
-                  Embed Code
-                </h2>
+      <Modal
+        open={!!embedPopover}
+        onClose={() => {
+          setEmbedPopover(null);
+          setEmbedCopied(false);
+        }}
+        title="Embed Code"
+        icon="code"
+        size="md"
+      >
+        {embedPopover && (
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="min-w-0">
+                <p className="font-medium text-[#0f172a] text-sm truncate">
+                  {embedPopover.game.title || `Game #${embedPopover.game.id}`}
+                </p>
+                <p className="text-xs text-[#64748b]">
+                  ID: {embedPopover.game.id}
+                </p>
               </div>
+            </div>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <label className="text-sm font-medium text-[#64748b]">
+                  Paste this into your HTML
+                </label>
+                <button
+                  onClick={() =>
+                    copyEmbedSnippet(embedPopover.game.id, embedPopover.type)
+                  }
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-[#0f172a] transition-colors flex items-center gap-1.5 flex-shrink-0"
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    {embedCopied ? "check" : "content_copy"}
+                  </span>
+                  {embedCopied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <pre className="bg-[#1e293b] text-slate-300 rounded-lg p-4 text-xs overflow-x-auto leading-relaxed">
+                <code>
+                  {getEmbedSnippet(embedPopover.game.id, embedPopover.type)}
+                </code>
+              </pre>
+            </div>
+            <div className="flex justify-end">
               <button
                 onClick={() => {
                   setEmbedPopover(null);
                   setEmbedCopied(false);
                 }}
-                className="p-1 text-[#64748b] hover:text-[#0f172a] transition-colors"
+                className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
               >
-                <span className="material-symbols-outlined">close</span>
+                Close
               </button>
             </div>
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div>
-                  <p className="font-medium text-[#0f172a] text-sm">
-                    {embedPopover.game.title || `Game #${embedPopover.game.id}`}
-                  </p>
-                  <p className="text-xs text-[#64748b]">
-                    ID: {embedPopover.game.id}
-                  </p>
-                </div>
-              </div>
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-[#64748b]">
-                    Paste this into your HTML
-                  </label>
-                  <button
-                    onClick={() =>
-                      copyEmbedSnippet(embedPopover.game.id, embedPopover.type)
-                    }
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-[#0f172a] transition-colors flex items-center gap-1.5"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      {embedCopied ? "check" : "content_copy"}
-                    </span>
-                    {embedCopied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-                <pre className="bg-[#1e293b] text-slate-300 rounded-lg p-4 text-xs overflow-x-auto leading-relaxed">
-                  <code>
-                    {getEmbedSnippet(embedPopover.game.id, embedPopover.type)}
-                  </code>
-                </pre>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    setEmbedPopover(null);
-                    setEmbedCopied(false);
-                  }}
-                  className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }
@@ -545,7 +534,7 @@ function GameSection({
           {games.map((game) => (
             <div
               key={game.id}
-              className="px-5 py-3 flex items-center gap-4 hover:bg-slate-50 transition-colors"
+              className="px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:bg-slate-50 transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[#0f172a] truncate">
@@ -557,39 +546,40 @@ function GameSection({
                   {game.word && ` · "${game.word}"`}
                 </p>
               </div>
-              {game.status === "scheduled" && game.scheduled_date ? (
-                <div className="flex items-center gap-1.5">
-                  <Badge
-                    variant="scheduled"
-                    onClick={() => onToggleStatus(type, game.id, game.status)}
-                    title="Click to publish now"
-                  >
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">
-                        schedule_send
+              <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+                {game.status === "scheduled" && game.scheduled_date ? (
+                  <div className="flex items-center gap-1.5">
+                    <Badge
+                      variant="scheduled"
+                      onClick={() => onToggleStatus(type, game.id, game.status)}
+                      title="Click to publish now"
+                    >
+                      <span className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">
+                          schedule_send
+                        </span>
+                        {new Date(game.scheduled_date).toLocaleDateString(
+                          undefined,
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </span>
-                      {new Date(game.scheduled_date).toLocaleDateString(
-                        undefined,
-                        {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
-                      )}
-                    </span>
+                    </Badge>
+                  </div>
+                ) : (
+                  <Badge
+                    variant={game.status === "published" ? "success" : "draft"}
+                    onClick={() => onToggleStatus(type, game.id, game.status)}
+                    title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
+                  >
+                    {game.status}
                   </Badge>
-                </div>
-              ) : (
-                <Badge
-                  variant={game.status === "published" ? "success" : "draft"}
-                  onClick={() => onToggleStatus(type, game.id, game.status)}
-                  title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
-                >
-                  {game.status}
-                </Badge>
-              )}
-              <div className="flex items-center gap-1">
+                )}
+                <div className="flex items-center gap-1">
                 <button
                   onClick={() => onShowCode(game)}
                   className="p-1.5 text-[#64748b] hover:text-rust transition-colors rounded-lg hover:bg-slate-100"
@@ -639,6 +629,7 @@ function GameSection({
                     delete
                   </span>
                 </button>
+                </div>
               </div>
             </div>
           ))}
@@ -1022,94 +1013,77 @@ function GameModal({
   // Success view with embed code
   if (createdGame) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-white rounded-[4px] w-full max-w-lg shadow-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#0f172a]">
-              {typeLabels[type]} Created!
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-1 text-[#64748b] hover:text-[#0f172a] transition-colors"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
+      <Modal
+        open
+        onClose={onClose}
+        title={`${typeLabels[type]} Created!`}
+        size="md"
+      >
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-green-600">
+                check_circle
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="font-medium text-[#0f172a] truncate">
+                &ldquo;{createdGame.title}&rdquo;
+              </p>
+              <p className="text-xs text-[#64748b]">ID: {createdGame.id}</p>
+            </div>
           </div>
 
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
-                <span className="material-symbols-outlined text-green-600">
-                  check_circle
-                </span>
-              </div>
-              <div>
-                <p className="font-medium text-[#0f172a]">
-                  &ldquo;{createdGame.title}&rdquo;
-                </p>
-                <p className="text-xs text-[#64748b]">ID: {createdGame.id}</p>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-[#0f172a]">
-                  Embed Code
-                </label>
-                <button
-                  onClick={copyEmbed}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-[#0f172a] transition-colors flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-sm">
-                    {embedCopied ? "check" : "content_copy"}
-                  </span>
-                  {embedCopied ? "Copied!" : "Copy Snippet"}
-                </button>
-              </div>
-              <pre className="bg-[#1e293b] text-slate-300 rounded-lg p-4 text-xs overflow-x-auto leading-relaxed">
-                <code>{getEmbedCode(createdGame.id)}</code>
-              </pre>
-            </div>
-
-            <p className="text-xs text-[#64748b] mb-5">
-              Paste this snippet into your website&apos;s HTML to display the
-              game. Make sure your API token is active on the{" "}
-              <span className="font-medium text-rust">
-                API Keys &amp; Embeds
-              </span>{" "}
-              page.
-            </p>
-
-            <div className="flex justify-end">
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <label className="text-sm font-medium text-[#0f172a]">
+                Embed Code
+              </label>
               <button
-                onClick={onClose}
-                className="px-5 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors font-medium"
+                onClick={copyEmbed}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-[#0f172a] transition-colors flex items-center gap-1.5 flex-shrink-0"
               >
-                Done
+                <span className="material-symbols-outlined text-sm">
+                  {embedCopied ? "check" : "content_copy"}
+                </span>
+                {embedCopied ? "Copied!" : "Copy Snippet"}
               </button>
             </div>
+            <pre className="bg-[#1e293b] text-slate-300 rounded-lg p-4 text-xs overflow-x-auto leading-relaxed">
+              <code>{getEmbedCode(createdGame.id)}</code>
+            </pre>
+          </div>
+
+          <p className="text-xs text-[#64748b] mb-5">
+            Paste this snippet into your website&apos;s HTML to display the
+            game. Make sure your API token is active on the{" "}
+            <span className="font-medium text-rust">
+              API Keys &amp; Embeds
+            </span>{" "}
+            page.
+          </p>
+
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors font-medium"
+            >
+              Done
+            </button>
           </div>
         </div>
-      </div>
+      </Modal>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-[4px] w-full max-w-lg shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[#0f172a]">
-            {mode === "create" ? "Create" : "Edit"} {typeLabels[type]}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1 text-[#64748b] hover:text-[#0f172a] transition-colors"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1">
+    <Modal
+      open
+      onClose={onClose}
+      title={`${mode === "create" ? "Create" : "Edit"} ${typeLabels[type]}`}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6">
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               {error}
@@ -1832,7 +1806,7 @@ function GameModal({
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 justify-end pt-4 border-t border-[#e2e8f0]">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-4 border-t border-[#e2e8f0]">
             <button
               type="button"
               onClick={onClose}
@@ -1852,8 +1826,7 @@ function GameModal({
                   : "Save Changes"}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 }

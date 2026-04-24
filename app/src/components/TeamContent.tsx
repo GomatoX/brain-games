@@ -179,86 +179,90 @@ export default function TeamContent({
             return (
               <div
                 key={member.id}
-                className="px-5 py-3 flex items-center gap-4 hover:bg-slate-50 transition-colors"
+                className="px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-slate-50 transition-colors"
               >
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                    member.invite_pending
-                      ? "bg-amber-50 text-amber-600"
-                      : "bg-navy-900/10 text-navy-900"
-                  }`}
-                >
-                  {member.invite_pending ? (
-                    <span className="material-symbols-outlined text-lg">
-                      mail
-                    </span>
-                  ) : (
-                    (
-                      member.first_name?.[0] ||
-                      member.email?.[0] ||
-                      "U"
-                    ).toUpperCase()
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#0f172a] truncate">
-                    {name}
-                    {isCurrentUser && (
-                      <span className="text-xs text-[#64748b] ml-1.5">
-                        (you)
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-[#64748b] truncate">
-                    {member.email} ·{" "}
-                    {member.invite_pending
-                      ? "Invited"
-                      : new Date(member.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-
-                {/* Status badges */}
-                {member.invite_pending ? (
-                  <Badge variant={member.invite_expired ? "error" : "warning"}>
-                    {member.invite_expired ? "Expired" : "Pending"}
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant={
-                      member.org_role === "owner" ? "warning" : "neutral"
-                    }
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                      member.invite_pending
+                        ? "bg-amber-50 text-amber-600"
+                        : "bg-navy-900/10 text-navy-900"
+                    }`}
                   >
-                    {member.org_role}
-                  </Badge>
-                )}
-
-                {/* Action buttons for owner */}
-                {data.isOwner && !isCurrentUser && (
-                  <div className="flex items-center gap-1">
-                    {member.invite_pending && (
-                      <button
-                        onClick={() => handleResendInvite(member.id)}
-                        className="p-1.5 text-[#64748b] hover:text-navy-900 transition-colors rounded-[4px] hover:bg-slate-100"
-                        title="Regenerate invite link"
-                      >
-                        <span className="material-symbols-outlined text-lg">
-                          refresh
-                        </span>
-                      </button>
-                    )}
-                    {member.org_role !== "owner" && (
-                      <button
-                        onClick={() => setDeleteConfirm(member.id)}
-                        className="p-1.5 text-[#64748b] hover:text-red-600 transition-colors rounded-lg hover:bg-slate-100"
-                        title="Remove member"
-                      >
-                        <span className="material-symbols-outlined text-lg">
-                          person_remove
-                        </span>
-                      </button>
+                    {member.invite_pending ? (
+                      <span className="material-symbols-outlined text-lg">
+                        mail
+                      </span>
+                    ) : (
+                      (
+                        member.first_name?.[0] ||
+                        member.email?.[0] ||
+                        "U"
+                      ).toUpperCase()
                     )}
                   </div>
-                )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#0f172a] truncate">
+                      {name}
+                      {isCurrentUser && (
+                        <span className="text-xs text-[#64748b] ml-1.5">
+                          (you)
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-[#64748b] truncate">
+                      {member.email} ·{" "}
+                      {member.invite_pending
+                        ? "Invited"
+                        : new Date(member.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
+                  {/* Status badges */}
+                  {member.invite_pending ? (
+                    <Badge variant={member.invite_expired ? "error" : "warning"}>
+                      {member.invite_expired ? "Expired" : "Pending"}
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant={
+                        member.org_role === "owner" ? "warning" : "neutral"
+                      }
+                    >
+                      {member.org_role}
+                    </Badge>
+                  )}
+
+                  {/* Action buttons for owner */}
+                  {data.isOwner && !isCurrentUser && (
+                    <div className="flex items-center gap-1">
+                      {member.invite_pending && (
+                        <button
+                          onClick={() => handleResendInvite(member.id)}
+                          className="p-1.5 text-[#64748b] hover:text-navy-900 transition-colors rounded-[4px] hover:bg-slate-100"
+                          title="Regenerate invite link"
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            refresh
+                          </span>
+                        </button>
+                      )}
+                      {member.org_role !== "owner" && (
+                        <button
+                          onClick={() => setDeleteConfirm(member.id)}
+                          className="p-1.5 text-[#64748b] hover:text-red-600 transition-colors rounded-lg hover:bg-slate-100"
+                          title="Remove member"
+                        >
+                          <span className="material-symbols-outlined text-lg">
+                            person_remove
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -274,7 +278,7 @@ export default function TeamContent({
       >
         {inviteLink ? (
           /* Success: show invite link */
-          <div className="p-6 flex flex-col gap-4">
+          <div className="p-4 sm:p-6 flex flex-col gap-4">
             <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
               <span className="material-symbols-outlined text-green-600 text-2xl">
                 check_circle
@@ -310,8 +314,8 @@ export default function TeamContent({
           </div>
         ) : (
           /* Form: collect email + name */
-          <form onSubmit={handleInvite} className="p-6 flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleInvite} className="p-4 sm:p-6 flex flex-col gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-[#64748b] mb-1 block">
                   First Name
@@ -369,7 +373,7 @@ export default function TeamContent({
               </div>
             )}
 
-            <div className="flex gap-3 justify-end pt-2">
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
               <button
                 type="button"
                 onClick={closeInviteModal}
@@ -394,7 +398,7 @@ export default function TeamContent({
         open={!!inviteLink && !inviteOpen}
         onClose={() => setInviteLink("")}
       >
-        <div className="p-6 flex flex-col gap-4">
+        <div className="p-4 sm:p-6 flex flex-col gap-4">
           <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
             <span className="material-symbols-outlined text-green-600 text-2xl">
               check_circle
@@ -436,7 +440,7 @@ export default function TeamContent({
         onClose={() => setDeleteConfirm(null)}
         size="sm"
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
             Remove Member
           </h3>
@@ -444,7 +448,7 @@ export default function TeamContent({
             Are you sure you want to remove this member? They will lose access
             to all shared games and data.
           </p>
-          <div className="flex gap-3 justify-end">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
               Cancel
             </Button>
