@@ -339,7 +339,9 @@ if (isPostgres) {
       }
 
       const rows = sqlite
-        .prepare("SELECT * FROM branding WHERE tokens IS NULL")
+        .prepare(
+          "SELECT id, accent_color, accent_hover_color, accent_light_color, selection_color, selection_ring_color, highlight_color, correct_color, correct_light_color, present_color, absent_color, bg_primary_color, bg_secondary_color, text_primary_color, text_secondary_color, border_color, cell_bg_color, cell_blocked_color, sidebar_active_color, sidebar_active_bg_color, grid_border_color, main_word_marker_color, font_sans, font_serif, border_radius, tokens FROM branding WHERE tokens IS NULL",
+        )
         .all() as OldBranding[]
 
       if (rows.length > 0) {
@@ -389,41 +391,47 @@ if (isPostgres) {
         }
 
         sqlite.exec("BEGIN TRANSACTION")
-        for (const row of rows) {
-          const overrides: Record<string, string> = {}
-          for (const [oldKey, newKey] of Object.entries(OVERRIDE_FIELD_MAP)) {
-            const v = row[oldKey as keyof OldBranding]
-            if (v) overrides[newKey] = v as string
+        try {
+          for (const row of rows) {
+            const overrides: Record<string, string> = {}
+            for (const [oldKey, newKey] of Object.entries(OVERRIDE_FIELD_MAP)) {
+              const v = row[oldKey as keyof OldBranding]
+              if (v) overrides[newKey] = v as string
+            }
+
+            const tokens = {
+              primary: row.accent_color || PLATFORM_DEFAULTS.primary,
+              surface: row.bg_primary_color || PLATFORM_DEFAULTS.surface,
+              text: row.text_primary_color || PLATFORM_DEFAULTS.text,
+              overrides,
+            }
+
+            const typography = {
+              ...TYPOGRAPHY_DEFAULT,
+              fontSans: row.font_sans,
+              fontSerif: row.font_serif,
+            }
+
+            const radius = row.border_radius
+              ? Number.parseInt(row.border_radius.replace(/[^\d]/g, ""), 10) ||
+                8
+              : 8
+            const spacing = { ...SPACING_DEFAULT, radius }
+
+            update.run(
+              JSON.stringify(tokens),
+              JSON.stringify(typography),
+              JSON.stringify(spacing),
+              JSON.stringify(COMPONENTS_DEFAULT),
+              row.id,
+            )
           }
-
-          const tokens = {
-            primary: row.accent_color || PLATFORM_DEFAULTS.primary,
-            surface: row.bg_primary_color || PLATFORM_DEFAULTS.surface,
-            text: row.text_primary_color || PLATFORM_DEFAULTS.text,
-            overrides,
-          }
-
-          const typography = {
-            ...TYPOGRAPHY_DEFAULT,
-            fontSans: row.font_sans,
-            fontSerif: row.font_serif,
-          }
-
-          const radius = row.border_radius
-            ? Number.parseInt(row.border_radius.replace(/[^\d]/g, ""), 10) || 8
-            : 8
-          const spacing = { ...SPACING_DEFAULT, radius }
-
-          update.run(
-            JSON.stringify(tokens),
-            JSON.stringify(typography),
-            JSON.stringify(spacing),
-            JSON.stringify(COMPONENTS_DEFAULT),
-            row.id,
-          )
+          sqlite.exec("COMMIT")
+          console.log(`[migrate] ✅ backfilled ${rows.length} branding rows`)
+        } catch (err) {
+          sqlite.exec("ROLLBACK")
+          throw err
         }
-        sqlite.exec("COMMIT")
-        console.log(`[migrate] ✅ backfilled ${rows.length} branding rows`)
       }
     }
   } catch (err) {
