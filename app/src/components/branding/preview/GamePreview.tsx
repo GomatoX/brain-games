@@ -1,10 +1,9 @@
 "use client"
 import { useState } from "react"
-import type { DraftState } from "../BrandingEditor"
 
 type GameType = "crossword" | "wordsearch" | "wordgame"
 
-export default function GamePreview({ draft: _draft }: { draft: DraftState }) {
+export default function GamePreview() {
   const [type, setType] = useState<GameType>("crossword")
 
   return (

@@ -45,7 +45,7 @@ export default function BrandingPreviewPane({ draft }: { draft: DraftState }) {
       </nav>
       <div data-brand-preview style={cssVars as React.CSSProperties}>
         {tab === "dashboard" && <DashboardPreview draft={draft} />}
-        {tab === "game" && <GamePreview draft={draft} />}
+        {tab === "game" && <GamePreview />}
         {tab === "login" && <LoginPreview draft={draft} />}
       </div>
     </div>
