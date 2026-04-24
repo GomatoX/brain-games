@@ -31,6 +31,8 @@ export default function BrandingContent({
   const [createPresetId, setCreatePresetId] = useState(PRESETS[0]?.id ?? "")
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState("")
 
   const handleOpenCreate = () => {
     setCreateName("")
@@ -46,6 +48,7 @@ export default function BrandingContent({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (creating) return
     const name = createName.trim()
     if (!name) {
       setCreateError("Name is required")
@@ -73,19 +76,26 @@ export default function BrandingContent({
   }
 
   const handleDelete = async (id: string, name: string) => {
+    if (deletingId) return
     const ok = window.confirm(
       `Delete "${name}"? Games using this brand will lose their styling.`,
     )
     if (!ok) return
+    setDeletingId(id)
+    setDeleteError("")
     try {
       const res = await fetch(`/api/branding?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       })
-      if (res.ok) {
-        setPresets((prev) => prev.filter((p) => p.id !== id))
+      if (!res.ok) {
+        setDeleteError(`Failed to delete "${name}". Please try again.`)
+        return
       }
+      setPresets((prev) => prev.filter((p) => p.id !== id))
     } catch {
-      // ignore
+      setDeleteError(`Failed to delete "${name}". Please try again.`)
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -100,6 +110,12 @@ export default function BrandingContent({
           </Button>
         }
       />
+
+      {deleteError && (
+        <p className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-[4px]">
+          {deleteError}
+        </p>
+      )}
 
       {presets.length === 0 ? (
         <Panel>
@@ -166,9 +182,10 @@ export default function BrandingContent({
                       variant="outline"
                       size="sm"
                       icon="delete"
+                      disabled={deletingId === p.id}
                       onClick={() => handleDelete(p.id, p.name || "Untitled")}
                     >
-                      Delete
+                      {deletingId === p.id ? "Deleting…" : "Delete"}
                     </Button>
                   </div>
                 </div>
@@ -180,7 +197,7 @@ export default function BrandingContent({
 
       <Modal
         open={showCreateModal}
-        onClose={handleCloseCreate}
+        onClose={creating ? () => {} : handleCloseCreate}
         title="New brand"
         icon="palette"
         size="md"
