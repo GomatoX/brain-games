@@ -42,7 +42,7 @@ if (isPostgres) {
         if (accentColCheck.rowCount === 0) return
 
         const { rows } = await pool.query(
-          "SELECT * FROM branding WHERE tokens IS NULL",
+          "SELECT id, accent_color, accent_hover_color, accent_light_color, selection_color, selection_ring_color, highlight_color, correct_color, correct_light_color, present_color, absent_color, bg_primary_color, bg_secondary_color, text_primary_color, text_secondary_color, border_color, cell_bg_color, cell_blocked_color, sidebar_active_color, sidebar_active_bg_color, grid_border_color, main_word_marker_color, font_sans, font_serif, border_radius FROM branding WHERE tokens IS NULL",
         )
 
         if (rows.length === 0) return
@@ -55,69 +55,14 @@ if (isPostgres) {
           text: "#0f172a",
         }
 
-        const OVERRIDE_FIELD_MAP: Record<string, string> = {
-          accent_hover_color: "primary-hover",
-          accent_light_color: "primary-light",
-          selection_color: "selection",
-          selection_ring_color: "selection-ring",
-          highlight_color: "highlight",
-          correct_color: "correct",
-          correct_light_color: "correct-light",
-          present_color: "present",
-          absent_color: "absent",
-          bg_secondary_color: "surface-elevated",
-          text_secondary_color: "text-muted",
-          border_color: "border",
-          cell_bg_color: "cell-bg",
-          cell_blocked_color: "cell-blocked",
-          sidebar_active_color: "sidebar-active",
-          sidebar_active_bg_color: "sidebar-active-bg",
-          grid_border_color: "grid-border",
-          main_word_marker_color: "main-word-marker",
-        }
-
-        const TYPOGRAPHY_DEFAULT = {
-          fontSans: null as string | null,
-          fontSerif: null as string | null,
-          scale: "default" as const,
-        }
-        const SPACING_DEFAULT = { density: "cozy" as const, radius: 8 }
-        const COMPONENTS_DEFAULT = {
-          button: { variant: "solid", shadow: "subtle" },
-          input: { variant: "outlined" },
-          card: { elevation: "subtle" },
-        }
-
         const client = await pool.connect()
         try {
           await client.query("BEGIN")
           for (const row of rows) {
-            const overrides: Record<string, string> = {}
-            for (const [oldKey, newKey] of Object.entries(OVERRIDE_FIELD_MAP)) {
-              const v = row[oldKey]
-              if (v) overrides[newKey] = v as string
-            }
-
-            const tokens = {
-              primary: row.accent_color || PLATFORM_DEFAULTS.primary,
-              surface: row.bg_primary_color || PLATFORM_DEFAULTS.surface,
-              text: row.text_primary_color || PLATFORM_DEFAULTS.text,
-              overrides,
-            }
-
-            const typography = {
-              ...TYPOGRAPHY_DEFAULT,
-              fontSans: row.font_sans,
-              fontSerif: row.font_serif,
-            }
-
-            const radius = row.border_radius
-              ? Number.parseInt(
-                  String(row.border_radius).replace(/[^\d]/g, ""),
-                  10,
-                ) || 8
-              : 8
-            const spacing = { ...SPACING_DEFAULT, radius }
+            const { tokens, typography, spacing, components } = backfillRow(
+              row as OldBrandingRow,
+              PLATFORM_DEFAULTS,
+            )
 
             await client.query(
               "UPDATE branding SET tokens = $1::jsonb, typography = $2::jsonb, spacing = $3::jsonb, components = $4::jsonb, updated_at = now() WHERE id = $5",
@@ -125,7 +70,7 @@ if (isPostgres) {
                 JSON.stringify(tokens),
                 JSON.stringify(typography),
                 JSON.stringify(spacing),
-                JSON.stringify(COMPONENTS_DEFAULT),
+                JSON.stringify(components),
                 row.id,
               ],
             )
