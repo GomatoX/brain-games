@@ -36,4 +36,24 @@ describe("scopeCss", () => {
     expect(out).not.toContain(`weird"id`)
     expect(out).toContain(`weird&quot;id`)
   })
+
+  it("passes @keyframes through unchanged (no scope prefix on the at-rule)", () => {
+    const out = scopeCss(`@keyframes spin { from { rotate: 0deg } to { rotate: 360deg } }`, "acme")
+    expect(out).toContain("@keyframes spin {")
+    expect(out).not.toMatch(/\[data-org-id="acme"\]\s*@keyframes/)
+  })
+
+  it("passes @font-face through unchanged", () => {
+    const out = scopeCss(`@font-face { font-family: "X"; src: url(/x.woff2); }`, "acme")
+    expect(out).toContain("@font-face {")
+    expect(out).not.toMatch(/\[data-org-id="acme"\]\s*@font-face/)
+  })
+
+  it("escapes <, >, ' in the org-id value", () => {
+    const out = scopeCss(`.x { color: red }`, `<script>'`)
+    expect(out).not.toContain("<script>")
+    expect(out).not.toContain(`<`)
+    expect(out).not.toContain(`'`)
+    expect(out).toContain("&lt;script&gt;&#39;")
+  })
 })

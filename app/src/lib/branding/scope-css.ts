@@ -1,5 +1,10 @@
 const escapeOrgId = (id: string): string =>
-  id.replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+  id
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
 
 const prefixSelectorList = (selectors: string, scope: string): string =>
   selectors
@@ -33,6 +38,9 @@ export function scopeCss(css: string, orgId: string): string {
       if (depth === 0) {
         const sel = buf.trim()
         if (sel.startsWith("@media") || sel.startsWith("@supports") || sel.startsWith("@layer")) {
+          out += sel + " {"
+        } else if (sel.startsWith("@")) {
+          // pass-through: @keyframes / @font-face / @page / @property / @counter-style / etc.
           out += sel + " {"
         } else if (sel) {
           out += prefixSelectorList(sel, scope) + " {"
