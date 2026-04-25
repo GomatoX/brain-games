@@ -3,6 +3,42 @@ import fs from "fs"
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 import type * as SqliteSchema from "./schema.sqlite"
 import { backfillRow, type OldBrandingRow } from "@/lib/branding/backfill"
+import {
+  PLATFORM_ORG_ID,
+  PLATFORM_USER_ID,
+  PLATFORM_PUZZLE_IDS,
+} from "@/lib/branding/platform-defaults"
+
+// Hand-authored sample puzzles used by the branding editor preview pane.
+// Inserted once at startup if the platform org doesn't exist yet.
+const PLATFORM_CROSSWORD_WORDS = [
+  { word: "BRAND",  clue: "Identity expressed through colour and type" },
+  { word: "STYLE",  clue: "A characteristic manner or appearance" },
+  { word: "THEME",  clue: "A unified visual scheme" },
+  { word: "COLOR",  clue: "Hue, saturation, lightness" },
+  { word: "FONT",   clue: "Typeface used for text" },
+]
+
+const PLATFORM_WORDSEARCH_GRID = [
+  ["B","R","A","N","D","X","T","H"],
+  ["S","T","Y","L","E","O","H","Q"],
+  ["W","C","O","L","O","R","E","V"],
+  ["F","O","N","T","P","I","M","Z"],
+  ["A","T","H","E","M","E","E","K"],
+  ["I","C","O","N","Q","D","R","L"],
+  ["L","O","G","O","M","P","V","Y"],
+  ["P","I","X","E","L","B","S","N"],
+]
+
+const PLATFORM_WORDSEARCH_WORDS = [
+  { word: "BRAND",  clue: "" },
+  { word: "STYLE",  clue: "" },
+  { word: "COLOR",  clue: "" },
+  { word: "FONT",   clue: "" },
+  { word: "THEME",  clue: "" },
+  { word: "LOGO",   clue: "" },
+  { word: "PIXEL",  clue: "" },
+]
 
 const isPostgres = !!process.env.DATABASE_URL
 
@@ -85,6 +121,85 @@ if (isPostgres) {
         }
       } catch (err) {
         console.error("[migrate] ❌ branding backfill failed:", err)
+      }
+    })
+    .then(async () => {
+      // ─── Seed platform-default org + sample puzzles ──────────
+      try {
+        const exists = await pool.query(
+          "SELECT 1 FROM organizations WHERE id = $1",
+          [PLATFORM_ORG_ID],
+        )
+        if ((exists.rowCount ?? 0) > 0) return
+
+        console.log("[migrate] seeding platform-default org + sample puzzles")
+        const client = await pool.connect()
+        try {
+          await client.query("BEGIN")
+          await client.query(
+            "INSERT INTO organizations (id, name, default_language) VALUES ($1, $2, $3)",
+            [PLATFORM_ORG_ID, "Platform Defaults", "en"],
+          )
+          await client.query(
+            "INSERT INTO users (id, email, password_hash, first_name, last_name, role, org_id, org_role, use_platform_chrome) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)",
+            [
+              PLATFORM_USER_ID,
+              "platform-defaults@internal.invalid",
+              "!disabled",
+              "Platform",
+              "Defaults",
+              "publisher",
+              PLATFORM_ORG_ID,
+              "owner",
+            ],
+          )
+          await client.query(
+            "INSERT INTO crosswords (id, org_id, user_id, status, title, difficulty, words, main_word) VALUES ($1, $2, $3, 'published', $4, $5, $6::jsonb, $7)",
+            [
+              PLATFORM_PUZZLE_IDS.crossword,
+              PLATFORM_ORG_ID,
+              PLATFORM_USER_ID,
+              "Welcome crossword",
+              "Easy",
+              JSON.stringify(PLATFORM_CROSSWORD_WORDS),
+              "BRAND",
+            ],
+          )
+          await client.query(
+            "INSERT INTO wordsearches (id, org_id, user_id, status, title, difficulty, words, grid, grid_size) VALUES ($1, $2, $3, 'published', $4, $5, $6::jsonb, $7::jsonb, $8)",
+            [
+              PLATFORM_PUZZLE_IDS.wordsearch,
+              PLATFORM_ORG_ID,
+              PLATFORM_USER_ID,
+              "Brand sampler",
+              "Easy",
+              JSON.stringify(PLATFORM_WORDSEARCH_WORDS),
+              JSON.stringify(PLATFORM_WORDSEARCH_GRID),
+              PLATFORM_WORDSEARCH_GRID.length,
+            ],
+          )
+          await client.query(
+            "INSERT INTO wordgames (id, org_id, user_id, status, title, word, definition, max_attempts) VALUES ($1, $2, $3, 'published', $4, $5, $6, $7)",
+            [
+              PLATFORM_PUZZLE_IDS.wordgame,
+              PLATFORM_ORG_ID,
+              PLATFORM_USER_ID,
+              "Daily demo",
+              "BRAND",
+              "Identity expressed through colour and type",
+              6,
+            ],
+          )
+          await client.query("COMMIT")
+          console.log("[migrate] ✅ seeded platform-default puzzles")
+        } catch (err) {
+          await client.query("ROLLBACK")
+          throw err
+        } finally {
+          client.release()
+        }
+      } catch (err) {
+        console.error("[migrate] ❌ platform-default seed failed:", err)
       }
     })
     .catch((err: unknown) =>
@@ -300,6 +415,94 @@ if (isPostgres) {
     }
   } catch (err) {
     console.error("[migrate] ❌ branding backfill failed:", err)
+  }
+
+  // ─── Seed platform-default org + sample puzzles ──────────────
+  // Used by the branding editor preview pane. Idempotent: skipped if
+  // the platform org already exists.
+  try {
+    const orgExists = sqlite
+      .prepare("SELECT 1 FROM organizations WHERE id = ?")
+      .get(PLATFORM_ORG_ID)
+    if (!orgExists) {
+      console.log("[migrate] seeding platform-default org + sample puzzles")
+      sqlite.exec("BEGIN TRANSACTION")
+      try {
+        sqlite
+          .prepare(
+            "INSERT INTO organizations (id, name, default_language, created_at) VALUES (?, ?, ?, datetime('now'))",
+          )
+          .run(PLATFORM_ORG_ID, "Platform Defaults", "en")
+
+        // Placeholder user satisfies puzzle FKs. Password hash is unusable
+        // (won't bcrypt-verify against any real password); email is sentinel.
+        sqlite
+          .prepare(
+            "INSERT INTO users (id, email, password_hash, first_name, last_name, role, org_id, org_role, created_at, use_platform_chrome) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 0)",
+          )
+          .run(
+            PLATFORM_USER_ID,
+            "platform-defaults@internal.invalid",
+            "!disabled",
+            "Platform",
+            "Defaults",
+            "publisher",
+            PLATFORM_ORG_ID,
+            "owner",
+          )
+
+        sqlite
+          .prepare(
+            "INSERT INTO crosswords (id, org_id, user_id, status, title, difficulty, words, main_word, created_at, updated_at) VALUES (?, ?, ?, 'published', ?, ?, ?, ?, datetime('now'), datetime('now'))",
+          )
+          .run(
+            PLATFORM_PUZZLE_IDS.crossword,
+            PLATFORM_ORG_ID,
+            PLATFORM_USER_ID,
+            "Welcome crossword",
+            "Easy",
+            JSON.stringify(PLATFORM_CROSSWORD_WORDS),
+            "BRAND",
+          )
+
+        sqlite
+          .prepare(
+            "INSERT INTO wordsearches (id, org_id, user_id, status, title, difficulty, words, grid, grid_size, created_at, updated_at) VALUES (?, ?, ?, 'published', ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+          )
+          .run(
+            PLATFORM_PUZZLE_IDS.wordsearch,
+            PLATFORM_ORG_ID,
+            PLATFORM_USER_ID,
+            "Brand sampler",
+            "Easy",
+            JSON.stringify(PLATFORM_WORDSEARCH_WORDS),
+            JSON.stringify(PLATFORM_WORDSEARCH_GRID),
+            PLATFORM_WORDSEARCH_GRID.length,
+          )
+
+        sqlite
+          .prepare(
+            "INSERT INTO wordgames (id, org_id, user_id, status, title, word, definition, max_attempts, created_at, updated_at) VALUES (?, ?, ?, 'published', ?, ?, ?, ?, datetime('now'), datetime('now'))",
+          )
+          .run(
+            PLATFORM_PUZZLE_IDS.wordgame,
+            PLATFORM_ORG_ID,
+            PLATFORM_USER_ID,
+            "Daily demo",
+            "BRAND",
+            "Identity expressed through colour and type",
+            6,
+          )
+
+        sqlite.exec("COMMIT")
+        console.log("[migrate] ✅ seeded platform-default puzzles")
+      } catch (err) {
+        sqlite.exec("ROLLBACK")
+        throw err
+      }
+    }
+  } catch (err) {
+    console.error("[migrate] ❌ platform-default seed failed:", err)
   }
 
   db = sqliteDb
