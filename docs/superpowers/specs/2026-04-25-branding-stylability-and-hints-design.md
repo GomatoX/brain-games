@@ -211,12 +211,11 @@ Markers are added on the elements whose visible appearance is currently being co
 | Crossword   | `.cell.blocked`                        | `cell-blocked`   |
 | Crossword   | `.cell` (default)                      | `cell-bg`        |
 | Crossword   | grid wrapper                           | `grid-border`    |
-| Crossword   | `.clue-item.active`                    | `highlight`      |
-| Word search | active-row cell                        | `highlight`      |
-| Word search | found-word cell                        | `correct`        |
+| Crossword   | `.clue-item.active`                    | `sidebar-active-bg` |
+| Word search | found-word cell                        | `correct-light`  |
 | Word search | drag-selection path                    | `selection`      |
-| Word game   | tile per state                         | `correct` / `present` / `absent` |
-| Word game   | active row outline                     | `selection-ring` |
+| Word game   | tile per submitted state               | `correct` / `present` / `absent` |
+| Word game   | current cell (active row entry)        | `selection-ring` |
 | All         | top-level surface container            | `surface`        |
 | All         | text-bearing element (illustrative)    | `text` / `text-muted` |
 

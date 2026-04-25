@@ -512,13 +512,13 @@
     font-weight: 600;
     text-transform: uppercase;
     border: 2px solid var(--border-color, #e2e8f0);
-    background: var(--bg-primary, #ffffff);
+    background: var(--cell-bg, var(--bg-primary, #ffffff));
     transition: all 0.15s ease;
   }
 
   .word-game.dark-theme .letter-cell {
     border-color: var(--border-color, #334155);
-    background: var(--bg-primary, #0f172a);
+    background: var(--cell-bg, var(--bg-primary, #0f172a));
   }
 
   .letter-cell.filled {

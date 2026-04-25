@@ -29,7 +29,7 @@
           class="clue-item"
           class:active={isActive}
           class:solved={isSolved(clue)}
-          data-brand-token={isActive ? "highlight" : undefined}
+          data-brand-token={isActive ? "sidebar-active-bg" : undefined}
           on:click={() => handleClick(clue)}
           role="button"
           tabindex="0"
@@ -53,7 +53,7 @@
           class="clue-item"
           class:active={isActive}
           class:solved={isSolved(clue)}
-          data-brand-token={isActive ? "highlight" : undefined}
+          data-brand-token={isActive ? "sidebar-active-bg" : undefined}
           on:click={() => handleClick(clue)}
           role="button"
           tabindex="0"
