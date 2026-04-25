@@ -1,3 +1,8 @@
+// Single source of truth for branded design tokens. When adding or changing
+// entries here, also update the snapshot in
+// `app/src/lib/__tests__/branding-field-map-compat.test.ts` so the resolve
+// pipeline regression guard reflects the new shape.
+
 export type TokenGroup = "color" | "surface" | "state" | "feedback" | "structural"
 
 export type TokenDef = {
@@ -76,6 +81,6 @@ export const TOKEN_REGISTRY: TokenDef[] = [
     label: "Sidebar active text", description: "Text colour for the active item in the dashboard sidebar.",
     group: "color" },
   { id: "sidebar-active-bg",  cssVars: ["--sidebar-active-bg"],
-    label: "Sidebar active bg",   description: "Background for the active item in the dashboard sidebar.",
+    label: "Sidebar active background", description: "Background for the active item in the dashboard sidebar.",
     group: "color" },
 ]
