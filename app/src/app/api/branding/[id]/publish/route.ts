@@ -26,10 +26,12 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: "no draft to publish" }, { status: 400 })
   }
 
-  // Drizzle transaction for atomic copy + delete
+  // Atomic copy + delete. Drizzle's better-sqlite3 transaction requires a
+  // sync callback (better-sqlite3's transaction wrapper rejects promises).
+  // Pass a sync function and call .run() so the queries execute inline.
   const updatedAt = new Date().toISOString()
-  await db.transaction(async (tx) => {
-    await tx
+  db.transaction((tx) => {
+    tx
       .update(branding)
       .set({
         tokens: draft.tokens as never,
@@ -45,7 +47,8 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
         updatedAt,
       })
       .where(eq(branding.id, id))
-    await tx.delete(brandingDrafts).where(eq(brandingDrafts.brandingId, id))
+      .run()
+    tx.delete(brandingDrafts).where(eq(brandingDrafts.brandingId, id)).run()
   })
 
   return NextResponse.json({ success: true, updatedAt })
