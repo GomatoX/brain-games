@@ -223,10 +223,7 @@
       <div class="guess-grid" style="--word-length: {wordLength}">
         {#each Array(maxAttempts) as _, rowIndex}
           {@const isActiveRow = rowIndex === guesses.length}
-          <div
-            class="guess-row"
-            data-brand-token={isActiveRow ? "selection-ring" : undefined}
-          >
+          <div class="guess-row">
             {#each Array(wordLength) as _, colIndex}
               {@const guess = guesses[rowIndex]}
               {@const letter = guess
@@ -235,14 +232,14 @@
                   ? currentGuess[colIndex]
                   : ""}
               {@const state = guess ? guess.result[colIndex] : ""}
+              {@const isCurrent = isActiveRow && colIndex < currentGuess.length}
               <div
                 class="letter-cell"
                 class:filled={letter}
                 class:correct={state === "correct"}
                 class:present={state === "present"}
                 class:absent={state === "absent"}
-                class:current={isActiveRow &&
-                  colIndex < currentGuess.length}
+                class:current={isCurrent}
                 data-brand-token={
                   state === "correct"
                     ? "correct"
@@ -250,7 +247,9 @@
                       ? "present"
                       : state === "absent"
                         ? "absent"
-                        : "cell-bg"
+                        : isCurrent
+                          ? "selection-ring"
+                          : "cell-bg"
                 }
               >
                 {letter || ""}
@@ -531,12 +530,12 @@
   }
 
   .letter-cell.current {
-    border-color: var(--text-secondary, #64748b);
+    border-color: var(--selection-ring, #64748b);
     animation: subtle-pulse 2s infinite;
   }
 
   .word-game.dark-theme .letter-cell.current {
-    border-color: var(--text-secondary, #94a3b8);
+    border-color: var(--selection-ring, #94a3b8);
   }
 
   .letter-cell.correct {

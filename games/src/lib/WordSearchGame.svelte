@@ -446,7 +446,7 @@
                     data-col={colIdx}
                     data-brand-token={
                       isFound
-                        ? "correct"
+                        ? "correct-light"
                         : isSelecting
                           ? "selection"
                           : "cell-bg"

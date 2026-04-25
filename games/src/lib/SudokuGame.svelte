@@ -369,18 +369,22 @@
                 {@const isSelected = highlight === "selected"}
                 {@const isHighlighted =
                   highlight === "related" || highlight === "same-number"}
+                {@const isGivenCell = isGiven(rowIndex, colIndex)}
+                {@const isConflict = conflicts.has(`${rowIndex},${colIndex}`)}
                 <div
                   class="sudoku-cell {highlight}"
-                  class:given={isGiven(rowIndex, colIndex)}
-                  class:conflict={conflicts.has(`${rowIndex},${colIndex}`)}
+                  class:given={isGivenCell}
+                  class:conflict={isConflict}
                   class:box-right={colIndex === 2 || colIndex === 5}
                   class:box-bottom={rowIndex === 2 || rowIndex === 5}
                   data-brand-token={
-                    isSelected
-                      ? "selection"
-                      : isHighlighted
-                        ? "highlight"
-                        : "cell-bg"
+                    isConflict || isGivenCell
+                      ? undefined
+                      : isSelected
+                        ? "selection"
+                        : isHighlighted
+                          ? "highlight"
+                          : "cell-bg"
                   }
                   role="button"
                   tabindex="0"
