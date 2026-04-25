@@ -562,6 +562,7 @@
 
   .dark-theme .spinner {
     border-color: var(--border-color, #334155);
+    border-top-color: var(--accent, #c25e40);
   }
 
   @keyframes spin {

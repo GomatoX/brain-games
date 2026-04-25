@@ -557,6 +557,7 @@
 
   :global(.dark-theme) .spinner {
     border-color: var(--border-color, #334155);
+    border-top-color: #64748b;
   }
 
   @keyframes spin {

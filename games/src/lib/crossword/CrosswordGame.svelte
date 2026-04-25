@@ -1181,6 +1181,11 @@
     color: var(--text-primary, #0f172a);
   }
 
+  .dark-theme .crossword-container {
+    background: var(--bg-primary, #0f172a);
+    color: var(--text-primary, #f1f5f9);
+  }
+
   /* Branded CSS variables now flow in from a parent (dashboard wrapper or
      server-rendered embed). Use-site rules below carry the previous
      light-theme defaults as fallbacks. Paired `.dark-theme <selector>` rules
@@ -1191,11 +1196,6 @@
 
   .dark-theme {
     /* class kept only for non-token concerns */
-  }
-
-  .dark-theme .crossword-container {
-    background: var(--bg-primary, #0f172a);
-    color: var(--text-primary, #f1f5f9);
   }
 
   /* Loading & Error */
@@ -1217,7 +1217,8 @@
   }
 
   .dark-theme .spinner {
-    border: 4px solid var(--border-color, #334155);
+    border-color: var(--border-color, #334155);
+    border-top-color: #64748b;
   }
 
   @keyframes spin {

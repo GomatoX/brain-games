@@ -64,7 +64,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: var(--cell-highlighted, #e8ebfa);
+    background: var(--cell-highlighted, #fcece8);
     border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 12px 12px 0 0;
     padding: 8px 16px;

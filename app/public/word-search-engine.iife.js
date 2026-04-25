@@ -47,7 +47,7 @@ var WordSearchEngine=(function(){"use strict";typeof window<"u"&&((window.__svel
 
   /* ─── Loading & Error ───────────────────────────────── */.loading-state.svelte-len5il,
   .error-state.svelte-len5il {text-align:center;padding:48px;}.spinner.svelte-len5il {width:40px;height:40px;border:4px solid var(--border-color, #e2e8f0);border-top-color:#64748b;border-radius:50%;
-    animation: svelte-len5il-spin 1s linear infinite;margin:0 auto 16px;}.dark-theme .spinner.svelte-len5il {border-color:var(--border-color, #334155);}
+    animation: svelte-len5il-spin 1s linear infinite;margin:0 auto 16px;}.dark-theme .spinner.svelte-len5il {border-color:var(--border-color, #334155);border-top-color:#64748b;}
 
   @keyframes svelte-len5il-spin {
     to {
