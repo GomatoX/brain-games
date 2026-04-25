@@ -115,9 +115,9 @@ Files created or modified, grouped by responsibility:
 - `app/src/components/branding/sections/ImagerySection.tsx`
 - `app/src/components/branding/sections/CustomCssSection.tsx`
 - `app/src/components/branding/sections/AdvancedSection.tsx`
-- `app/src/components/branding/preview/DashboardPreview.tsx`
-- `app/src/components/branding/preview/GamePreview.tsx`
-- `app/src/components/branding/preview/LoginPreview.tsx`
+- `app/src/components/branding/preview/GamePreview.tsx` — game-only preview (Dashboard / Login tabs were cut for focus)
+- `app/src/app/api/preview/games/route.ts` — session-auth'd endpoint that returns the platform-default sample puzzle for a given game type
+- `app/src/lib/branding/platform-defaults.ts` — constants for the seeded platform org id + per-type sample puzzle ids
 
 **Created — tests (`app/src/lib/__tests__/`):**
 - `branding-derive.test.ts`
@@ -2906,25 +2906,26 @@ Repeat the same stub shape (different title in `<summary>`) for `ThemeSection.ts
 import { useState } from "react"
 import type { DraftState } from "./BrandingEditor"
 
-type Tab = "dashboard" | "game" | "login"
+type GameType = "crossword" | "wordsearch" | "wordgame"
 
 export default function BrandingPreviewPane({ draft }: { draft: DraftState }) {
-  const [tab, setTab] = useState<Tab>("dashboard")
+  const [type, setType] = useState<GameType>("crossword")
   return (
     <div className="p-6">
-      <nav className="flex gap-2 mb-4">
-        {(["dashboard", "game", "login"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1 border rounded ${tab === t ? "bg-[var(--primary)] text-white" : ""}`}
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </nav>
+      <label className="block mb-3 text-sm">
+        Game type:{" "}
+        <select
+          className="border rounded px-2 py-1"
+          value={type}
+          onChange={(e) => setType(e.target.value as GameType)}
+        >
+          <option value="crossword">Crossword</option>
+          <option value="wordsearch">Word search</option>
+          <option value="wordgame">Word game</option>
+        </select>
+      </label>
       <div className="text-sm text-[var(--text-muted)]">
-        Preview for tab &quot;{tab}&quot; — wired in Task 23.
+        Real game preview wired in Task 23.
       </div>
       {/* draft is intentionally unused in the stub; consumed in Task 23 */}
       <span className="hidden">{JSON.stringify(draft.tokens.primary)}</span>
@@ -3504,29 +3505,133 @@ git commit -m "feat(branding): implement Identity, Imagery, Custom CSS, Advanced
 
 ## Phase 8 — Preview pane
 
-### Task 23: Wire live CSS-var injection on preview wrapper
+### Task 23: Game-only live preview with platform-default sample puzzles
+
+The preview pane shows a real game embed (same Web Component customers see at `/play`) running against a hand-authored platform-default sample puzzle, one per game type. A small dropdown switches game type. No Dashboard or Login mockups — those tabs were cut so the preview stays focused on what brand styling actually affects.
+
+Brand changes propagate via CSS variables on the preview wrapper element, the same mechanism `applyBrandingFromData()` uses in production game embeds.
 
 **Files:**
-- Modify: `app/src/components/branding/BrandingPreviewPane.tsx`
-- Create: `app/src/components/branding/preview/DashboardPreview.tsx`
-- Create: `app/src/components/branding/preview/GamePreview.tsx`
-- Create: `app/src/components/branding/preview/LoginPreview.tsx`
+- Create: `app/src/lib/branding/platform-defaults.ts` — constant IDs for the seeded platform org + per-type sample puzzles
+- Create: `app/src/app/api/preview/games/route.ts` — session-auth'd endpoint returning the platform-default puzzle for a given type
+- Create: `app/src/components/branding/preview/GamePreview.tsx` — game-only preview component
+- Modify: `app/src/components/branding/BrandingPreviewPane.tsx` — wire CSS vars onto wrapper, render GamePreview inside
+- Modify: `app/src/db/index.ts` — idempotent seeding of the platform org + 3 sample puzzles at startup (both dialects)
 
-- [ ] **Step 1: Compute CSS vars from draft**
+- [ ] **Step 1: Define the platform-default constants**
 
-Replace `BrandingPreviewPane.tsx`:
+`app/src/lib/branding/platform-defaults.ts`:
+
+```ts
+export const PLATFORM_ORG_ID = "00000000-0000-0000-0000-000000000001"
+
+export const PLATFORM_PUZZLE_IDS = {
+  crossword:  "00000000-0000-0000-0000-000000000010",
+  wordsearch: "00000000-0000-0000-0000-000000000011",
+  wordgame:   "00000000-0000-0000-0000-000000000012",
+} as const
+
+export type PreviewGameType = keyof typeof PLATFORM_PUZZLE_IDS
+```
+
+NO semicolons.
+
+These sentinel UUIDs are easy to recognise in the DB and won't collide with `crypto.randomUUID()` output. `PLATFORM_ORG_ID` is not exposed to non-staff users — the org has no logins, no billing, just the puzzle rows.
+
+- [ ] **Step 2: Seed the platform org + 3 sample puzzles in `db/index.ts`**
+
+Add an idempotent seeding block at the end of BOTH the SQLite and PG migration sections (after the branding-backfill block). The block must:
+
+1. Check if a row exists at `organizations.id = PLATFORM_ORG_ID`. If yes, skip — already seeded.
+2. Insert the `__platform__` org with name `"Platform Defaults"`, no `apiToken`.
+3. Insert one row each into `crosswords`, `wordgames`, `wordsearches`, with the IDs from `PLATFORM_PUZZLE_IDS`. `userId` references whatever default-admin user `db:seed` creates (or `NULL` if the FK allows it; otherwise create a placeholder `__platform__` user too).
+4. Hand-author small puzzle content for each:
+   - **Crossword** (`status: "published"`, `title: "Welcome"`, `difficulty: "Easy"`): 4 short words on a 5×5 grid with simple clues. `mainWord: "BRAND"` if it fits.
+   - **Wordsearch** (`status: "published"`, `title: "Sample"`): 8×8 grid with 5–6 short words.
+   - **Wordgame** (`status: "published"`, `title: "Demo"`): a 5-letter target word. Match the existing `wordgames` row shape for word-game day puzzles.
+
+Inspect each game table's existing schema to know exactly which columns are NOT NULL. Use sensible defaults for everything else.
+
+Wrap the inserts in a single transaction. Same pattern as the existing branding-backfill block:
+
+```ts
+try {
+  const existing = sqlite
+    .prepare("SELECT 1 FROM organizations WHERE id = ?")
+    .get(PLATFORM_ORG_ID)
+  if (!existing) {
+    console.log("[migrate] seeding platform-default org + sample puzzles")
+    sqlite.exec("BEGIN TRANSACTION")
+    try {
+      // INSERTs here
+      sqlite.exec("COMMIT")
+      console.log("[migrate] ✅ seeded platform-default puzzles")
+    } catch (err) {
+      sqlite.exec("ROLLBACK")
+      throw err
+    }
+  }
+} catch (err) {
+  console.error("[migrate] ❌ platform-default seed failed:", err)
+}
+```
+
+PG branch mirrors with `pool.connect()` + `BEGIN`/`COMMIT`/`ROLLBACK` (same pattern as the existing PG backfill).
+
+Verify by deleting `app/data/brain.db`, running `yarn dev` once, then querying:
+```bash
+sqlite3 app/data/brain.db "SELECT id, name FROM organizations WHERE id LIKE '00000000%'; SELECT id, title FROM crosswords WHERE id LIKE '00000000%'; SELECT id, title FROM wordsearches WHERE id LIKE '00000000%'; SELECT id, title FROM wordgames WHERE id LIKE '00000000%';"
+```
+Expected: 1 org + 3 puzzle rows. Restart `yarn dev`, confirm no re-seed log message (idempotency).
+
+- [ ] **Step 3: Build the preview-only games endpoint**
+
+`app/src/app/api/preview/games/route.ts`:
+
+```ts
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/db"
+import { crosswords, wordgames, wordsearches } from "@/db/schema"
+import { eq } from "drizzle-orm"
+import { requireAuth } from "@/lib/api-auth"
+import { PLATFORM_PUZZLE_IDS, type PreviewGameType } from "@/lib/branding/platform-defaults"
+
+const TABLES = {
+  crossword: crosswords,
+  wordsearch: wordsearches,
+  wordgame: wordgames,
+} as const
+
+export async function GET(request: NextRequest) {
+  const auth = await requireAuth()
+  if (auth instanceof NextResponse) return auth
+
+  const type = new URL(request.url).searchParams.get("type") as PreviewGameType | null
+  if (!type || !(type in PLATFORM_PUZZLE_IDS)) {
+    return NextResponse.json({ error: "invalid type" }, { status: 400 })
+  }
+
+  const id = PLATFORM_PUZZLE_IDS[type]
+  const table = TABLES[type]
+  const [row] = await db.select().from(table).where(eq(table.id, id)).limit(1)
+  if (!row) return NextResponse.json({ error: "platform puzzle not found" }, { status: 404 })
+
+  // No branding object — preview pane injects CSS vars on its wrapper instead.
+  return NextResponse.json({ ...row, branding: null })
+}
+```
+
+NO semicolons. Session-auth'd (any logged-in dashboard user). Returns the puzzle data shape that the IIFE Web Components expect from `/api/public/games`, but with `branding: null` so the component skips its own `applyBrandingFromData()` call (the editor's wrapper handles styling).
+
+- [ ] **Step 4: Rewrite `BrandingPreviewPane.tsx` (game-only)**
 
 ```tsx
 "use client"
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import type { DraftState } from "./BrandingEditor"
 import { deriveTokens } from "@/lib/branding/derive"
 import { FIELD_MAP, TYPOGRAPHY_VARS, SCALE_VARS, DENSITY_VARS, radiusVars } from "@/lib/branding/field-map"
-import DashboardPreview from "./preview/DashboardPreview"
 import GamePreview from "./preview/GamePreview"
-import LoginPreview from "./preview/LoginPreview"
-
-type Tab = "dashboard" | "game" | "login"
 
 function buildVars(draft: DraftState): Record<string, string> {
   const derived = deriveTokens(draft.tokens)
@@ -3545,77 +3650,18 @@ function buildVars(draft: DraftState): Record<string, string> {
 }
 
 export default function BrandingPreviewPane({ draft }: { draft: DraftState }) {
-  const [tab, setTab] = useState<Tab>("dashboard")
   const cssVars = useMemo(() => buildVars(draft), [draft])
-
   return (
     <div className="p-6">
-      <nav className="flex gap-2 mb-4">
-        {(["dashboard", "game", "login"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1 border rounded ${tab === t ? "bg-[var(--primary)] text-white" : ""}`}
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </nav>
       <div data-brand-preview style={cssVars}>
-        {tab === "dashboard" && <DashboardPreview draft={draft} />}
-        {tab === "game" && <GamePreview draft={draft} />}
-        {tab === "login" && <LoginPreview draft={draft} />}
+        <GamePreview draft={draft} />
       </div>
     </div>
   )
 }
 ```
 
-- [ ] **Step 2: Implement `DashboardPreview.tsx`**
-
-`app/src/components/branding/preview/DashboardPreview.tsx`:
-
-```tsx
-"use client"
-import type { DraftState } from "../BrandingEditor"
-
-export default function DashboardPreview({ draft }: { draft: DraftState }) {
-  return (
-    <div className="border rounded overflow-hidden" style={{ background: "var(--surface)" }}>
-      <header className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: "var(--border)" }}>
-        {draft.logoPath ? (
-          <img src={`/api/uploads/${draft.logoPath}`} alt="" className="h-8" />
-        ) : (
-          <div className="font-bold text-lg" style={{ color: "var(--primary)" }}>Brand</div>
-        )}
-        <div className="ml-auto text-sm">user@example.com</div>
-      </header>
-      <div className="flex">
-        <aside className="w-48 p-4 border-r" style={{ borderColor: "var(--border)", background: "var(--surface-elevated)" }}>
-          <ul className="space-y-2 text-sm">
-            <li className="px-2 py-1 rounded" style={{ background: "var(--sidebar-active-bg)", color: "var(--sidebar-active)" }}>Dashboard</li>
-            <li className="px-2 py-1">Games</li>
-            <li className="px-2 py-1">Settings</li>
-          </ul>
-        </aside>
-        <main className="flex-1 p-4">
-          <h2 className="text-xl font-semibold mb-2" style={{ color: "var(--text)" }}>Welcome back</h2>
-          <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>Recent activity and quick actions.</p>
-          <div className="border rounded p-4 mb-3" style={{ borderColor: "var(--border)" }}>
-            <h3 className="font-semibold mb-2">Card title</h3>
-            <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>Some descriptive content.</p>
-            <button className="px-3 py-1 rounded text-white" style={{ background: "var(--primary)" }}>Primary action</button>
-            <button className="ml-2 px-3 py-1 rounded border" style={{ borderColor: "var(--border)" }}>Secondary</button>
-          </div>
-          <input className="border rounded px-2 py-1 w-full" style={{ borderColor: "var(--border)" }} placeholder="Search…" />
-        </main>
-      </div>
-    </div>
-  )
-}
-```
-
-- [ ] **Step 3: Implement `GamePreview.tsx`**
+- [ ] **Step 5: Implement `GamePreview.tsx`**
 
 `app/src/components/branding/preview/GamePreview.tsx`:
 
@@ -3623,116 +3669,89 @@ export default function DashboardPreview({ draft }: { draft: DraftState }) {
 "use client"
 import { useEffect, useRef, useState } from "react"
 import type { DraftState } from "../BrandingEditor"
+import type { PreviewGameType } from "@/lib/branding/platform-defaults"
 
-type GameType = "crossword" | "wordsearch" | "wordgame"
-
-const SAMPLE_PUZZLES: Record<GameType, string> = {
-  crossword: "/preview-puzzles/crossword.json",
-  wordsearch: "/preview-puzzles/wordsearch.json",
-  wordgame: "/preview-puzzles/wordgame.json",
+const TAG_FOR: Record<PreviewGameType, string> = {
+  crossword:  "crossword-game",
+  wordsearch: "word-search-game",
+  wordgame:   "word-game",
 }
 
-export default function GamePreview({ draft }: { draft: DraftState }) {
-  const [type, setType] = useState<GameType>("crossword")
+const ENGINE_FOR: Record<PreviewGameType, string> = {
+  crossword:  "/crossword-engine.iife.js",
+  wordsearch: "/word-search-engine.iife.js",
+  wordgame:   "/word-game-engine.iife.js",
+}
+
+export default function GamePreview({ draft: _draft }: { draft: DraftState }) {
+  const [type, setType] = useState<PreviewGameType>("crossword")
   const hostRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    // Lazily load the IIFE for the chosen game type
     const id = `branding-preview-${type}-script`
     if (!document.getElementById(id)) {
       const s = document.createElement("script")
       s.id = id
-      s.src = `/${type}-engine.iife.js`
+      s.src = ENGINE_FOR[type]
       s.async = true
       document.body.appendChild(s)
     }
     if (!hostRef.current) return
     hostRef.current.innerHTML = ""
-    const tag =
-      type === "crossword" ? "crossword-game" :
-      type === "wordsearch" ? "word-search-game" : "word-game"
-    const el = document.createElement(tag)
+    const el = document.createElement(TAG_FOR[type])
     el.setAttribute("puzzle-id", "preview")
-    el.setAttribute("api-url", SAMPLE_PUZZLES[type])
+    el.setAttribute("api-url", `/api/preview/games?type=${type}`)
     hostRef.current.appendChild(el)
   }, [type])
 
   return (
     <div>
-      <select
-        className="mb-3 border rounded px-2 py-1"
-        value={type}
-        onChange={(e) => setType(e.target.value as GameType)}
-      >
-        <option value="crossword">Crossword</option>
-        <option value="wordsearch">Word search</option>
-        <option value="wordgame">Word game</option>
-      </select>
+      <label className="block mb-3 text-sm">
+        Game type:{" "}
+        <select
+          className="border rounded px-2 py-1"
+          value={type}
+          onChange={(e) => setType(e.target.value as PreviewGameType)}
+        >
+          <option value="crossword">Crossword</option>
+          <option value="wordsearch">Word search</option>
+          <option value="wordgame">Word game</option>
+        </select>
+      </label>
       <div ref={hostRef} className="border rounded p-2" style={{ borderColor: "var(--border)" }} />
-      {/* Note: branding cascades from the parent's data-brand-preview wrapper via CSS vars */}
+      {/* Branding cascades from the parent's data-brand-preview wrapper via CSS vars */}
     </div>
   )
 }
 ```
 
-Also create three sample puzzle JSON files under `app/public/preview-puzzles/`:
-- `crossword.json`, `wordsearch.json`, `wordgame.json` — minimal valid puzzles. (Copy any small existing puzzle from `app/data/` or hand-author a tiny grid; the file just needs to satisfy each game's expected shape.)
+NO semicolons.
 
-- [ ] **Step 4: Implement `LoginPreview.tsx`**
+The `_draft` parameter is currently unused — `GamePreview` doesn't need it because branding is applied by the parent wrapper. Kept in the signature for symmetry with the section components (and so editor logo/imagery from `draft.logoPath` could be displayed alongside the game later if useful).
 
-`app/src/components/branding/preview/LoginPreview.tsx`:
+⚠️ **Compatibility check before writing:** the IIFE Web Components currently set `api-url` to a URL that they `fetch(...)` directly. Verify they pass cookies (`credentials: "same-origin"` or default `"include"`-equivalent — they're cross-origin from a CDN normally, but here they're same-origin to the dashboard so default behaviour suffices). Skim `shared/game-lib/api-client.js` to confirm. If the components currently strip cookies or use a hardcoded API path that ignores `api-url` for some calls, this approach won't work; fall back to seeding the platform org with an `apiToken` and passing it via the `token` attribute on the Web Component.
 
-```tsx
-"use client"
-import type { DraftState } from "../BrandingEditor"
-
-export default function LoginPreview({ draft }: { draft: DraftState }) {
-  return (
-    <div className="flex items-center justify-center py-12" style={{ background: "var(--surface)" }}>
-      <div
-        className="w-80 p-6 rounded border"
-        style={{ borderColor: "var(--border)", background: "var(--surface-elevated)" }}
-      >
-        {draft.logoPath ? (
-          <img src={`/api/uploads/${draft.logoPath}`} alt="" className="h-10 mb-4 mx-auto" />
-        ) : (
-          <div className="text-center font-bold text-2xl mb-4" style={{ color: "var(--primary)" }}>Brand</div>
-        )}
-        <div className="space-y-3">
-          <input
-            placeholder="Email"
-            className="w-full border rounded px-3 py-2"
-            style={{ borderColor: "var(--border)" }}
-          />
-          <input
-            placeholder="Password"
-            type="password"
-            className="w-full border rounded px-3 py-2"
-            style={{ borderColor: "var(--border)" }}
-          />
-          <button
-            className="w-full py-2 rounded text-white"
-            style={{ background: "var(--primary)" }}
-          >
-            Sign in
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-```
-
-- [ ] **Step 5: Smoke test live preview**
-
-`yarn dev`. Open the editor. Drag the primary color picker — confirm the Dashboard preview's button + sidebar-active highlight track in real time. Switch to the Game tab, confirm the Web Component mounts and re-themes. Switch to the Login tab, confirm the login card uses the brand colors.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Smoke test live preview**
 
 ```bash
 cd /home/mindaugas/projects/brain-games
-git add app/src/components/branding/BrandingPreviewPane.tsx app/src/components/branding/preview app/public/preview-puzzles
-git commit -m "feat(branding): wire live preview pane (Dashboard + Game + Login)"
+./dev.sh dev
+```
+
+1. Log in. Navigate to `/dashboard/branding/<id>/edit`.
+2. Confirm the right pane shows a real crossword game (the seeded "Welcome" puzzle), not a mockup.
+3. Drag the primary color picker — confirm the game's accents (selection, current cell, etc.) re-theme in real time.
+4. Open DevTools → inspect the game element → confirm CSS vars on the `[data-brand-preview]` wrapper match the editor's current draft.
+5. Switch the game-type dropdown to "Word search" — the wordsearch IIFE loads, mounts, and shows the seeded puzzle. Brand re-applies.
+6. Switch to "Word game" — same.
+7. Refresh the page, confirm the seeded puzzles still load (idempotent seed didn't duplicate or break anything).
+
+- [ ] **Step 7: Commit**
+
+```bash
+cd /home/mindaugas/projects/brain-games
+git add app/src/lib/branding/platform-defaults.ts app/src/app/api/preview/games app/src/components/branding/BrandingPreviewPane.tsx app/src/components/branding/preview app/src/db/index.ts
+git commit -m "feat(branding): wire game-only live preview with seeded platform-default puzzles"
 ```
 
 ---
@@ -3786,11 +3805,13 @@ git commit -m "chore: lint cleanup after branding overhaul"
 
 `./dev.sh dev`. Walk through every check in the spec's Testing → Manual section:
 
-- [ ] Editor live-preview parity: change primary color, preview's Dashboard tab updates within ~50ms; Game tab's Web Component re-themes too.
+- [ ] Editor live-preview parity: change primary color, the Game preview's Web Component re-themes within ~50ms.
+- [ ] Switch the game-type dropdown in the preview pane through all 3 types (crossword/wordsearch/wordgame), confirm each loads the seeded platform-default puzzle and applies the brand.
 - [ ] Cross-tab draft conflict: open the same brand in two tabs, edit in both, confirm one tab gets a 409 (alert message appears).
 - [ ] Publish: change brand in editor, publish, navigate to `/play?id=...&type=...` for an org game, confirm the new brand renders on the live game.
 - [ ] Multi-org dashboard: log in as a user in two orgs, switch active org, confirm dashboard chrome re-themes (or hard-navigates if the org-switcher uses navigation).
 - [ ] User opt-out: enable `usePlatformChrome` in settings, confirm dashboard chrome reverts to platform default while game previews still re-theme.
+- [ ] Platform-default seed idempotency: restart the dev server twice; confirm `[migrate] seeding platform-default org` log appears only on the first run, never on subsequent runs.
 
 - [ ] **Step 2: Push branch**
 

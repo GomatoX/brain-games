@@ -1,6 +1,6 @@
 import { getAuthenticatedUser } from "@/lib/auth-server";
 import { db } from "@/db";
-import { organizations, branding } from "@/db/schema";
+import { organizations, branding, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import SettingsContent from "@/components/SettingsContent";
 
@@ -8,7 +8,7 @@ export default async function SettingsPage() {
   const user = await getAuthenticatedUser();
   const isOwner = user.orgRole === "owner";
 
-  const [org, presets] = await Promise.all([
+  const [org, presets, userRow] = await Promise.all([
     db
       .select({
         language: organizations.defaultLanguage,
@@ -28,6 +28,12 @@ export default async function SettingsPage() {
       .from(branding)
       .where(eq(branding.orgId, user.orgId))
       .orderBy(desc(branding.createdAt)),
+    db
+      .select({ usePlatformChrome: users.usePlatformChrome })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1)
+      .then((rows) => rows[0]),
   ]);
 
   const initialSettings = {
@@ -38,6 +44,7 @@ export default async function SettingsPage() {
     share_image_url: org?.shareImageUrl || "",
     share_title: org?.shareTitle || "",
     share_description: org?.shareDescription || "",
+    use_platform_chrome: userRow?.usePlatformChrome ?? false,
   };
 
   const initialBrandingOptions = presets.map((b) => ({

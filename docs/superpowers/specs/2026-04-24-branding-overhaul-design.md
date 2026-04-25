@@ -140,9 +140,9 @@ Routes:
 │ Topbar: < Back   "Coral Theme" (name)    [Discard] [Publish●]   │
 ├──────────────────────────────┬───────────────────────────────────┤
 │ EDITOR (scroll, ~480px)      │ PREVIEW (sticky, fills viewport)  │
-│  ▼ Identity                  │  [Dashboard] [Game] [Login]       │
+│  ▼ Identity                  │  Game type: [crossword ▾]         │
 │  ▼ Theme (preset + 3 seeds)  │                                   │
-│  ▼ Typography                │  ← live preview renders here      │
+│  ▼ Typography                │  ← real game embed renders here   │
 │  ▼ Spacing                   │                                   │
 │  ▼ Components                │                                   │
 │  ▼ Imagery                   │                                   │
@@ -153,19 +153,18 @@ Routes:
 
 `▼` sections open by default; `▶` are collapsed.
 
-**Edit page (<1024px):** editor stacks full-width; a floating "Preview" button bottom-right opens a sheet containing the tabbed preview.
+**Edit page (<1024px):** editor stacks full-width; a floating "Preview" button bottom-right opens a sheet containing the preview.
 
-**Preview tabs:**
-- **Dashboard** — a representative slice (sidebar fragment + topbar + a card with buttons / inputs / text). Composed of the same React components used in the real dashboard so the preview is authentic. Not the literal `/dashboard` page.
-- **Game** — mounts a real Web Component (`<crossword-game>` by default; small dropdown switches between crossword / wordsearch / wordgame). Loads a hardcoded sample puzzle; no API call.
-- **Login** — a representative login card (logo + email/password + button) using the same components as the real login page.
+**Preview pane — game-only.** The preview shows a real game embed (the same Web Component customers see at `/play`) running against a platform-default sample puzzle. A small dropdown above the preview switches the game type (crossword / wordsearch / wordgame); the puzzle for each is the corresponding platform-default seed. No Dashboard or Login mockups — those tabs were cut to keep the preview focused. Admins primarily care about how the brand affects the embedded game; chrome customisation is automatic and visible the moment they navigate the dashboard.
+
+**Platform-default sample puzzles.** One row per game type seeded into the production DB at startup with a reserved `org_id = "__platform__"` (or sentinel value chosen during implementation). These rows are real game records with hand-authored small puzzles ("Welcome" crossword, mini wordsearch, sample wordgame). The preview pane fetches them via the existing `/api/public/games?type=X&id=<platformDefaultId>` path, so the preview exercises the same code path as production embeds. Brand-new orgs get the same preview as established ones; new branding presets work immediately.
 
 **Live update mechanism (in-process, no iframe, no postMessage):**
 
-1. Preview pane is a `<div data-brand-preview>` wrapper.
+1. Preview pane is a `<div data-brand-preview>` wrapper containing the mounted game Web Component.
 2. On every editor change, recompute the full token set from seeds + overrides via `culori`.
 3. Set CSS vars on the wrapper element. CSS-var cascade applies to everything inside, including the mounted Web Component (the games' existing `applyBrandingFromData()` already uses `element.style.setProperty()` — the same approach scales to the wrapper level).
-4. React state cycles re-render the dashboard/login tabs.
+4. Switching game type dismounts the current Web Component and mounts the chosen one with the new platform-default puzzle ID.
 
 **Debounce:** 50ms on color picker drag (avoid layout-thrash). Instant on dropdown / radio changes. Autosave (separate, network) debounces at 800ms.
 

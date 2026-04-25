@@ -66,11 +66,6 @@ export default function RootLayout({
       </head>
       <body
         className={`${playfair.variable} ${inter.variable} ${ibmPlex.variable} antialiased`}
-        style={
-          {
-            "--platform-accent": platformConfig.accent,
-          } as React.CSSProperties
-        }
       >
         <Providers>{children}</Providers>
       </body>

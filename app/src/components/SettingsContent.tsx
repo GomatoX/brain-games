@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   PageHeader,
   Panel,
@@ -28,6 +29,7 @@ interface SettingsProps {
     share_image_url: string
     share_title: string
     share_description: string
+    use_platform_chrome: boolean
   }
   initialBrandingOptions: { id: string; name: string }[];
 }
@@ -61,6 +63,37 @@ export default function SettingsContent({
   const [shareDescription, setShareDescription] = useState(
     initialSettings.share_description,
   )
+  const [usePlatformChrome, setUsePlatformChrome] = useState(
+    initialSettings.use_platform_chrome,
+  )
+  const [chromeError, setChromeError] = useState("")
+  const [chromePending, setChromePending] = useState(false)
+  const router = useRouter()
+
+  async function handleChromeToggle(next: boolean) {
+    const previous = usePlatformChrome
+    setUsePlatformChrome(next)
+    setChromeError("")
+    setChromePending(true)
+    try {
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usePlatformChrome: next }),
+      })
+      if (!res.ok) {
+        setUsePlatformChrome(previous)
+        setChromeError("Failed to update appearance preference. Please try again.")
+        return
+      }
+      router.refresh()
+    } catch {
+      setUsePlatformChrome(previous)
+      setChromeError("Failed to update appearance preference. Please try again.")
+    } finally {
+      setChromePending(false)
+    }
+  }
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -235,6 +268,33 @@ export default function SettingsContent({
               </p>
             </div>
           )}
+        </Panel>
+
+        {/* Appearance (per-user) */}
+        <Panel>
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+            <div className="border-b border-[#f1f5f9] pb-4">
+              <h2 className="text-lg font-semibold text-navy-900">Appearance</h2>
+              <p className="text-sm text-[#94a3b8] mt-1">
+                Controls how the dashboard chrome looks for you.
+              </p>
+            </div>
+            <label className="flex items-start gap-3 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={usePlatformChrome}
+                disabled={chromePending}
+                onChange={(e) => void handleChromeToggle(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Use the platform default appearance (don&apos;t apply my organization&apos;s brand to the dashboard).
+              </span>
+            </label>
+            {chromeError && (
+              <p className="text-xs text-red-600">{chromeError}</p>
+            )}
+          </div>
         </Panel>
 
         {/* Security & Access */}
