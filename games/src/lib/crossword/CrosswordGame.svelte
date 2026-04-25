@@ -1055,7 +1055,7 @@
   }
 </script>
 
-<div class="crossword-container {themeClass}" bind:this={containerEl}>
+<div class="crossword-container {themeClass}" data-brand-token="surface" bind:this={containerEl}>
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>

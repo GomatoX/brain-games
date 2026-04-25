@@ -100,6 +100,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
   }, [initialDraft, live])
 
   const [draft, setDraft] = useState<DraftState>(startState)
+  const [hoveredToken, setHoveredToken] = useState<string | null>(null)
   const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft)
   const [saveState, setSaveState] = useState<SaveState>("idle")
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(initialDraft?.updatedAt ?? null)
@@ -265,10 +266,10 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
           <ComponentsSection draft={draft} update={update} />
           <ImagerySection draft={draft} update={update} />
           <CustomCssSection draft={draft} update={update} />
-          <AdvancedSection draft={draft} update={update} />
+          <AdvancedSection draft={draft} update={update} onTokenHover={setHoveredToken} />
         </aside>
         <section className="flex-1 overflow-y-auto">
-          <BrandingPreviewPane draft={draft} />
+          <BrandingPreviewPane draft={draft} hoveredToken={hoveredToken} />
         </section>
       </div>
     </div>

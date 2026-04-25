@@ -11,7 +11,7 @@
   }
 </script>
 
-<div class="clue-banner">
+<div class="clue-banner" data-brand-token="highlight">
   <button
     class="banner-arrow"
     on:click={() => navigate(-1)}

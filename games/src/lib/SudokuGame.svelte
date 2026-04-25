@@ -312,7 +312,7 @@
   }
 </script>
 
-<div class="sudoku-game {themeClass}" bind:this={containerEl}>
+<div class="sudoku-game {themeClass}" data-brand-token="surface" bind:this={containerEl}>
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
@@ -365,18 +365,32 @@
           <div class="sudoku-grid">
             {#each board as row, rowIndex}
               {#each row as cell, colIndex}
+                {@const highlight = getCellHighlight(rowIndex, colIndex)}
+                {@const isSelected = highlight === "selected"}
+                {@const isHighlighted =
+                  highlight === "related" || highlight === "same-number"}
                 <div
-                  class="sudoku-cell {getCellHighlight(rowIndex, colIndex)}"
+                  class="sudoku-cell {highlight}"
                   class:given={isGiven(rowIndex, colIndex)}
                   class:conflict={conflicts.has(`${rowIndex},${colIndex}`)}
                   class:box-right={colIndex === 2 || colIndex === 5}
                   class:box-bottom={rowIndex === 2 || rowIndex === 5}
+                  data-brand-token={
+                    isSelected
+                      ? "selection"
+                      : isHighlighted
+                        ? "highlight"
+                        : "cell-bg"
+                  }
                   role="button"
                   tabindex="0"
                   on:click={() => handleCellClick(rowIndex, colIndex)}
                   on:keydown={(e) =>
                     e.key === "Enter" && handleCellClick(rowIndex, colIndex)}
                 >
+                  {#if isSelected}
+                    <span class="cell-ring-marker" data-brand-token="selection-ring" aria-hidden="true"></span>
+                  {/if}
                   {#if cell !== 0}
                     <span class="cell-value">{cell}</span>
                   {:else if notes[`${rowIndex},${colIndex}`]?.size > 0}
@@ -788,6 +802,12 @@
     cursor: pointer;
     transition: background-color 0.1s ease;
     user-select: none;
+  }
+
+  .cell-ring-marker {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
 
   .dark-theme .sudoku-cell {

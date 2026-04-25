@@ -352,6 +352,7 @@
 <div
   class="word-search-container"
   class:dark={theme === "dark"}
+  data-brand-token="surface"
   role="application"
   aria-label="Word Search Game"
   bind:this={containerEl}
@@ -391,7 +392,7 @@
       <!-- Main Content: Grid Section (reuses crossword grid-section pattern) -->
       <div class="grid-section">
         <!-- Header banner (reuses crossword ClueBanner pattern) -->
-        <div class="clue-banner">
+        <div class="clue-banner" data-brand-token="highlight">
           <div class="clue-banner-content">
             <span class="clue-banner-text font-serif">{title}</span>
             <div class="content-meta">
@@ -443,6 +444,13 @@
                     class:found={isFound}
                     data-row={rowIdx}
                     data-col={colIdx}
+                    data-brand-token={
+                      isFound
+                        ? "correct"
+                        : isSelecting
+                          ? "selection"
+                          : "cell-bg"
+                    }
                     role="gridcell"
                     aria-label="Letter {letter}"
                   >

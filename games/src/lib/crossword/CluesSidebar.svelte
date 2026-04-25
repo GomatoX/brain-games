@@ -22,12 +22,14 @@
     <h4>{$t("crossword.across")}</h4>
     <ul>
       {#each allClues.filter((c) => c.direction === "across") as clue}
+        {@const isActive = currentClue &&
+          currentClue.number === clue.number &&
+          currentClue.direction === clue.direction}
         <li
           class="clue-item"
-          class:active={currentClue &&
-            currentClue.number === clue.number &&
-            currentClue.direction === clue.direction}
+          class:active={isActive}
           class:solved={isSolved(clue)}
+          data-brand-token={isActive ? "highlight" : undefined}
           on:click={() => handleClick(clue)}
           role="button"
           tabindex="0"
@@ -44,12 +46,14 @@
     <h4>{$t("crossword.down")}</h4>
     <ul>
       {#each allClues.filter((c) => c.direction === "down") as clue}
+        {@const isActive = currentClue &&
+          currentClue.number === clue.number &&
+          currentClue.direction === clue.direction}
         <li
           class="clue-item"
-          class:active={currentClue &&
-            currentClue.number === clue.number &&
-            currentClue.direction === clue.direction}
+          class:active={isActive}
           class:solved={isSolved(clue)}
+          data-brand-token={isActive ? "highlight" : undefined}
           on:click={() => handleClick(clue)}
           role="button"
           tabindex="0"

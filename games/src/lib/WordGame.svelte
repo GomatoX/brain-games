@@ -192,7 +192,7 @@
   }
 </script>
 
-<div class="word-game {themeClass}" bind:this={containerEl}>
+<div class="word-game {themeClass}" data-brand-token="surface" bind:this={containerEl}>
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
@@ -222,12 +222,16 @@
       <!-- Grid -->
       <div class="guess-grid" style="--word-length: {wordLength}">
         {#each Array(maxAttempts) as _, rowIndex}
-          <div class="guess-row">
+          {@const isActiveRow = rowIndex === guesses.length}
+          <div
+            class="guess-row"
+            data-brand-token={isActiveRow ? "selection-ring" : undefined}
+          >
             {#each Array(wordLength) as _, colIndex}
               {@const guess = guesses[rowIndex]}
               {@const letter = guess
                 ? guess.word[colIndex]
-                : rowIndex === guesses.length
+                : isActiveRow
                   ? currentGuess[colIndex]
                   : ""}
               {@const state = guess ? guess.result[colIndex] : ""}
@@ -237,8 +241,17 @@
                 class:correct={state === "correct"}
                 class:present={state === "present"}
                 class:absent={state === "absent"}
-                class:current={rowIndex === guesses.length &&
+                class:current={isActiveRow &&
                   colIndex < currentGuess.length}
+                data-brand-token={
+                  state === "correct"
+                    ? "correct"
+                    : state === "present"
+                      ? "present"
+                      : state === "absent"
+                        ? "absent"
+                        : "cell-bg"
+                }
               >
                 {letter || ""}
               </div>

@@ -137,21 +137,35 @@
   <div
     class="crossword-grid"
     bind:this={gridEl}
+    data-brand-token="grid-border"
     style="--grid-cols: {grid[0]?.length || 1}; --grid-rows: {grid.length || 1}"
   >
     {#each grid as row, rowIndex}
       {#each row as cell, colIndex}
         {@const cellKey = `${rowIndex},${colIndex}`}
         {@const isLocked = lockedCells.has(cellKey)}
+        {@const isSelected = !blurred &&
+          selectedCell?.row === rowIndex &&
+          selectedCell?.col === colIndex}
+        {@const isWordHighlighted = !blurred && selectedWordCells.has(cellKey)}
         <div
           class="cell"
           class:blocked={cell.isBlocked}
-          class:selected={!blurred &&
-            selectedCell?.row === rowIndex &&
-            selectedCell?.col === colIndex}
-          class:word-highlighted={!blurred && selectedWordCells.has(cellKey)}
+          class:selected={isSelected}
+          class:word-highlighted={isWordHighlighted}
           class:main-word-cell={mainWordCellSet.has(cellKey)}
           class:locked={isLocked}
+          data-brand-token={
+            cell.isBlocked
+              ? "cell-blocked"
+              : isLocked
+                ? "correct"
+                : isSelected
+                  ? "selection"
+                  : isWordHighlighted
+                    ? "highlight"
+                    : "cell-bg"
+          }
           role="button"
           tabindex={cell.isBlocked || blurred ? -1 : 0}
           on:click={() => handleCellClick(rowIndex, colIndex)}
@@ -163,6 +177,9 @@
           {/if}
           {#if mainWordCellSet.has(cellKey)}
             <span class="main-word-dot"></span>
+          {/if}
+          {#if isSelected}
+            <span class="cell-ring-marker" data-brand-token="selection-ring" aria-hidden="true"></span>
           {/if}
           {#if !cell.isBlocked}
             <input
@@ -350,6 +367,12 @@
     aspect-ratio: 1;
     transition: background-color 0.1s ease;
     border: 0.5px solid var(--grid-border, var(--border-color, #e2e8f0));
+  }
+
+  .cell-ring-marker {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
 
   :global(.dark-theme) .cell {
