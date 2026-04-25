@@ -65,10 +65,15 @@
     align-items: center;
     gap: 12px;
     background: var(--cell-highlighted, #e8ebfa);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 12px 12px 0 0;
     padding: 8px 16px;
     min-height: 52px;
+  }
+
+  :global(.dark-theme) .clue-banner {
+    background: var(--cell-highlighted, rgba(194, 94, 64, 0.15));
+    border-color: var(--border-color, #334155);
   }
 
   .banner-arrow {
@@ -76,7 +81,7 @@
     border: none;
     cursor: pointer;
     font-size: 1.4rem;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     transition: all 0.15s ease;
     flex-shrink: 0;
     line-height: 1;
@@ -85,9 +90,17 @@
     padding: 4px;
   }
 
+  :global(.dark-theme) .banner-arrow {
+    color: var(--text-primary, #f1f5f9);
+  }
+
   .banner-arrow:hover {
     background: rgba(0, 0, 0, 0.05);
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .banner-arrow:hover {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .clue-banner-content {
@@ -99,16 +112,24 @@
   .clue-banner-direction {
     display: block;
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
     margin-bottom: 2px;
+  }
+
+  :global(.dark-theme) .clue-banner-direction {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .clue-banner-text {
     display: block;
     font-size: 0.95rem;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  :global(.dark-theme) .clue-banner-text {
+    color: var(--text-primary, #f1f5f9);
   }
 </style>

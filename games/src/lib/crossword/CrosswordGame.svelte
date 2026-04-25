@@ -1177,45 +1177,25 @@
     padding: 0;
     margin: 0 auto;
     max-width: 1440px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-primary, #0f172a);
   }
 
-  /* Theme Colors */
+  /* Branded CSS variables now flow in from a parent (dashboard wrapper or
+     server-rendered embed). Use-site rules below carry the previous
+     light-theme defaults as fallbacks. Paired `.dark-theme <selector>` rules
+     override fallbacks for properties whose dark-mode default differed. */
   .light-theme {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f3f4f6;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --border-color: #e2e8f0;
-    --cell-bg: #ffffff;
-    --cell-blocked: #1a1a1a;
-    --cell-selected-bg: #fcece8;
-    --cell-selected-ring: #c25e40;
-    --cell-highlighted: #fcece8;
-    --accent: #c25e40;
-    --accent-hover: #a0492d;
-    --accent-light: #fcece8;
-    --correct: #007a3c;
-    --correct-light: #e2f3ea;
+    /* class kept only for non-token concerns */
   }
 
   .dark-theme {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --border-color: #334155;
-    --cell-bg: #1e293b;
-    --cell-blocked: #0f172a;
-    --cell-selected-bg: rgba(194, 94, 64, 0.2);
-    --cell-selected-ring: #c25e40;
-    --cell-highlighted: rgba(194, 94, 64, 0.15);
-    --accent: #c25e40;
-    --accent-hover: #a0492d;
-    --accent-light: rgba(194, 94, 64, 0.15);
-    --correct: #10b981;
-    --correct-light: rgba(16, 185, 129, 0.15);
+    /* class kept only for non-token concerns */
+  }
+
+  .dark-theme .crossword-container {
+    background: var(--bg-primary, #0f172a);
+    color: var(--text-primary, #f1f5f9);
   }
 
   /* Loading & Error */
@@ -1229,11 +1209,15 @@
   .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid var(--border-color);
+    border: 4px solid var(--border-color, #e2e8f0);
     border-top-color: #64748b;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 16px;
+  }
+
+  .dark-theme .spinner {
+    border: 4px solid var(--border-color, #334155);
   }
 
   @keyframes spin {
@@ -1288,9 +1272,9 @@
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-primary, #0f172a);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 8px;
     font-size: 0.875rem;
     font-weight: 500;
@@ -1299,9 +1283,15 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
+  .dark-theme .action-btn {
+    background: var(--bg-primary, #0f172a);
+    color: var(--text-primary, #f1f5f9);
+    border-color: var(--border-color, #334155);
+  }
+
   .action-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--accent, #c25e40);
+    color: var(--accent, #c25e40);
   }
 
   .preview-actions {
@@ -1311,12 +1301,18 @@
 
   .seed-display {
     font-size: 0.85rem;
-    color: var(--text-secondary);
-    background: var(--bg-primary);
+    color: var(--text-secondary, #64748b);
+    background: var(--bg-primary, #ffffff);
     padding: 6px 12px;
     border-radius: 4px;
     font-family: monospace;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  .dark-theme .seed-display {
+    color: var(--text-secondary, #94a3b8);
+    background: var(--bg-primary, #0f172a);
+    border-color: var(--border-color, #334155);
   }
 
   /* Feedback */
@@ -1355,10 +1351,14 @@
   }
 
   code {
-    background: var(--bg-secondary);
+    background: var(--bg-secondary, #f3f4f6);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.85em;
+  }
+
+  .dark-theme code {
+    background: var(--bg-secondary, #1e293b);
   }
 
   /* Grid area container for overlay positioning */

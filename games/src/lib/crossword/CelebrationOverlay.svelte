@@ -128,6 +128,11 @@
     text-align: center;
   }
 
+  :global(.dark-theme) .celebration {
+    background: var(--correct-light, rgba(16, 185, 129, 0.15));
+    border-color: var(--correct, #10b981);
+  }
+
   @keyframes celebrationPop {
     0% {
       opacity: 0;
@@ -155,6 +160,10 @@
     flex-shrink: 0;
   }
 
+  :global(.dark-theme) .check-icon {
+    color: var(--correct, #10b981);
+  }
+
   .celebration h2 {
     font-family: var(--font-serif);
     font-size: 1.75rem;
@@ -162,10 +171,18 @@
     margin: 0;
   }
 
+  :global(.dark-theme) .celebration h2 {
+    color: var(--correct, #10b981);
+  }
+
   .celebration p {
     font-family: var(--font-sans);
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     margin: 0 0 16px;
+  }
+
+  :global(.dark-theme) .celebration p {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .celebration-actions {
@@ -182,6 +199,10 @@
     background: var(--correct, #007a3c);
     color: #ffffff;
     padding: 10px;
+  }
+
+  :global(.dark-theme) .time-badge {
+    background: var(--correct, #10b981);
   }
 
   .time-label {
@@ -205,7 +226,7 @@
     gap: 10px;
     padding: 8px 12px;
     background: transparent;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     border: 1px solid var(--correct, #007a3c);
     border-radius: 8px;
     font-family: var(--font-sans);
@@ -216,13 +237,26 @@
     transition: all 0.15s ease;
   }
 
+  :global(.dark-theme) .share-btn {
+    color: var(--text-primary, #f1f5f9);
+    border-color: var(--correct, #10b981);
+  }
+
   .share-btn svg {
     color: var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .share-btn svg {
+    color: var(--correct, #10b981);
   }
 
   .share-btn:hover {
     background: var(--correct, #007a3c);
     color: #ffffff;
+  }
+
+  :global(.dark-theme) .share-btn:hover {
+    background: var(--correct, #10b981);
   }
 
   .share-btn:hover svg {
@@ -261,6 +295,11 @@
     animation: slideUp 0.2s ease;
   }
 
+  :global(.dark-theme) .share-modal {
+    background: var(--bg-primary, #0f172a);
+    border-color: var(--border-color, #334155);
+  }
+
   @keyframes slideUp {
     from {
       opacity: 0;
@@ -285,8 +324,16 @@
     line-height: 1;
   }
 
+  :global(.dark-theme) .modal-close {
+    color: var(--text-secondary, #94a3b8);
+  }
+
   .modal-close:hover {
     color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .modal-close:hover {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .modal-title {
@@ -297,11 +344,19 @@
     margin: 0 0 4px;
   }
 
+  :global(.dark-theme) .modal-title {
+    color: var(--text-primary, #f1f5f9);
+  }
+
   .modal-subtitle {
     font-family: var(--font-sans);
     font-size: 0.875rem;
     color: var(--text-secondary, #64748b);
     margin: 0 0 16px;
+  }
+
+  :global(.dark-theme) .modal-subtitle {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .url-row {
@@ -322,8 +377,18 @@
     min-width: 0;
   }
 
+  :global(.dark-theme) .share-url-input {
+    border-color: var(--border-color, #334155);
+    color: var(--text-primary, #f1f5f9);
+    background: var(--bg-secondary, #1e293b);
+  }
+
   .share-url-input:focus {
     border-color: var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .share-url-input:focus {
+    border-color: var(--correct, #10b981);
   }
 
   .copy-btn {
@@ -338,6 +403,10 @@
     cursor: pointer;
     white-space: nowrap;
     transition: background 0.15s ease;
+  }
+
+  :global(.dark-theme) .copy-btn {
+    background: var(--correct, #10b981);
   }
 
   .copy-btn:hover {

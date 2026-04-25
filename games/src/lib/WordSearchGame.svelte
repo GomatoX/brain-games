@@ -518,30 +518,24 @@
 
   /* ─── Container ─────────────────────────────────────── */
   .word-search-container {
-    /* Theme Colors (matching crossword light-theme) */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f3f4f6;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --border-color: #e2e8f0;
-    --cell-bg: #ffffff;
-    --cell-blocked: #1a1a1a;
-    --cell-highlighted: #fcece8;
-    --accent: #c25e40;
-    --accent-hover: #a0492d;
-    --accent-light: #fcece8;
-    --correct: #007a3c;
-    --correct-light: #e2f3ea;
+    /* Branded CSS variables flow in from the parent. Use-site fallbacks
+       below preserve the previous light defaults. `--correct-hover` is
+       not in the branded pipeline; it stays declared here. */
     --correct-hover: #005c2d;
 
     font-family: var(--font-sans);
     padding: 0;
     margin: 0 auto;
     max-width: 1440px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-primary, #0f172a);
     user-select: none;
     -webkit-user-select: none;
+  }
+
+  :global(.dark-theme) .word-search-container {
+    background: var(--bg-primary, #0f172a);
+    color: var(--text-primary, #f1f5f9);
   }
 
   /* ─── Loading & Error ───────────────────────────────── */
@@ -559,6 +553,10 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 16px;
+  }
+
+  :global(.dark-theme) .spinner {
+    border-color: var(--border-color, #334155);
   }
 
   @keyframes spin {
@@ -604,12 +602,21 @@
     border-radius: 3px;
   }
 
+  :global(.dark-theme) .clues-section::-webkit-scrollbar-thumb {
+    background-color: var(--border-color, #334155);
+  }
+
   .clue-box {
     background: var(--bg-primary, #ffffff);
     border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 12px;
     padding: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  :global(.dark-theme) .clue-box {
+    background: var(--bg-primary, #0f172a);
+    border-color: var(--border-color, #334155);
   }
 
   .clue-box h4 {
@@ -622,6 +629,10 @@
     margin: 0 0 6px;
     padding-bottom: 0;
     border-bottom: none;
+  }
+
+  :global(.dark-theme) .clue-box h4 {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .clue-box ul {
@@ -642,10 +653,19 @@
     background: var(--bg-secondary, #f3f4f6);
   }
 
+  :global(.dark-theme) .clue-item:hover {
+    background: var(--bg-secondary, #1e293b);
+  }
+
   /* Solved = green highlight + strikethrough (matches crossword) */
   .clue-item.solved {
     background: var(--correct-light, #e2f3ea);
     border-left: 1px solid var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .clue-item.solved {
+    background: var(--correct-light, rgba(16, 185, 129, 0.15));
+    border-left-color: var(--correct, #10b981);
   }
 
   .clue-item.solved .clue-text {
@@ -653,8 +673,16 @@
     color: var(--text-secondary, #64748b);
   }
 
+  :global(.dark-theme) .clue-item.solved .clue-text {
+    color: var(--text-secondary, #94a3b8);
+  }
+
   .clue-item.solved .clue-num {
     color: var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .clue-item.solved .clue-num {
+    color: var(--correct, #10b981);
   }
 
   .clue-num {
@@ -668,10 +696,18 @@
     flex-shrink: 0;
   }
 
+  :global(.dark-theme) .clue-num {
+    color: var(--text-secondary, #94a3b8);
+  }
+
   .clue-text {
     font-size: 0.85rem;
     line-height: 1.5;
     color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .clue-text {
+    color: var(--text-primary, #f1f5f9);
   }
 
   /* ─── Grid Section (matches crossword) ──────────────── */
@@ -688,11 +724,16 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: var(--cell-highlighted);
-    border: 1px solid var(--border-color);
+    background: var(--cell-highlighted, #fcece8);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 12px 12px 0 0;
     padding: 8px 16px;
     min-height: 52px;
+  }
+
+  :global(.dark-theme) .clue-banner {
+    background: var(--cell-highlighted, rgba(194, 94, 64, 0.15));
+    border-color: var(--border-color, #334155);
   }
 
   .clue-banner-content {
@@ -708,7 +749,11 @@
   .clue-banner-text {
     display: block;
     font-size: 0.95rem;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .clue-banner-text {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .content-meta {
@@ -724,7 +769,11 @@
     font-family: var(--font-sans);
     font-size: 12px;
     line-height: 12px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
+  }
+
+  :global(.dark-theme) .meta-item {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .meta-icon {
@@ -746,8 +795,12 @@
     justify-content: center;
     gap: 16px;
     padding: 12px 0;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color, #e2e8f0);
     margin-top: 8px;
+  }
+
+  :global(.dark-theme) .history-nav {
+    border-top-color: var(--border-color, #334155);
   }
 
   .history-btn {
@@ -755,20 +808,26 @@
     align-items: center;
     gap: 4px;
     padding: 6px 14px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
+    background: var(--bg-primary, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 6px;
     font-family: var(--font-sans);
     font-size: 0.85rem;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     cursor: pointer;
     transition: all 0.15s ease;
   }
 
+  :global(.dark-theme) .history-btn {
+    background: var(--bg-primary, #0f172a);
+    border-color: var(--border-color, #334155);
+    color: var(--text-primary, #f1f5f9);
+  }
+
   .history-btn:hover:not(:disabled) {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--accent, #c25e40);
+    color: var(--accent, #c25e40);
   }
 
   .history-btn:disabled {
@@ -780,7 +839,11 @@
     font-family: var(--font-sans);
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
+  }
+
+  :global(.dark-theme) .history-count {
+    color: var(--text-secondary, #94a3b8);
   }
 
   /* ─── Grid Area (gray zone) ─────────────────────────── */
@@ -791,6 +854,10 @@
     padding: 16px;
     cursor: crosshair;
     touch-action: none;
+  }
+
+  :global(.dark-theme) .grid-area {
+    background: var(--bg-secondary, #1e293b);
   }
 
   .grid-wrapper {
@@ -812,6 +879,10 @@
     max-width: 100%;
   }
 
+  :global(.dark-theme) .grid {
+    background: var(--cell-blocked, #0f172a);
+  }
+
   .cell {
     display: flex;
     align-items: center;
@@ -825,9 +896,17 @@
     font-size: var(--cell-font, 20px);
   }
 
+  :global(.dark-theme) .cell {
+    background: var(--cell-bg, #1e293b);
+  }
+
   /* Fix: hover uses a subtle highlight, not black */
   .cell:hover:not(.found):not(.selecting) {
     background-color: var(--cell-highlighted, #fcece8);
+  }
+
+  :global(.dark-theme) .cell:hover:not(.found):not(.selecting) {
+    background-color: var(--cell-highlighted, rgba(194, 94, 64, 0.15));
   }
 
   .cell.selecting {
@@ -842,8 +921,16 @@
     background-color: var(--correct-light, #e2f3ea);
   }
 
+  :global(.dark-theme) .cell.found {
+    background-color: var(--correct-light, rgba(16, 185, 129, 0.15));
+  }
+
   .cell.found .cell-letter {
     color: var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .cell.found .cell-letter {
+    color: var(--correct, #10b981);
   }
 
   .cell-letter {
@@ -854,6 +941,10 @@
     line-height: 1;
     letter-spacing: 0.4px;
     color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .cell-letter {
+    color: var(--text-primary, #f1f5f9);
   }
 
   /* ─── Restart ───────────────────────────────────────── */
@@ -879,9 +970,19 @@
     font-family: var(--font-sans);
   }
 
+  :global(.dark-theme) .restart-btn {
+    color: var(--text-secondary, #94a3b8);
+    border-color: var(--border-color, #334155);
+  }
+
   .restart-btn:hover {
     border-color: var(--correct, #007a3c);
     color: var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .restart-btn:hover {
+    border-color: var(--correct, #10b981);
+    color: var(--correct, #10b981);
   }
 
   /* ─── Responsive (matches crossword breakpoint) ─────── */
