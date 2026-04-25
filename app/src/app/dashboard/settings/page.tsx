@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { organizations, branding, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import SettingsContent from "@/components/SettingsContent";
+import DashboardContainer from "@/components/DashboardContainer";
 
 export default async function SettingsPage() {
   const user = await getAuthenticatedUser();
@@ -53,10 +54,12 @@ export default async function SettingsPage() {
   }));
 
   return (
-    <SettingsContent
-      isOwner={isOwner}
-      initialSettings={initialSettings}
-      initialBrandingOptions={initialBrandingOptions}
-    />
+    <DashboardContainer>
+      <SettingsContent
+        isOwner={isOwner}
+        initialSettings={initialSettings}
+        initialBrandingOptions={initialBrandingOptions}
+      />
+    </DashboardContainer>
   );
 }

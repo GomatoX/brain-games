@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { users, organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import TeamContent from "@/components/TeamContent";
+import DashboardContainer from "@/components/DashboardContainer";
 
 export default async function TeamPage() {
   const user = await getAuthenticatedUser();
@@ -48,5 +49,9 @@ export default async function TeamPage() {
     isOwner: user.orgRole === "owner",
   };
 
-  return <TeamContent initialData={initialData} />;
+  return (
+    <DashboardContainer>
+      <TeamContent initialData={initialData} />
+    </DashboardContainer>
+  );
 }

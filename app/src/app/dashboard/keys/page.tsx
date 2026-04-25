@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import KeysContent from "@/components/KeysContent";
+import DashboardContainer from "@/components/DashboardContainer";
 
 export default async function KeysPage() {
   const { user, token } = await getAuthenticatedUserWithToken();
@@ -16,10 +17,12 @@ export default async function KeysPage() {
   const initialLang = org?.language || "lt";
 
   return (
-    <KeysContent
-      initialToken={token}
-      orgId={user.orgId}
-      initialLang={initialLang}
-    />
+    <DashboardContainer>
+      <KeysContent
+        initialToken={token}
+        orgId={user.orgId}
+        initialLang={initialLang}
+      />
+    </DashboardContainer>
   );
 }

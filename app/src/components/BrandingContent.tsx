@@ -100,7 +100,7 @@ export default function BrandingContent({
   }
 
   return (
-    <div>
+    <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-10 pb-24">
       <PageHeader
         title="Branding"
         description="Create and manage reusable brand presets for your games."
@@ -130,7 +130,7 @@ export default function BrandingContent({
           </div>
         </Panel>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {presets.map((p) => {
             const primary = p.tokens?.primary ?? FALLBACK_PRIMARY
             const surface = p.tokens?.surface ?? FALLBACK_SURFACE
