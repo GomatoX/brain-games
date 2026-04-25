@@ -10,6 +10,7 @@ import {
 } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import DashboardContent from "@/components/DashboardContent"
+import DashboardContainer from "@/components/DashboardContainer"
 import { promoteScheduledGames } from "@/lib/schedule-publisher"
 
 export default async function DashboardPage() {
@@ -126,11 +127,13 @@ export default async function DashboardPage() {
   const initialLang = orgRow?.language || "lt"
 
   return (
-    <DashboardContent
-      initialGames={games}
-      initialLang={initialLang}
-      orgId={user.orgId}
-    />
+    <DashboardContainer>
+      <DashboardContent
+        initialGames={games}
+        initialLang={initialLang}
+        orgId={user.orgId}
+      />
+    </DashboardContainer>
   )
 }
 
