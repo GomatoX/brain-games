@@ -127,12 +127,6 @@ export default function BrandingContent({
         }
       />
 
-      {deleteError && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-[4px]">
-          {deleteError}
-        </p>
-      )}
-
       {presets.length === 0 ? (
         <Panel>
           <div className="p-12 text-center">
@@ -305,6 +299,11 @@ export default function BrandingContent({
               </p>
             )}
             <p className="text-xs text-[#64748b]">This cannot be undone.</p>
+            {deleteError && (
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-[4px]">
+                {deleteError}
+              </p>
+            )}
             <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
               <Button variant="outline" onClick={handleCancelDelete} disabled={deletingId === deleteTarget.id}>
                 Cancel
