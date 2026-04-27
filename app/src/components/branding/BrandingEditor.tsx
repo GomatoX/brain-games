@@ -83,22 +83,32 @@ const DEFAULT_COMPONENTS: BrandingComponents = {
 const AUTOSAVE_DEBOUNCE_MS = 800
 const JUST_SAVED_DISPLAY_MS = 1500
 
+const liveToDraft = (src: {
+  tokens: unknown
+  typography: unknown
+  spacing: unknown
+  components: unknown
+  logoPath: string | null
+  logoDarkPath: string | null
+  faviconPath: string | null
+  backgroundPath: string | null
+  ogImagePath: string | null
+  customCssGames: string | null
+}): DraftState => ({
+  tokens: (src.tokens as BrandingTokens | null) ?? DEFAULT_TOKENS,
+  typography: (src.typography as BrandingTypography | null) ?? DEFAULT_TYPOGRAPHY,
+  spacing: (src.spacing as BrandingSpacing | null) ?? DEFAULT_SPACING,
+  components: (src.components as BrandingComponents | null) ?? DEFAULT_COMPONENTS,
+  logoPath: src.logoPath,
+  logoDarkPath: src.logoDarkPath,
+  faviconPath: src.faviconPath,
+  backgroundPath: src.backgroundPath,
+  ogImagePath: src.ogImagePath,
+  customCssGames: src.customCssGames,
+})
+
 export default function BrandingEditor({ brandingId, live, initialDraft }: Props) {
-  const startState: DraftState = useMemo(() => {
-    const src = initialDraft ?? live
-    return {
-      tokens: (src.tokens as BrandingTokens | null) ?? DEFAULT_TOKENS,
-      typography: (src.typography as BrandingTypography | null) ?? DEFAULT_TYPOGRAPHY,
-      spacing: (src.spacing as BrandingSpacing | null) ?? DEFAULT_SPACING,
-      components: (src.components as BrandingComponents | null) ?? DEFAULT_COMPONENTS,
-      logoPath: src.logoPath,
-      logoDarkPath: src.logoDarkPath,
-      faviconPath: src.faviconPath,
-      backgroundPath: src.backgroundPath,
-      ogImagePath: src.ogImagePath,
-      customCssGames: src.customCssGames,
-    }
-  }, [initialDraft, live])
+  const startState: DraftState = useMemo(() => liveToDraft(initialDraft ?? live), [initialDraft, live])
 
   const [draft, setDraft] = useState<DraftState>(startState)
   const [hoveredToken, setHoveredToken] = useState<string | null>(null)
@@ -117,7 +127,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       return
     }
     if (conflicted) return
-    if (saveState === "just-discarded") return
+    if (discardingRef.current) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       void saveDraft()
@@ -138,6 +148,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
   const savingRef = useRef(false)
   const draftRef = useRef(draft)
   const draftUpdatedAtRef = useRef(draftUpdatedAt)
+  const discardingRef = useRef(false)
 
   useEffect(() => {
     draftRef.current = draft
@@ -248,25 +259,20 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       window.alert("Failed to discard draft. Please try again.")
       return
     }
-    // Reset draft state to whatever is currently live.
-    setDraft({
-      tokens: (live.tokens as BrandingTokens | null) ?? DEFAULT_TOKENS,
-      typography: (live.typography as BrandingTypography | null) ?? DEFAULT_TYPOGRAPHY,
-      spacing: (live.spacing as BrandingSpacing | null) ?? DEFAULT_SPACING,
-      components: (live.components as BrandingComponents | null) ?? DEFAULT_COMPONENTS,
-      logoPath: live.logoPath,
-      logoDarkPath: live.logoDarkPath,
-      faviconPath: live.faviconPath,
-      backgroundPath: live.backgroundPath,
-      ogImagePath: live.ogImagePath,
-      customCssGames: live.customCssGames,
-    })
+    // Reset draft state to whatever is currently live. The discardingRef is set
+    // synchronously so the autosave effect (triggered by the setDraft below) sees
+    // it and skips; the setTimeout(0) clears it after that effect run completes,
+    // so any subsequent user edits during the "Discarded" toast window still
+    // autosave normally.
+    discardingRef.current = true
+    setDraft(liveToDraft(live))
     setHasDraft(false)
     setDraftUpdatedAt(null)
     dirtyRef.current = false
     setSaveState("just-discarded")
     if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
     justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
+    setTimeout(() => { discardingRef.current = false }, 0)
   }
 
   const update = <K extends keyof DraftState>(key: K, val: DraftState[K]) => {
