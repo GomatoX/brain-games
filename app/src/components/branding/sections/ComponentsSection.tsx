@@ -1,11 +1,15 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
 import SelectField from "../fields/SelectField"
+import RadioCardGroup from "../fields/RadioCardGroup"
+import ButtonVariantPreview from "../preview/ButtonVariantPreview"
+import CardElevationPreview from "../preview/CardElevationPreview"
+import InputVariantPreview from "../preview/InputVariantPreview"
 
 const BUTTON_VARIANT = [
-  { value: "solid", label: "Solid" },
-  { value: "outline", label: "Outline" },
-  { value: "ghost-fill", label: "Ghost-fill" },
+  { value: "solid", label: "Solid", preview: <ButtonVariantPreview variant="solid" /> },
+  { value: "outline", label: "Outline", preview: <ButtonVariantPreview variant="outline" /> },
+  { value: "ghost-fill", label: "Ghost-fill", preview: <ButtonVariantPreview variant="ghost-fill" /> },
 ]
 const BUTTON_ELEVATION = [
   { value: "none", label: "Flat" },
@@ -13,14 +17,14 @@ const BUTTON_ELEVATION = [
   { value: "pronounced", label: "Lifted" },
 ]
 const INPUT_VARIANT = [
-  { value: "outlined", label: "Outlined" },
-  { value: "filled", label: "Filled" },
-  { value: "underlined", label: "Underlined" },
+  { value: "outlined", label: "Outlined", preview: <InputVariantPreview variant="outlined" /> },
+  { value: "filled", label: "Filled", preview: <InputVariantPreview variant="filled" /> },
+  { value: "underlined", label: "Underlined", preview: <InputVariantPreview variant="underlined" /> },
 ]
 const CARD_ELEVATION = [
-  { value: "flat", label: "Flat" },
-  { value: "subtle", label: "Subtle" },
-  { value: "lifted", label: "Lifted" },
+  { value: "flat", label: "Flat", preview: <CardElevationPreview elevation="flat" /> },
+  { value: "subtle", label: "Subtle", preview: <CardElevationPreview elevation="subtle" /> },
+  { value: "lifted", label: "Lifted", preview: <CardElevationPreview elevation="lifted" /> },
 ]
 
 type Props = {
@@ -32,8 +36,8 @@ export default function ComponentsSection({ draft, update }: Props) {
   return (
     <details open className="mb-4">
       <summary className="font-semibold cursor-pointer">Components</summary>
-      <div className="mt-3 space-y-3">
-        <SelectField
+      <div className="mt-3 space-y-4">
+        <RadioCardGroup
           label="Button variant"
           value={draft.components.button.variant}
           options={BUTTON_VARIANT}
@@ -51,7 +55,7 @@ export default function ComponentsSection({ draft, update }: Props) {
             button: { ...draft.components.button, shadow: v as DraftState["components"]["button"]["shadow"] },
           })}
         />
-        <SelectField
+        <RadioCardGroup
           label="Input variant"
           value={draft.components.input.variant}
           options={INPUT_VARIANT}
@@ -60,7 +64,7 @@ export default function ComponentsSection({ draft, update }: Props) {
             input: { variant: v as DraftState["components"]["input"]["variant"] },
           })}
         />
-        <SelectField
+        <RadioCardGroup
           label="Card elevation"
           value={draft.components.card.elevation}
           options={CARD_ELEVATION}
