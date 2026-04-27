@@ -34,4 +34,16 @@ describe("TOKEN_REGISTRY", () => {
       expect(registryIds.has(k), `derived token "${k}" has no registry entry`).toBe(true)
     }
   })
+
+  it("every derived token's id has matching cssVars on the registry (replaces FIELD_MAP compat)", () => {
+    const derived = deriveTokens({
+      primary: "#c25e40", surface: "#ffffff", text: "#0f172a", overrides: {},
+    })
+    const byId = new Map(TOKEN_REGISTRY.map((t) => [t.id, t]))
+    for (const k of Object.keys(derived)) {
+      const def = byId.get(k)
+      expect(def, `derived token "${k}" has no registry entry`).toBeTruthy()
+      expect(def!.cssVars.length, `derived token "${k}" has empty cssVars`).toBeGreaterThan(0)
+    }
+  })
 })

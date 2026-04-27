@@ -1,7 +1,7 @@
 // Single source of truth for branded design tokens. When adding or changing
-// entries here, also update the snapshot in
-// `app/src/lib/__tests__/branding-field-map-compat.test.ts` so the resolve
-// pipeline regression guard reflects the new shape.
+// entries here, run the registry coverage assertions in
+// `app/src/lib/__tests__/branding-token-registry.test.ts` and the legacy-key
+// guard in `app/src/lib/__tests__/branding-legacy-keys.test.ts`.
 
 export type TokenGroup = "color" | "surface" | "state" | "feedback" | "structural"
 

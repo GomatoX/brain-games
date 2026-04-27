@@ -3,21 +3,21 @@ import { useMemo } from "react"
 import type { DraftState } from "./BrandingEditor"
 import { deriveTokens } from "@/lib/branding/derive"
 import {
-  FIELD_MAP,
   TYPOGRAPHY_VARS,
   SCALE_VARS,
   DENSITY_VARS,
   radiusVars,
-} from "@/lib/branding/field-map"
+} from "@/lib/branding/css-vars"
+import { TOKEN_REGISTRY } from "@/lib/branding/token-registry"
 import GamePreview from "./preview/GamePreview"
 
 function buildVars(draft: DraftState): Record<string, string> {
   const derived = deriveTokens(draft.tokens)
   const out: Record<string, string> = {}
-  for (const [tokenName, vars] of Object.entries(FIELD_MAP)) {
-    const v = derived[tokenName]
+  for (const t of TOKEN_REGISTRY) {
+    const v = derived[t.id]
     if (!v) continue
-    for (const cv of vars) out[cv] = v
+    for (const cv of t.cssVars) out[cv] = v
   }
   if (draft.typography.fontSans) out[TYPOGRAPHY_VARS.fontSans] = draft.typography.fontSans
   if (draft.typography.fontSerif) out[TYPOGRAPHY_VARS.fontSerif] = draft.typography.fontSerif

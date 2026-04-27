@@ -8,8 +8,8 @@ import {
   SCALE_VARS,
   DENSITY_VARS,
   radiusVars,
-  FIELD_MAP,
-} from "./field-map"
+} from "./css-vars"
+import { TOKEN_REGISTRY } from "./token-registry"
 import type { BrandingTokens, BrandingTypography, BrandingSpacing } from "./tokens"
 import {
   PLATFORM_DEFAULT_TOKENS,
@@ -84,10 +84,10 @@ function tokensToCssVars(
 ): Record<string, string> {
   const derived = deriveTokens(tokens)
   const out: Record<string, string> = {}
-  for (const [tokenName, cssVars] of Object.entries(FIELD_MAP)) {
-    const v = derived[tokenName]
+  for (const t of TOKEN_REGISTRY) {
+    const v = derived[t.id]
     if (!v) continue
-    for (const cssVar of cssVars) out[cssVar] = v
+    for (const cssVar of t.cssVars) out[cssVar] = v
   }
   if (typography.fontSans) out[TYPOGRAPHY_VARS.fontSans] = typography.fontSans
   if (typography.fontSerif) out[TYPOGRAPHY_VARS.fontSerif] = typography.fontSerif
