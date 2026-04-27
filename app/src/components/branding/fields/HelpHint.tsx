@@ -10,7 +10,7 @@ export default function HelpHint({ text }: Props) {
       role="img"
       aria-label={text}
       title={text}
-      className="inline-block text-slate-400 cursor-help select-none"
+      className="inline-block shrink-0 text-slate-400 cursor-help select-none"
     >
       ⓘ
     </span>
