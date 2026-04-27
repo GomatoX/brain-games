@@ -46,6 +46,11 @@ export default function ComponentsSection({ draft, update }: Props) {
             button: { ...draft.components.button, variant: v as DraftState["components"]["button"]["variant"] },
           })}
         />
+        {/* Button elevation stays as a SelectField (not a RadioCardGroup):
+            elevation differences are subtle (none / subtle / pronounced) and
+            don't render distinct enough on the small swatch we'd have room
+            for. Variant, Input style, and Card elevation all use swatches —
+            those have visually distinct shapes/borders/fills. */}
         <SelectField
           label="Button elevation"
           value={draft.components.button.shadow}
