@@ -102,7 +102,7 @@ export default function BrandingContent({
     setDeletingId(target.id)
     setDeleteError("")
     try {
-      const res = await fetch(`/api/branding?id=${encodeURIComponent(target.id)}`, {
+      const res = await fetch(`/api/branding/${encodeURIComponent(target.id)}`, {
         method: "DELETE",
       })
       if (!res.ok) {

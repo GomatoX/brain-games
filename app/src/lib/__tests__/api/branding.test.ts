@@ -40,4 +40,17 @@ describe("branding draft + publish lifecycle", () => {
     const publishMod = await import("@/app/api/branding/[id]/publish/route")
     expect(publishMod.POST).toBeDefined()
   })
+
+  it("the [id] route exports DELETE for path-param deletion", async () => {
+    // Sprint 4 unified delete-by-id under [id]/route.ts to match the GET /
+    // PATCH / DELETE / POST convention used by the nested draft / publish
+    // routes. The previous query-string handler (DELETE /api/branding?id=...)
+    // is gone; the file-level route now exports only GET and POST.
+    const idMod = await import("@/app/api/branding/[id]/route")
+    const fileMod = await import("@/app/api/branding/route")
+    expect(idMod.DELETE).toBeDefined()
+    // Type-only assertion: confirm no DELETE leaks back onto the file-level
+    // route. Using `in` is enough because vi.mock doesn't synthesize exports.
+    expect("DELETE" in fileMod).toBe(false)
+  })
 })

@@ -26,3 +26,19 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({ live, draft: draft ?? null })
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  const result = await requireAuth()
+  if (result instanceof NextResponse) return result
+  const { orgId } = result as { orgId: string }
+  const { id } = await ctx.params
+
+  await db
+    .delete(branding)
+    .where(and(eq(branding.id, id), eq(branding.orgId, orgId)))
+
+  return NextResponse.json({ success: true })
+}

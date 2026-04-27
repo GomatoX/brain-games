@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { branding } from "@/db/schema"
-import { and, desc, eq } from "drizzle-orm"
+import { desc, eq } from "drizzle-orm"
 import { requireAuth } from "@/lib/api-auth"
 import { PRESETS } from "@/lib/branding/presets"
 
@@ -44,16 +44,4 @@ export async function POST(request: NextRequest) {
     .returning()
 
   return NextResponse.json({ id: row.id, name: row.name })
-}
-
-export async function DELETE(request: NextRequest) {
-  const result = await requireAuth()
-  if (result instanceof NextResponse) return result
-  const { orgId } = result
-  const { searchParams } = new URL(request.url)
-  const id = searchParams.get("id")
-  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 })
-
-  await db.delete(branding).where(and(eq(branding.id, id), eq(branding.orgId, orgId)))
-  return NextResponse.json({ success: true })
 }
