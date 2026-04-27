@@ -105,9 +105,48 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(initialDraft?.updatedAt ?? null)
   const [conflicted, setConflicted] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  // Refs — declared up front so every effect/handler can reference them
+  // without temporal-dead-zone or "Cannot access variable before declared"
+  // errors.
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
   const justSavedTimer = useRef<NodeJS.Timeout | null>(null)
   const isInitialMount = useRef(true)
+  const dirtyRef = useRef(false)
+  const savingRef = useRef(false)
+  const draftRef = useRef(draft)
+  const draftUpdatedAtRef = useRef(draftUpdatedAt)
+  const discardingRef = useRef(false)
+
+  async function saveDraft() {
+    setSaveState("saving")
+    let res: Response
+    try {
+      res = await fetch(`/api/branding/${brandingId}/draft`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...draft, expectedUpdatedAt: draftUpdatedAt }),
+      })
+    } catch {
+      setSaveState("idle")
+      return
+    }
+    if (res.status === 409) {
+      setConflicted(true)
+      setSaveState("idle")
+      return
+    }
+    if (!res.ok) {
+      setSaveState("idle")
+      return
+    }
+    const body = (await res.json()) as { draft: { updatedAt: string } | null }
+    if (body.draft) setDraftUpdatedAt(body.draft.updatedAt)
+    setHasDraft(true)
+    dirtyRef.current = false
+    setSaveState("just-saved")
+    if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
+    justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
+  }
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -123,6 +162,10 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current)
     }
+    // saveDraft is intentionally omitted: it closes over draft/draftUpdatedAt
+    // and re-creating it every render would defeat the debounce. The ref
+    // chain (draftRef/draftUpdatedAtRef) is what actually keeps the request
+    // body fresh during the keepalive flush in the unload handler.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft])
 
@@ -131,12 +174,6 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
     }
   }, [])
-
-  const dirtyRef = useRef(false)
-  const savingRef = useRef(false)
-  const draftRef = useRef(draft)
-  const draftUpdatedAtRef = useRef(draftUpdatedAt)
-  const discardingRef = useRef(false)
 
   useEffect(() => {
     draftRef.current = draft
@@ -184,37 +221,6 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       window.removeEventListener("pagehide", handlePageHide)
     }
   }, [brandingId])
-
-  async function saveDraft() {
-    setSaveState("saving")
-    let res: Response
-    try {
-      res = await fetch(`/api/branding/${brandingId}/draft`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...draft, expectedUpdatedAt: draftUpdatedAt }),
-      })
-    } catch {
-      setSaveState("idle")
-      return
-    }
-    if (res.status === 409) {
-      setConflicted(true)
-      setSaveState("idle")
-      return
-    }
-    if (!res.ok) {
-      setSaveState("idle")
-      return
-    }
-    const body = (await res.json()) as { draft: { updatedAt: string } | null }
-    if (body.draft) setDraftUpdatedAt(body.draft.updatedAt)
-    setHasDraft(true)
-    dirtyRef.current = false
-    setSaveState("just-saved")
-    if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
-    justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
-  }
 
   async function publish() {
     if (publishing) return
