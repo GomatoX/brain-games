@@ -259,8 +259,8 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
           className="w-[480px] overflow-y-auto p-6 border-r"
           style={{ borderColor: "var(--border)", pointerEvents: editorLocked ? "none" : undefined, opacity: editorLocked ? 0.5 : 1 }}
         >
-          <IdentitySection draft={draft} update={update} />
           <ThemeSection draft={draft} update={update} />
+          <IdentitySection draft={draft} update={update} />
           <TypographySection draft={draft} update={update} />
           <SpacingSection draft={draft} update={update} />
           <ComponentsSection draft={draft} update={update} />
