@@ -72,4 +72,58 @@ describe("<RadioCardGroup />", () => {
     expect(handle).toHaveBeenCalledTimes(2)
     expect(handle).toHaveBeenLastCalledWith("outline")
   })
+
+  it("ArrowRight selects and focuses the next option", () => {
+    const handle = vi.fn()
+    const { getAllByRole } = render(
+      <RadioCardGroup
+        label="Button variant"
+        value="solid"
+        onChange={handle}
+        options={[
+          { value: "solid", label: "Solid", preview: <span /> },
+          { value: "outline", label: "Outline", preview: <span /> },
+          { value: "ghost", label: "Ghost", preview: <span /> },
+        ]}
+      />,
+    )
+    fireEvent.keyDown(getAllByRole("radio")[0], { key: "ArrowRight" })
+    expect(handle).toHaveBeenCalledWith("outline")
+  })
+
+  it("ArrowLeft from the first option wraps to the last", () => {
+    const handle = vi.fn()
+    const { getAllByRole } = render(
+      <RadioCardGroup
+        label="Button variant"
+        value="solid"
+        onChange={handle}
+        options={[
+          { value: "solid", label: "Solid", preview: <span /> },
+          { value: "outline", label: "Outline", preview: <span /> },
+          { value: "ghost", label: "Ghost", preview: <span /> },
+        ]}
+      />,
+    )
+    fireEvent.keyDown(getAllByRole("radio")[0], { key: "ArrowLeft" })
+    expect(handle).toHaveBeenCalledWith("ghost")
+  })
+
+  it("ArrowDown selects the next option (vertical alias of ArrowRight)", () => {
+    const handle = vi.fn()
+    const { getAllByRole } = render(
+      <RadioCardGroup
+        label="Button variant"
+        value="outline"
+        onChange={handle}
+        options={[
+          { value: "solid", label: "Solid", preview: <span /> },
+          { value: "outline", label: "Outline", preview: <span /> },
+          { value: "ghost", label: "Ghost", preview: <span /> },
+        ]}
+      />,
+    )
+    fireEvent.keyDown(getAllByRole("radio")[1], { key: "ArrowDown" })
+    expect(handle).toHaveBeenCalledWith("ghost")
+  })
 })
