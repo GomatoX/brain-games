@@ -1,6 +1,7 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
 import { PRESETS } from "@/lib/branding/presets"
+import SelectField from "../fields/SelectField"
 
 type Props = {
   draft: DraftState
@@ -20,17 +21,13 @@ export default function ThemeSection({ draft, update }: Props) {
     <details open className="mb-4">
       <summary className="font-semibold cursor-pointer">Theme</summary>
       <div className="mt-3 space-y-3">
-        <label className="block text-sm">
-          <span className="block mb-1">Preset</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            onChange={(e) => applyPreset(e.target.value)}
-            value=""
-          >
-            <option value="" disabled>Pick a preset…</option>
-            {PRESETS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </label>
+        <SelectField
+          label="Preset"
+          value=""
+          placeholder="Pick a preset…"
+          options={PRESETS.map((p) => ({ value: p.id, label: p.name }))}
+          onChange={(id) => applyPreset(id)}
+        />
         {(["primary", "surface", "text"] as const).map((k) => (
           <label key={k} className="block text-sm">
             <span className="block mb-1 capitalize">{k}</span>

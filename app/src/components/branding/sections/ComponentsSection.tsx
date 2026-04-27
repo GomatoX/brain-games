@@ -1,5 +1,27 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
+import SelectField from "../fields/SelectField"
+
+const BUTTON_VARIANT = [
+  { value: "solid", label: "Solid" },
+  { value: "outline", label: "Outline" },
+  { value: "ghost-fill", label: "Ghost-fill" },
+]
+const BUTTON_SHADOW = [
+  { value: "none", label: "None" },
+  { value: "subtle", label: "Subtle" },
+  { value: "pronounced", label: "Pronounced" },
+]
+const INPUT_VARIANT = [
+  { value: "outlined", label: "Outlined" },
+  { value: "filled", label: "Filled" },
+  { value: "underlined", label: "Underlined" },
+]
+const CARD_ELEVATION = [
+  { value: "flat", label: "Flat" },
+  { value: "subtle", label: "Subtle" },
+  { value: "lifted", label: "Lifted" },
+]
 
 type Props = {
   draft: DraftState
@@ -11,84 +33,42 @@ export default function ComponentsSection({ draft, update }: Props) {
     <details open className="mb-4">
       <summary className="font-semibold cursor-pointer">Components</summary>
       <div className="mt-3 space-y-3">
-        <label className="block text-sm">
-          <span className="block mb-1">Button variant</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.components.button.variant}
-            onChange={(e) =>
-              update("components", {
-                ...draft.components,
-                button: {
-                  ...draft.components.button,
-                  variant: e.target.value as DraftState["components"]["button"]["variant"],
-                },
-              })
-            }
-          >
-            <option value="solid">Solid</option>
-            <option value="outline">Outline</option>
-            <option value="ghost-fill">Ghost-fill</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="block mb-1">Button shadow</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.components.button.shadow}
-            onChange={(e) =>
-              update("components", {
-                ...draft.components,
-                button: {
-                  ...draft.components.button,
-                  shadow: e.target.value as DraftState["components"]["button"]["shadow"],
-                },
-              })
-            }
-          >
-            <option value="none">None</option>
-            <option value="subtle">Subtle</option>
-            <option value="pronounced">Pronounced</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="block mb-1">Input variant</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.components.input.variant}
-            onChange={(e) =>
-              update("components", {
-                ...draft.components,
-                input: {
-                  variant: e.target.value as DraftState["components"]["input"]["variant"],
-                },
-              })
-            }
-          >
-            <option value="outlined">Outlined</option>
-            <option value="filled">Filled</option>
-            <option value="underlined">Underlined</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="block mb-1">Card elevation</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.components.card.elevation}
-            onChange={(e) =>
-              update("components", {
-                ...draft.components,
-                card: {
-                  elevation: e.target.value as DraftState["components"]["card"]["elevation"],
-                },
-              })
-            }
-          >
-            <option value="flat">Flat</option>
-            <option value="subtle">Subtle</option>
-            <option value="lifted">Lifted</option>
-          </select>
-        </label>
+        <SelectField
+          label="Button variant"
+          value={draft.components.button.variant}
+          options={BUTTON_VARIANT}
+          onChange={(v) => update("components", {
+            ...draft.components,
+            button: { ...draft.components.button, variant: v as DraftState["components"]["button"]["variant"] },
+          })}
+        />
+        <SelectField
+          label="Button shadow"
+          value={draft.components.button.shadow}
+          options={BUTTON_SHADOW}
+          onChange={(v) => update("components", {
+            ...draft.components,
+            button: { ...draft.components.button, shadow: v as DraftState["components"]["button"]["shadow"] },
+          })}
+        />
+        <SelectField
+          label="Input variant"
+          value={draft.components.input.variant}
+          options={INPUT_VARIANT}
+          onChange={(v) => update("components", {
+            ...draft.components,
+            input: { variant: v as DraftState["components"]["input"]["variant"] },
+          })}
+        />
+        <SelectField
+          label="Card elevation"
+          value={draft.components.card.elevation}
+          options={CARD_ELEVATION}
+          onChange={(v) => update("components", {
+            ...draft.components,
+            card: { elevation: v as DraftState["components"]["card"]["elevation"] },
+          })}
+        />
       </div>
     </details>
   )

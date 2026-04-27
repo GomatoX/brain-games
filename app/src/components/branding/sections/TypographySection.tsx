@@ -1,5 +1,6 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
+import SelectField from "../fields/SelectField"
 
 const SANS_FONTS = [
   "Inter, sans-serif", "Roboto, sans-serif", "Open Sans, sans-serif",
@@ -14,6 +15,15 @@ const SERIF_FONTS = [
   "Spectral, serif", "serif",
 ]
 
+const SCALE_OPTIONS = [
+  { value: "compact", label: "Compact" },
+  { value: "default", label: "Default" },
+  { value: "relaxed", label: "Relaxed" },
+]
+
+const fontOptions = (fonts: string[]) =>
+  [{ value: "", label: "(default)" }, ...fonts.map((f) => ({ value: f, label: f.split(",")[0] }))]
+
 type Props = {
   draft: DraftState
   update: <K extends keyof DraftState>(key: K, val: DraftState[K]) => void
@@ -24,49 +34,24 @@ export default function TypographySection({ draft, update }: Props) {
     <details open className="mb-4">
       <summary className="font-semibold cursor-pointer">Typography</summary>
       <div className="mt-3 space-y-3">
-        <label className="block text-sm">
-          <span className="block mb-1">Sans font</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.typography.fontSans ?? ""}
-            onChange={(e) =>
-              update("typography", { ...draft.typography, fontSans: e.target.value || null })
-            }
-          >
-            <option value="">(default)</option>
-            {SANS_FONTS.map((f) => <option key={f} value={f}>{f.split(",")[0]}</option>)}
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="block mb-1">Serif font</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.typography.fontSerif ?? ""}
-            onChange={(e) =>
-              update("typography", { ...draft.typography, fontSerif: e.target.value || null })
-            }
-          >
-            <option value="">(default)</option>
-            {SERIF_FONTS.map((f) => <option key={f} value={f}>{f.split(",")[0]}</option>)}
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="block mb-1">Scale</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.typography.scale}
-            onChange={(e) =>
-              update("typography", {
-                ...draft.typography,
-                scale: e.target.value as DraftState["typography"]["scale"],
-              })
-            }
-          >
-            <option value="compact">Compact</option>
-            <option value="default">Default</option>
-            <option value="relaxed">Relaxed</option>
-          </select>
-        </label>
+        <SelectField
+          label="Sans font"
+          value={draft.typography.fontSans ?? ""}
+          options={fontOptions(SANS_FONTS)}
+          onChange={(v) => update("typography", { ...draft.typography, fontSans: v || null })}
+        />
+        <SelectField
+          label="Serif font"
+          value={draft.typography.fontSerif ?? ""}
+          options={fontOptions(SERIF_FONTS)}
+          onChange={(v) => update("typography", { ...draft.typography, fontSerif: v || null })}
+        />
+        <SelectField
+          label="Scale"
+          value={draft.typography.scale}
+          options={SCALE_OPTIONS}
+          onChange={(v) => update("typography", { ...draft.typography, scale: v as DraftState["typography"]["scale"] })}
+        />
       </div>
     </details>
   )

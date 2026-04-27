@@ -1,5 +1,12 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
+import SelectField from "../fields/SelectField"
+
+const DENSITY_OPTIONS = [
+  { value: "compact", label: "Compact" },
+  { value: "cozy", label: "Cozy" },
+  { value: "comfortable", label: "Comfortable" },
+]
 
 type Props = {
   draft: DraftState
@@ -11,23 +18,12 @@ export default function SpacingSection({ draft, update }: Props) {
     <details open className="mb-4">
       <summary className="font-semibold cursor-pointer">Spacing</summary>
       <div className="mt-3 space-y-3">
-        <label className="block text-sm">
-          <span className="block mb-1">Density</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.spacing.density}
-            onChange={(e) =>
-              update("spacing", {
-                ...draft.spacing,
-                density: e.target.value as DraftState["spacing"]["density"],
-              })
-            }
-          >
-            <option value="compact">Compact</option>
-            <option value="cozy">Cozy</option>
-            <option value="comfortable">Comfortable</option>
-          </select>
-        </label>
+        <SelectField
+          label="Density"
+          value={draft.spacing.density}
+          options={DENSITY_OPTIONS}
+          onChange={(v) => update("spacing", { ...draft.spacing, density: v as DraftState["spacing"]["density"] })}
+        />
         <label className="block text-sm">
           <span className="block mb-1">Radius (px): {draft.spacing.radius}</span>
           <input
