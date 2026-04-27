@@ -60,7 +60,7 @@ type Props = {
   } | null
 }
 
-type SaveState = "idle" | "saving" | "just-saved"
+type SaveState = "idle" | "saving" | "just-saved" | "just-published" | "just-discarded"
 
 const DEFAULT_TOKENS: BrandingTokens = {
   primary: "#c25e40",
@@ -117,6 +117,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       return
     }
     if (conflicted) return
+    if (saveState === "just-discarded") return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       void saveDraft()
@@ -225,7 +226,14 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
         window.alert("Failed to publish. Please try again.")
         return
       }
-      window.location.reload()
+      // Server returned the new live snapshot timestamp; mirror locally so the
+      // header indicator flips from "Unpublished draft" to "Live" immediately.
+      setHasDraft(false)
+      setDraftUpdatedAt(null)
+      dirtyRef.current = false
+      setSaveState("just-published")
+      if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
+      justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
     } finally {
       setPublishing(false)
     }
@@ -236,11 +244,29 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     const ok = window.confirm("Discard unpublished changes? This cannot be undone.")
     if (!ok) return
     const res = await fetch(`/api/branding/${brandingId}/draft`, { method: "DELETE" })
-    if (res.ok) {
-      window.location.reload()
-    } else {
+    if (!res.ok) {
       window.alert("Failed to discard draft. Please try again.")
+      return
     }
+    // Reset draft state to whatever is currently live.
+    setDraft({
+      tokens: (live.tokens as BrandingTokens | null) ?? DEFAULT_TOKENS,
+      typography: (live.typography as BrandingTypography | null) ?? DEFAULT_TYPOGRAPHY,
+      spacing: (live.spacing as BrandingSpacing | null) ?? DEFAULT_SPACING,
+      components: (live.components as BrandingComponents | null) ?? DEFAULT_COMPONENTS,
+      logoPath: live.logoPath,
+      logoDarkPath: live.logoDarkPath,
+      faviconPath: live.faviconPath,
+      backgroundPath: live.backgroundPath,
+      ogImagePath: live.ogImagePath,
+      customCssGames: live.customCssGames,
+    })
+    setHasDraft(false)
+    setDraftUpdatedAt(null)
+    dirtyRef.current = false
+    setSaveState("just-discarded")
+    if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
+    justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
   }
 
   const update = <K extends keyof DraftState>(key: K, val: DraftState[K]) => {
@@ -262,6 +288,18 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
             <span className="inline-flex items-center gap-1 text-green-600">
               <span className="material-symbols-outlined text-sm">check_circle</span>
               Saved
+            </span>
+          )}
+          {saveState === "just-published" && (
+            <span className="inline-flex items-center gap-1 text-green-600">
+              <span className="material-symbols-outlined text-sm">rocket_launch</span>
+              Published
+            </span>
+          )}
+          {saveState === "just-discarded" && (
+            <span className="inline-flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+              <span className="material-symbols-outlined text-sm">undo</span>
+              Discarded
             </span>
           )}
           {saveState === "idle" && hasDraft && (
