@@ -190,7 +190,7 @@ export default function BrandingContent({
                     )}
                   </div>
 
-                  <div className="text-[11px] text-[#64748b]">
+                  <div className="text-[11px] text-[#64748b]" suppressHydrationWarning>
                     Edited {formatRelativeTime(p.lastEditedAt)}
                   </div>
 
