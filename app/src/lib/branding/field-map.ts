@@ -1,31 +1,12 @@
+import { TOKEN_REGISTRY } from "./token-registry"
+
 // Token name → list of CSS custom property names it sets.
 // Multiple CSS vars per token allow legacy game CSS to still work
 // (e.g. selection sets both --cell-selected-bg and --cell-selected).
-export const FIELD_MAP: Record<string, string[]> = {
-  primary: ["--primary", "--accent"],
-  "primary-hover": ["--primary-hover", "--accent-hover"],
-  "primary-light": ["--primary-light", "--accent-light"],
-  "primary-foreground": ["--primary-foreground"],
-  surface: ["--surface", "--bg-primary"],
-  "surface-elevated": ["--surface-elevated", "--bg-secondary"],
-  "surface-muted": ["--surface-muted"],
-  text: ["--text", "--text-primary"],
-  "text-muted": ["--text-muted", "--text-secondary"],
-  border: ["--border", "--border-color"],
-  correct: ["--correct"],
-  "correct-light": ["--correct-light"],
-  present: ["--present"],
-  absent: ["--absent"],
-  selection: ["--selection", "--cell-selected", "--cell-selected-bg"],
-  "selection-ring": ["--selection-ring", "--cell-selected-ring"],
-  highlight: ["--highlight", "--cell-highlighted", "--cell-related"],
-  "cell-bg": ["--cell-bg"],
-  "cell-blocked": ["--cell-blocked"],
-  "grid-border": ["--grid-border"],
-  "main-word-marker": ["--main-word-marker"],
-  "sidebar-active": ["--sidebar-active"],
-  "sidebar-active-bg": ["--sidebar-active-bg"],
-}
+// Derived from TOKEN_REGISTRY (the source of truth) for back-compat.
+export const FIELD_MAP: Record<string, string[]> = Object.fromEntries(
+  TOKEN_REGISTRY.map((t) => [t.id, t.cssVars]),
+)
 
 export const TYPOGRAPHY_VARS = {
   fontSans: "--font-sans",

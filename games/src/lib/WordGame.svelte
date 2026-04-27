@@ -192,7 +192,7 @@
   }
 </script>
 
-<div class="word-game {themeClass}" bind:this={containerEl}>
+<div class="word-game {themeClass}" data-brand-token="surface" bind:this={containerEl}>
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
@@ -222,23 +222,35 @@
       <!-- Grid -->
       <div class="guess-grid" style="--word-length: {wordLength}">
         {#each Array(maxAttempts) as _, rowIndex}
+          {@const isActiveRow = rowIndex === guesses.length}
           <div class="guess-row">
             {#each Array(wordLength) as _, colIndex}
               {@const guess = guesses[rowIndex]}
               {@const letter = guess
                 ? guess.word[colIndex]
-                : rowIndex === guesses.length
+                : isActiveRow
                   ? currentGuess[colIndex]
                   : ""}
               {@const state = guess ? guess.result[colIndex] : ""}
+              {@const isCurrent = isActiveRow && colIndex < currentGuess.length}
               <div
                 class="letter-cell"
                 class:filled={letter}
                 class:correct={state === "correct"}
                 class:present={state === "present"}
                 class:absent={state === "absent"}
-                class:current={rowIndex === guesses.length &&
-                  colIndex < currentGuess.length}
+                class:current={isCurrent}
+                data-brand-token={
+                  state === "correct"
+                    ? "correct"
+                    : state === "present"
+                      ? "present"
+                      : state === "absent"
+                        ? "absent"
+                        : isCurrent
+                          ? "selection-ring"
+                          : "cell-bg"
+                }
               >
                 {letter || ""}
               </div>
@@ -325,17 +337,11 @@
 </div>
 
 <style>
-  /* CSS Variables - Rustycogs Theme */
+  /* Branded CSS variables flow in from a parent (dashboard wrapper or
+     server-rendered embed). Use-site rules below carry the previous
+     light defaults as fallbacks. Paired `.word-game.dark-theme <selector>`
+     rules override fallbacks for properties whose dark default differed. */
   .word-game {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --border-color: #e2e8f0;
-    --correct: #c25e40;
-    --present: #dcb162;
-    --absent: #94a3b8;
-
     font-family:
       var(--font-sans, "Inter"),
       -apple-system,
@@ -343,8 +349,8 @@
       "Segoe UI",
       Roboto,
       sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    background: var(--bg-primary, #ffffff);
+    color: var(--text-primary, #0f172a);
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
@@ -355,11 +361,8 @@
   }
 
   .word-game.dark-theme {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --border-color: #334155;
+    background: var(--bg-primary, #0f172a);
+    color: var(--text-primary, #f1f5f9);
   }
 
   /* Loading & Error */
@@ -368,17 +371,28 @@
   .no-game {
     text-align: center;
     padding: 40px 20px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
+  }
+
+  .word-game.dark-theme .loading,
+  .word-game.dark-theme .error,
+  .word-game.dark-theme .no-game {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid var(--border-color);
-    border-top-color: var(--correct);
+    border: 3px solid var(--border-color, #e2e8f0);
+    border-top-color: var(--correct, #c25e40);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin: 0 auto 12px;
+  }
+
+  .word-game.dark-theme .spinner {
+    border-color: var(--border-color, #334155);
+    border-top-color: var(--correct, #c25e40);
   }
 
   @keyframes spin {
@@ -404,7 +418,11 @@
     justify-content: center;
     gap: 10px;
     padding: 16px 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  .word-game.dark-theme .game-header {
+    border-bottom-color: var(--border-color, #334155);
   }
 
   .game-title {
@@ -412,13 +430,17 @@
     font-size: 1.5rem;
     font-weight: 700;
     margin: 0;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     letter-spacing: -0.01em;
     line-height: 1;
   }
 
+  .word-game.dark-theme .game-title {
+    color: var(--text-primary, #f1f5f9);
+  }
+
   .preview-badge {
-    background: var(--correct);
+    background: var(--correct, #c25e40);
     color: white;
     padding: 2px 8px;
     border-radius: 4px;
@@ -434,14 +456,19 @@
     align-items: flex-start;
     gap: 10px;
     padding: 12px 16px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary, #f9fafb);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 10px;
-    border-left: 3px solid var(--correct);
+    border-left: 3px solid var(--correct, #c25e40);
+  }
+
+  .word-game.dark-theme .hint {
+    background: var(--bg-secondary, #1e293b);
+    border-color: var(--border-color, #334155);
   }
 
   .hint-icon {
-    color: var(--correct);
+    color: var(--correct, #c25e40);
     font-size: 20px;
     flex-shrink: 0;
     margin-top: 1px;
@@ -450,9 +477,13 @@
   .hint-text {
     margin: 0;
     font-size: 0.9rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
     line-height: 1.5;
     font-style: italic;
+  }
+
+  .word-game.dark-theme .hint-text {
+    color: var(--text-secondary, #94a3b8);
   }
 
   /* Grid */
@@ -480,37 +511,50 @@
     font-size: 1.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    border: 2px solid var(--border-color);
-    background: var(--bg-primary);
+    border: 2px solid var(--border-color, #e2e8f0);
+    background: var(--cell-bg, var(--bg-primary, #ffffff));
     transition: all 0.15s ease;
   }
 
+  .word-game.dark-theme .letter-cell {
+    border-color: var(--border-color, #334155);
+    background: var(--cell-bg, var(--bg-primary, #0f172a));
+  }
+
   .letter-cell.filled {
-    border-color: var(--text-secondary);
+    border-color: var(--text-secondary, #64748b);
+  }
+
+  .word-game.dark-theme .letter-cell.filled {
+    border-color: var(--text-secondary, #94a3b8);
   }
 
   .letter-cell.current {
-    border-color: var(--text-secondary);
+    border-color: var(--selection-ring, #64748b);
     animation: subtle-pulse 2s infinite;
   }
 
+  .word-game.dark-theme .letter-cell.current {
+    border-color: var(--selection-ring, #94a3b8);
+  }
+
   .letter-cell.correct {
-    background: var(--correct);
-    border-color: var(--correct);
+    background: var(--correct, #c25e40);
+    border-color: var(--correct, #c25e40);
     color: white;
     box-shadow: 0 2px 4px rgba(194, 94, 64, 0.3);
   }
 
   .letter-cell.present {
-    background: var(--present);
-    border-color: var(--present);
+    background: var(--present, #dcb162);
+    border-color: var(--present, #dcb162);
     color: white;
     box-shadow: 0 2px 4px rgba(220, 177, 98, 0.3);
   }
 
   .letter-cell.absent {
-    background: var(--absent);
-    border-color: var(--absent);
+    background: var(--absent, #94a3b8);
+    border-color: var(--absent, #94a3b8);
     color: white;
   }
 
@@ -535,7 +579,7 @@
 
   .feedback.success {
     background: rgba(194, 94, 64, 0.1);
-    color: var(--correct);
+    color: var(--correct, #c25e40);
   }
 
   .feedback.error {
@@ -545,9 +589,13 @@
 
   /* How to Play */
   .how-to-play {
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color, #e2e8f0);
     padding-top: 20px;
     margin-top: 8px;
+  }
+
+  .word-game.dark-theme .how-to-play {
+    border-top-color: var(--border-color, #334155);
   }
 
   .how-to-play h2 {
@@ -558,11 +606,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  .word-game.dark-theme .how-to-play h2 {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .how-to-play h2 .material-symbols-outlined {
-    color: var(--correct);
+    color: var(--correct, #c25e40);
     font-size: 20px;
   }
 
@@ -577,14 +629,22 @@
     align-items: flex-start;
     gap: 8px;
     font-size: 0.875rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
     line-height: 1.5;
     margin-bottom: 8px;
   }
 
+  .word-game.dark-theme .how-to-play li {
+    color: var(--text-secondary, #94a3b8);
+  }
+
   .how-to-play li::before {
     content: "•";
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  .word-game.dark-theme .how-to-play li::before {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .legend {
@@ -613,21 +673,25 @@
   }
 
   .legend-cell.correct {
-    background: var(--correct);
+    background: var(--correct, #c25e40);
   }
 
   .legend-cell.present {
-    background: var(--present);
+    background: var(--present, #dcb162);
   }
 
   .legend-cell.absent {
-    background: var(--absent);
+    background: var(--absent, #94a3b8);
   }
 
   .legend-item span {
     font-size: 0.75rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
+  }
+
+  .word-game.dark-theme .legend-item span {
+    color: var(--text-secondary, #94a3b8);
   }
 
   /* Keyboard Hints */
@@ -636,7 +700,11 @@
     flex-direction: column;
     gap: 8px;
     padding-top: 12px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  .word-game.dark-theme .keyboard-hints {
+    border-top-color: var(--border-color, #334155);
   }
 
   .hint-item {
@@ -644,7 +712,11 @@
     align-items: center;
     gap: 10px;
     font-size: 0.825rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
+  }
+
+  .word-game.dark-theme .hint-item {
+    color: var(--text-secondary, #94a3b8);
   }
 
   kbd {
@@ -654,15 +726,21 @@
     min-width: 36px;
     height: 28px;
     padding: 0 8px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--bg-secondary, #f9fafb);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 6px;
     font-family: inherit;
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     flex-shrink: 0;
+  }
+
+  .word-game.dark-theme kbd {
+    background: var(--bg-secondary, #1e293b);
+    border-color: var(--border-color, #334155);
+    color: var(--text-primary, #f1f5f9);
   }
 
   /* Game Actions */
@@ -674,7 +752,7 @@
 
   .reset-button {
     padding: 12px 24px;
-    background: var(--correct);
+    background: var(--correct, #c25e40);
     color: white;
     border: none;
     border-radius: 8px;
@@ -711,8 +789,12 @@
     font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
     font-weight: 600;
+  }
+
+  .word-game.dark-theme .powered-label {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .powered-link {
@@ -720,12 +802,16 @@
     align-items: center;
     gap: 4px;
     text-decoration: none;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  .word-game.dark-theme .powered-link {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .powered-link .material-symbols-outlined {
     font-size: 16px;
-    color: var(--correct);
+    color: var(--correct, #c25e40);
     transition: transform 0.7s ease;
   }
 
@@ -740,9 +826,13 @@
   }
 
   code {
-    background: var(--bg-secondary);
+    background: var(--bg-secondary, #f9fafb);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.85em;
+  }
+
+  .word-game.dark-theme code {
+    background: var(--bg-secondary, #1e293b);
   }
 </style>

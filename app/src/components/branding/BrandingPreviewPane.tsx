@@ -27,10 +27,24 @@ function buildVars(draft: DraftState): Record<string, string> {
   return out
 }
 
-export default function BrandingPreviewPane({ draft }: { draft: DraftState }) {
+type PreviewProps = {
+  draft: DraftState
+  hoveredToken?: string | null
+}
+
+export default function BrandingPreviewPane({ draft, hoveredToken }: PreviewProps) {
   const cssVars = useMemo(() => buildVars(draft), [draft])
   return (
     <div className="p-6">
+      {hoveredToken && (
+        <style>{`
+          [data-brand-preview] [data-brand-token="${hoveredToken}"] {
+            outline: 2px dashed #ff00aa !important;
+            outline-offset: 2px;
+            transition: outline-color 100ms;
+          }
+        `}</style>
+      )}
       <div data-brand-preview style={cssVars as React.CSSProperties}>
         <GamePreview />
       </div>

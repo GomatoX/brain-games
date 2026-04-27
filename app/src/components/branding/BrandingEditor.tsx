@@ -13,6 +13,7 @@ import AdvancedSection from "./sections/AdvancedSection"
 import type {
   BrandingTokens, BrandingTypography, BrandingSpacing, BrandingComponents,
 } from "@/lib/branding/tokens"
+import { hasPendingSave } from "@/lib/branding/unload-guard"
 
 export interface DraftState {
   tokens: BrandingTokens
@@ -59,7 +60,7 @@ type Props = {
   } | null
 }
 
-type SaveState = "idle" | "saving" | "just-saved"
+type SaveState = "idle" | "saving" | "just-saved" | "just-published" | "just-discarded"
 
 const DEFAULT_TOKENS: BrandingTokens = {
   primary: "#c25e40",
@@ -82,24 +83,35 @@ const DEFAULT_COMPONENTS: BrandingComponents = {
 const AUTOSAVE_DEBOUNCE_MS = 800
 const JUST_SAVED_DISPLAY_MS = 1500
 
+const liveToDraft = (src: {
+  tokens: unknown
+  typography: unknown
+  spacing: unknown
+  components: unknown
+  logoPath: string | null
+  logoDarkPath: string | null
+  faviconPath: string | null
+  backgroundPath: string | null
+  ogImagePath: string | null
+  customCssGames: string | null
+}): DraftState => ({
+  tokens: (src.tokens as BrandingTokens | null) ?? DEFAULT_TOKENS,
+  typography: (src.typography as BrandingTypography | null) ?? DEFAULT_TYPOGRAPHY,
+  spacing: (src.spacing as BrandingSpacing | null) ?? DEFAULT_SPACING,
+  components: (src.components as BrandingComponents | null) ?? DEFAULT_COMPONENTS,
+  logoPath: src.logoPath,
+  logoDarkPath: src.logoDarkPath,
+  faviconPath: src.faviconPath,
+  backgroundPath: src.backgroundPath,
+  ogImagePath: src.ogImagePath,
+  customCssGames: src.customCssGames,
+})
+
 export default function BrandingEditor({ brandingId, live, initialDraft }: Props) {
-  const startState: DraftState = useMemo(() => {
-    const src = initialDraft ?? live
-    return {
-      tokens: (src.tokens as BrandingTokens | null) ?? DEFAULT_TOKENS,
-      typography: (src.typography as BrandingTypography | null) ?? DEFAULT_TYPOGRAPHY,
-      spacing: (src.spacing as BrandingSpacing | null) ?? DEFAULT_SPACING,
-      components: (src.components as BrandingComponents | null) ?? DEFAULT_COMPONENTS,
-      logoPath: src.logoPath,
-      logoDarkPath: src.logoDarkPath,
-      faviconPath: src.faviconPath,
-      backgroundPath: src.backgroundPath,
-      ogImagePath: src.ogImagePath,
-      customCssGames: src.customCssGames,
-    }
-  }, [initialDraft, live])
+  const startState: DraftState = useMemo(() => liveToDraft(initialDraft ?? live), [initialDraft, live])
 
   const [draft, setDraft] = useState<DraftState>(startState)
+  const [hoveredToken, setHoveredToken] = useState<string | null>(null)
   const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft)
   const [saveState, setSaveState] = useState<SaveState>("idle")
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(initialDraft?.updatedAt ?? null)
@@ -115,6 +127,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       return
     }
     if (conflicted) return
+    if (discardingRef.current) return
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       void saveDraft()
@@ -130,6 +143,59 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
     }
   }, [])
+
+  const dirtyRef = useRef(false)
+  const savingRef = useRef(false)
+  const draftRef = useRef(draft)
+  const draftUpdatedAtRef = useRef(draftUpdatedAt)
+  const discardingRef = useRef(false)
+
+  useEffect(() => {
+    draftRef.current = draft
+  }, [draft])
+
+  useEffect(() => {
+    draftUpdatedAtRef.current = draftUpdatedAt
+  }, [draftUpdatedAt])
+
+  useEffect(() => {
+    savingRef.current = saveState === "saving"
+  }, [saveState])
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!hasPendingSave({ dirty: dirtyRef.current, saving: savingRef.current })) return
+      e.preventDefault()
+      // Some browsers still require returnValue to be set.
+      e.returnValue = ""
+    }
+
+    const handlePageHide = () => {
+      if (!hasPendingSave({ dirty: dirtyRef.current, saving: savingRef.current })) return
+      // Best-effort flush; keepalive lets the request complete after page unload.
+      try {
+        const body = JSON.stringify({
+          ...draftRef.current,
+          expectedUpdatedAt: draftUpdatedAtRef.current,
+        })
+        fetch(`/api/branding/${brandingId}/draft`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body,
+          keepalive: true,
+        })
+      } catch {
+        // No-op: page is unloading anyway.
+      }
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    window.addEventListener("pagehide", handlePageHide)
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      window.removeEventListener("pagehide", handlePageHide)
+    }
+  }, [brandingId])
 
   async function saveDraft() {
     setSaveState("saving")
@@ -156,6 +222,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     const body = (await res.json()) as { draft: { updatedAt: string } | null }
     if (body.draft) setDraftUpdatedAt(body.draft.updatedAt)
     setHasDraft(true)
+    dirtyRef.current = false
     setSaveState("just-saved")
     if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
     justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
@@ -170,7 +237,14 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
         window.alert("Failed to publish. Please try again.")
         return
       }
-      window.location.reload()
+      // Server returned the new live snapshot timestamp; mirror locally so the
+      // header indicator flips from "Unpublished draft" to "Live" immediately.
+      setHasDraft(false)
+      setDraftUpdatedAt(null)
+      dirtyRef.current = false
+      setSaveState("just-published")
+      if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
+      justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
     } finally {
       setPublishing(false)
     }
@@ -181,15 +255,30 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     const ok = window.confirm("Discard unpublished changes? This cannot be undone.")
     if (!ok) return
     const res = await fetch(`/api/branding/${brandingId}/draft`, { method: "DELETE" })
-    if (res.ok) {
-      window.location.reload()
-    } else {
+    if (!res.ok) {
       window.alert("Failed to discard draft. Please try again.")
+      return
     }
+    // Reset draft state to whatever is currently live. The discardingRef is set
+    // synchronously so the autosave effect (triggered by the setDraft below) sees
+    // it and skips; the setTimeout(0) clears it after that effect run completes,
+    // so any subsequent user edits during the "Discarded" toast window still
+    // autosave normally.
+    discardingRef.current = true
+    setDraft(liveToDraft(live))
+    setHasDraft(false)
+    setDraftUpdatedAt(null)
+    dirtyRef.current = false
+    setSaveState("just-discarded")
+    if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
+    justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
+    setTimeout(() => { discardingRef.current = false }, 0)
   }
 
-  const update = <K extends keyof DraftState>(key: K, val: DraftState[K]) =>
+  const update = <K extends keyof DraftState>(key: K, val: DraftState[K]) => {
+    dirtyRef.current = true
     setDraft((d) => ({ ...d, [key]: val }))
+  }
 
   const publishDisabled = !hasDraft || saveState === "saving" || publishing || conflicted
   const editorLocked = conflicted || publishing
@@ -205,6 +294,18 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
             <span className="inline-flex items-center gap-1 text-green-600">
               <span className="material-symbols-outlined text-sm">check_circle</span>
               Saved
+            </span>
+          )}
+          {saveState === "just-published" && (
+            <span className="inline-flex items-center gap-1 text-green-600">
+              <span className="material-symbols-outlined text-sm">rocket_launch</span>
+              Published
+            </span>
+          )}
+          {saveState === "just-discarded" && (
+            <span className="inline-flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+              <span className="material-symbols-outlined text-sm">undo</span>
+              Discarded
             </span>
           )}
           {saveState === "idle" && hasDraft && (
@@ -258,17 +359,18 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
           className="w-[480px] overflow-y-auto p-6 border-r"
           style={{ borderColor: "var(--border)", pointerEvents: editorLocked ? "none" : undefined, opacity: editorLocked ? 0.5 : 1 }}
         >
-          <IdentitySection draft={draft} update={update} />
+          {/* Section order is canonically defined in @/lib/branding/section-order.ts */}
           <ThemeSection draft={draft} update={update} />
+          <IdentitySection draft={draft} update={update} />
           <TypographySection draft={draft} update={update} />
           <SpacingSection draft={draft} update={update} />
           <ComponentsSection draft={draft} update={update} />
           <ImagerySection draft={draft} update={update} />
           <CustomCssSection draft={draft} update={update} />
-          <AdvancedSection draft={draft} update={update} />
+          <AdvancedSection draft={draft} update={update} onTokenHover={setHoveredToken} />
         </aside>
         <section className="flex-1 overflow-y-auto">
-          <BrandingPreviewPane draft={draft} />
+          <BrandingPreviewPane draft={draft} hoveredToken={hoveredToken} />
         </section>
       </div>
     </div>

@@ -44,7 +44,7 @@
 
 <style>
   .main-word-section {
-    background: var(--bg-secondary);
+    background: var(--bg-secondary, #f3f4f6);
     border-radius: 8px;
     padding: 32px 24px;
     margin-top: 16px;
@@ -54,13 +54,21 @@
     gap: 24px;
   }
 
+  :global(.dark-theme) .main-word-section {
+    background: var(--bg-secondary, #1e293b);
+  }
+
   .main-word-title {
     font-family: var(--font-serif);
     font-size: 28px;
     font-weight: 400;
     line-height: 36px;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     margin: 0;
+  }
+
+  :global(.dark-theme) .main-word-title {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .main-word-slots {
@@ -83,9 +91,18 @@
     transition: all 0.3s ease;
   }
 
+  :global(.dark-theme) .main-word-slot {
+    border-bottom-color: var(--text-primary, #f1f5f9);
+  }
+
   .main-word-slot.filled {
     border-color: var(--correct, #007a3c);
     background: var(--correct-light, #e2f3ea);
+  }
+
+  :global(.dark-theme) .main-word-slot.filled {
+    border-color: var(--correct, #10b981);
+    background: var(--correct-light, rgba(16, 185, 129, 0.15));
   }
 
   .main-word-slot.wrong {
@@ -105,6 +122,10 @@
     color: var(--correct, #007a3c);
   }
 
+  :global(.dark-theme) .slot-letter.filled {
+    color: var(--correct, #10b981);
+  }
+
   .slot-letter.wrong {
     color: #ee000e;
   }
@@ -113,8 +134,12 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: var(--border-color);
+    background: var(--border-color, #e2e8f0);
     padding: 10px;
+  }
+
+  :global(.dark-theme) .timer-badge {
+    background: var(--border-color, #334155);
   }
 
   .timer-label {
@@ -122,7 +147,11 @@
     font-size: 12px;
     font-weight: 400;
     line-height: 12px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
+  }
+
+  :global(.dark-theme) .timer-label {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .timer-value {
@@ -131,6 +160,10 @@
     font-weight: 400;
     line-height: 17px;
     color: var(--text-primary, #02030d);
+  }
+
+  :global(.dark-theme) .timer-value {
+    color: var(--text-primary, #f1f5f9);
   }
 
   @media (max-width: 1024px) {

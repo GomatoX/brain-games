@@ -22,12 +22,14 @@
     <h4>{$t("crossword.across")}</h4>
     <ul>
       {#each allClues.filter((c) => c.direction === "across") as clue}
+        {@const isActive = currentClue &&
+          currentClue.number === clue.number &&
+          currentClue.direction === clue.direction}
         <li
           class="clue-item"
-          class:active={currentClue &&
-            currentClue.number === clue.number &&
-            currentClue.direction === clue.direction}
+          class:active={isActive}
           class:solved={isSolved(clue)}
+          data-brand-token={isActive ? "sidebar-active-bg" : undefined}
           on:click={() => handleClick(clue)}
           role="button"
           tabindex="0"
@@ -44,12 +46,14 @@
     <h4>{$t("crossword.down")}</h4>
     <ul>
       {#each allClues.filter((c) => c.direction === "down") as clue}
+        {@const isActive = currentClue &&
+          currentClue.number === clue.number &&
+          currentClue.direction === clue.direction}
         <li
           class="clue-item"
-          class:active={currentClue &&
-            currentClue.number === clue.number &&
-            currentClue.direction === clue.direction}
+          class:active={isActive}
           class:solved={isSolved(clue)}
+          data-brand-token={isActive ? "sidebar-active-bg" : undefined}
           on:click={() => handleClick(clue)}
           role="button"
           tabindex="0"
@@ -85,16 +89,25 @@
   }
 
   .clues-section::-webkit-scrollbar-thumb {
-    background-color: var(--border-color);
+    background-color: var(--border-color, #e2e8f0);
     border-radius: 3px;
   }
 
+  :global(.dark-theme) .clues-section::-webkit-scrollbar-thumb {
+    background-color: var(--border-color, #334155);
+  }
+
   .clue-box {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
+    background: var(--bg-primary, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 12px;
     padding: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  :global(.dark-theme) .clue-box {
+    background: var(--bg-primary, #0f172a);
+    border-color: var(--border-color, #334155);
   }
 
   .clue-box h4 {
@@ -103,10 +116,14 @@
     font-weight: 400;
     line-height: 12px;
     letter-spacing: 0.2px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
     margin: 0 0 6px;
     padding-bottom: 0;
     border-bottom: none;
+  }
+
+  :global(.dark-theme) .clue-box h4 {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .clue-box ul {
@@ -124,7 +141,11 @@
   }
 
   .clue-item:hover {
-    background: var(--bg-secondary);
+    background: var(--bg-secondary, #f3f4f6);
+  }
+
+  :global(.dark-theme) .clue-item:hover {
+    background: var(--bg-secondary, #1e293b);
   }
 
   /* Active = selected clue */
@@ -133,8 +154,16 @@
     border-left: 1px solid var(--sidebar-active, var(--accent, #c25e40));
   }
 
+  :global(.dark-theme) .clue-item.active {
+    background: var(--sidebar-active-bg, var(--accent-light, rgba(194, 94, 64, 0.15)));
+  }
+
   .clue-item.active .clue-text {
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .clue-item.active .clue-text {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .clue-item.active .clue-num {
@@ -147,13 +176,26 @@
     border-left: 1px solid var(--correct, #007a3c);
   }
 
+  :global(.dark-theme) .clue-item.solved {
+    background: var(--correct-light, rgba(16, 185, 129, 0.15));
+    border-left-color: var(--correct, #10b981);
+  }
+
   .clue-item.solved .clue-text {
     text-decoration: line-through;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
+  }
+
+  :global(.dark-theme) .clue-item.solved .clue-text {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .clue-item.solved .clue-num {
     color: var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .clue-item.solved .clue-num {
+    color: var(--correct, #10b981);
   }
 
   /* Active takes priority over solved */
@@ -162,9 +204,17 @@
     border-left: 1px solid var(--sidebar-active, var(--accent, #c25e40));
   }
 
+  :global(.dark-theme) .clue-item.active.solved {
+    background: var(--sidebar-active-bg, var(--accent-light, rgba(194, 94, 64, 0.15)));
+  }
+
   .clue-item.active.solved .clue-text {
     text-decoration: line-through;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .clue-item.active.solved .clue-text {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .clue-item.active.solved .clue-num {
@@ -177,15 +227,23 @@
     font-weight: 400;
     line-height: 14px;
     letter-spacing: 0.3px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #64748b);
     min-width: 28px;
     flex-shrink: 0;
+  }
+
+  :global(.dark-theme) .clue-num {
+    color: var(--text-secondary, #94a3b8);
   }
 
   .clue-text {
     font-size: 0.85rem;
     line-height: 1.5;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .clue-text {
+    color: var(--text-primary, #f1f5f9);
   }
 
   @media (max-width: 1024px) {

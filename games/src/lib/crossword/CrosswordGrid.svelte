@@ -137,21 +137,35 @@
   <div
     class="crossword-grid"
     bind:this={gridEl}
+    data-brand-token="grid-border"
     style="--grid-cols: {grid[0]?.length || 1}; --grid-rows: {grid.length || 1}"
   >
     {#each grid as row, rowIndex}
       {#each row as cell, colIndex}
         {@const cellKey = `${rowIndex},${colIndex}`}
         {@const isLocked = lockedCells.has(cellKey)}
+        {@const isSelected = !blurred &&
+          selectedCell?.row === rowIndex &&
+          selectedCell?.col === colIndex}
+        {@const isWordHighlighted = !blurred && selectedWordCells.has(cellKey)}
         <div
           class="cell"
           class:blocked={cell.isBlocked}
-          class:selected={!blurred &&
-            selectedCell?.row === rowIndex &&
-            selectedCell?.col === colIndex}
-          class:word-highlighted={!blurred && selectedWordCells.has(cellKey)}
+          class:selected={isSelected}
+          class:word-highlighted={isWordHighlighted}
           class:main-word-cell={mainWordCellSet.has(cellKey)}
           class:locked={isLocked}
+          data-brand-token={
+            cell.isBlocked
+              ? "cell-blocked"
+              : isLocked
+                ? "correct"
+                : isSelected
+                  ? "selection"
+                  : isWordHighlighted
+                    ? "highlight"
+                    : "cell-bg"
+          }
           role="button"
           tabindex={cell.isBlocked || blurred ? -1 : 0}
           on:click={() => handleCellClick(rowIndex, colIndex)}
@@ -163,6 +177,9 @@
           {/if}
           {#if mainWordCellSet.has(cellKey)}
             <span class="main-word-dot"></span>
+          {/if}
+          {#if isSelected}
+            <span class="cell-ring-marker" data-brand-token="selection-ring" aria-hidden="true"></span>
           {/if}
           {#if !cell.isBlocked}
             <input
@@ -226,12 +243,16 @@
 <style>
   .grid-wrapper {
     position: relative;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-secondary, #f3f4f6);
     padding: 32px;
     border-radius: 0;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+  }
+
+  :global(.dark-theme) .grid-wrapper {
+    background-color: var(--bg-secondary, #1e293b);
   }
 
   @media (max-width: 1024px) {
@@ -244,12 +265,17 @@
     display: grid;
     grid-template-columns: repeat(var(--grid-cols), minmax(0, 60px));
     gap: 0;
-    background: var(--grid-border, var(--border-color));
-    border: 1px solid var(--grid-border, var(--border-color));
+    background: var(--grid-border, var(--border-color, #e2e8f0));
+    border: 1px solid var(--grid-border, var(--border-color, #e2e8f0));
     width: fit-content;
     max-width: 100%;
     margin: 0 auto;
     position: relative;
+  }
+
+  :global(.dark-theme) .crossword-grid {
+    background: var(--grid-border, var(--border-color, #334155));
+    border-color: var(--grid-border, var(--border-color, #334155));
   }
 
   @media (max-width: 1024px) {
@@ -333,38 +359,70 @@
 
   .cell {
     position: relative;
-    background: var(--cell-bg);
+    background: var(--cell-bg, #ffffff);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     aspect-ratio: 1;
     transition: background-color 0.1s ease;
-    border: 0.5px solid var(--grid-border, var(--border-color));
+    border: 0.5px solid var(--grid-border, var(--border-color, #e2e8f0));
+  }
+
+  .cell-ring-marker {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  :global(.dark-theme) .cell {
+    background: var(--cell-bg, #1e293b);
+    border-color: var(--grid-border, var(--border-color, #334155));
   }
 
   .cell.blocked {
-    background: var(--cell-blocked);
+    background: var(--cell-blocked, #1a1a1a);
     cursor: default;
-    border-color: var(--cell-blocked);
+    border-color: var(--cell-blocked, #1a1a1a);
+  }
+
+  :global(.dark-theme) .cell.blocked {
+    background: var(--cell-blocked, #0f172a);
+    border-color: var(--cell-blocked, #0f172a);
   }
 
   .cell.word-highlighted {
-    background: var(--cell-highlighted);
+    background: var(--cell-highlighted, #fcece8);
+  }
+
+  :global(.dark-theme) .cell.word-highlighted {
+    background: var(--cell-highlighted, rgba(194, 94, 64, 0.15));
   }
 
   .cell.selected {
-    background: var(--cell-selected-bg);
-    box-shadow: inset 0 0 0 2px var(--cell-selected-ring);
+    background: var(--cell-selected-bg, #fcece8);
+    box-shadow: inset 0 0 0 2px var(--cell-selected-ring, #c25e40);
+  }
+
+  :global(.dark-theme) .cell.selected {
+    background: var(--cell-selected-bg, rgba(194, 94, 64, 0.2));
   }
 
   .cell.selected input {
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     font-weight: 600;
   }
 
+  :global(.dark-theme) .cell.selected input {
+    color: var(--text-primary, #f1f5f9);
+  }
+
   .cell.word-highlighted input {
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
+  }
+
+  :global(.dark-theme) .cell.word-highlighted input {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .cell-number {
@@ -374,8 +432,12 @@
     font-size: 0.5rem;
     font-weight: 600;
     line-height: 1;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     pointer-events: none;
+  }
+
+  :global(.dark-theme) .cell-number {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .cell input {
@@ -388,10 +450,14 @@
     font-size: 1.3rem;
     font-weight: 500;
     text-transform: uppercase;
-    color: var(--text-primary);
+    color: var(--text-primary, #0f172a);
     outline: none;
-    caret-color: var(--accent);
+    caret-color: var(--accent, #c25e40);
     padding: 0;
+  }
+
+  :global(.dark-theme) .cell input {
+    color: var(--text-primary, #f1f5f9);
   }
 
   .cell input:focus {
@@ -410,9 +476,13 @@
     width: 6px;
     height: 6px;
     background: transparent;
-    border: 1.5px solid var(--text-secondary);
+    border: 1.5px solid var(--text-secondary, #64748b);
     border-radius: 50%;
     z-index: 3;
+  }
+
+  :global(.dark-theme) .main-word-dot {
+    border-color: var(--text-secondary, #94a3b8);
   }
 
   /* Locked (correctly solved) cells */
@@ -420,14 +490,26 @@
     background: var(--correct-light, #e2f3ea);
   }
 
+  :global(.dark-theme) .cell.locked {
+    background: var(--correct-light, rgba(16, 185, 129, 0.15));
+  }
+
   .cell.locked input {
     color: var(--correct, #007a3c);
     font-weight: 600;
   }
 
+  :global(.dark-theme) .cell.locked input {
+    color: var(--correct, #10b981);
+  }
+
   .cell.locked input[readonly] {
     opacity: 1;
     -webkit-text-fill-color: var(--correct, #007a3c);
+  }
+
+  :global(.dark-theme) .cell.locked input[readonly] {
+    -webkit-text-fill-color: var(--correct, #10b981);
   }
 
   /* Blurred result mode */
