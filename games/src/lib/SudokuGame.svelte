@@ -341,7 +341,7 @@
         <h1>{game.title || "Sudoku"}</h1>
       </div>
       <div class="header-right">
-        <div class="timer-display">
+        <div class="timer-display" data-brand-token="text">
           <span class="material-symbols-outlined timer-icon">timer</span>
           <span class="timer-value">{formatTime(elapsedTime)}</span>
           <div class="timer-divider"></div>
@@ -443,7 +443,11 @@
         <!-- Number Pad -->
         <div class="number-pad">
           {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as num}
-            <button class="num-btn" on:click={() => handleNumberPad(num)}>
+            <button
+              class="num-btn"
+              data-brand-token={num === 1 ? "primary" : undefined}
+              on:click={() => handleNumberPad(num)}
+            >
               {num}
             </button>
           {/each}
