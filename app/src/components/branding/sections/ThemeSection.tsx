@@ -6,9 +6,10 @@ import SelectField from "../fields/SelectField"
 type Props = {
   draft: DraftState
   update: <K extends keyof DraftState>(key: K, val: DraftState[K]) => void
+  onTokenHover?: (id: string | null) => void
 }
 
-export default function ThemeSection({ draft, update }: Props) {
+export default function ThemeSection({ draft, update, onTokenHover }: Props) {
   const setSeed = (k: "primary" | "surface" | "text", v: string) =>
     update("tokens", { ...draft.tokens, [k]: v })
 
@@ -29,7 +30,14 @@ export default function ThemeSection({ draft, update }: Props) {
           onChange={(id) => applyPreset(id)}
         />
         {(["primary", "surface", "text"] as const).map((k) => (
-          <label key={k} className="block text-sm">
+          <label
+            key={k}
+            className="block text-sm rounded px-1 -mx-1 hover:bg-slate-50 focus-within:bg-slate-50"
+            onMouseEnter={() => onTokenHover?.(k)}
+            onMouseLeave={() => onTokenHover?.(null)}
+            onFocus={() => onTokenHover?.(k)}
+            onBlur={() => onTokenHover?.(null)}
+          >
             <span className="block mb-1 capitalize">{k}</span>
             <div className="flex gap-2 items-center">
               <input

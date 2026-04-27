@@ -348,7 +348,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
           style={{ borderColor: "var(--border)", pointerEvents: editorLocked ? "none" : undefined, opacity: editorLocked ? 0.5 : 1 }}
         >
           {/* Section order is canonically defined in @/lib/branding/section-order.ts */}
-          <ThemeSection draft={draft} update={update} />
+          <ThemeSection draft={draft} update={update} onTokenHover={setHoveredToken} />
           <IdentitySection draft={draft} update={update} />
           <TypographySection draft={draft} update={update} />
           <SpacingSection draft={draft} update={update} />
