@@ -134,6 +134,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
   }, [])
 
   const dirtyRef = useRef(false)
+  const savingRef = useRef(false)
   const draftRef = useRef(draft)
   const draftUpdatedAtRef = useRef(draftUpdatedAt)
 
@@ -146,15 +147,19 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
   }, [draftUpdatedAt])
 
   useEffect(() => {
+    savingRef.current = saveState === "saving"
+  }, [saveState])
+
+  useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!hasPendingSave({ dirty: dirtyRef.current, saving: saveState === "saving" })) return
+      if (!hasPendingSave({ dirty: dirtyRef.current, saving: savingRef.current })) return
       e.preventDefault()
       // Some browsers still require returnValue to be set.
       e.returnValue = ""
     }
 
     const handlePageHide = () => {
-      if (!dirtyRef.current) return
+      if (!hasPendingSave({ dirty: dirtyRef.current, saving: savingRef.current })) return
       // Best-effort flush; keepalive lets the request complete after page unload.
       try {
         const body = JSON.stringify({
@@ -178,7 +183,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       window.removeEventListener("beforeunload", handleBeforeUnload)
       window.removeEventListener("pagehide", handlePageHide)
     }
-  }, [brandingId, saveState])
+  }, [brandingId])
 
   async function saveDraft() {
     setSaveState("saving")
