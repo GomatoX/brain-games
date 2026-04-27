@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PageHeader, Panel, Modal, Button, Input, Select } from "@/components/ui"
 import { PRESETS } from "@/lib/branding/presets"
+import { formatRelativeTime } from "@/lib/branding/relative-time"
 import type { BrandingTokens, BrandingTypography } from "@/lib/branding/tokens"
 
 const FALLBACK_PRIMARY = "#c25e40"
@@ -17,6 +18,9 @@ export interface BrandingListItem {
   tokens: BrandingTokens | null
   typography: BrandingTypography | null
   logoPath: string | null
+  updatedAt: string
+  hasDraft: boolean
+  lastEditedAt: string
 }
 
 export default function BrandingContent({
@@ -151,9 +155,32 @@ export default function BrandingContent({
                 </div>
 
                 <div className="p-4 flex flex-col gap-3 flex-1">
-                  <h3 className="font-semibold text-[#0f172a] truncate">
-                    {p.name || "Untitled"}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-[#0f172a] truncate">
+                      {p.name || "Untitled"}
+                    </h3>
+                    {p.hasDraft ? (
+                      <span
+                        className="shrink-0 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-[3px]"
+                        title="Has unpublished changes"
+                      >
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                        Draft
+                      </span>
+                    ) : (
+                      <span
+                        className="shrink-0 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide bg-green-50 text-green-700 px-1.5 py-0.5 rounded-[3px]"
+                        title="All changes are published"
+                      >
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                        Live
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-[11px] text-[#64748b]">
+                    Edited {formatRelativeTime(p.lastEditedAt)}
+                  </div>
 
                   <div className="flex items-center gap-2">
                     <Swatch color={primary} label="Primary" />
