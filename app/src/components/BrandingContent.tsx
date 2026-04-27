@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { PageHeader, Panel, Modal, Button, Input, Select } from "@/components/ui"
 import { PRESETS } from "@/lib/branding/presets"
 import { formatRelativeTime } from "@/lib/branding/relative-time"
+import { formatUsageLabel } from "@/lib/branding/usage"
 import type { BrandingTokens, BrandingTypography } from "@/lib/branding/tokens"
 
 const FALLBACK_PRIMARY = "#c25e40"
@@ -21,6 +22,7 @@ export interface BrandingListItem {
   updatedAt: string
   hasDraft: boolean
   lastEditedAt: string
+  usageCount: number
 }
 
 export default function BrandingContent({
@@ -37,6 +39,7 @@ export default function BrandingContent({
   const [createError, setCreateError] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState("")
+  const [deleteTarget, setDeleteTarget] = useState<BrandingListItem | null>(null)
 
   const handleOpenCreate = () => {
     setCreateName("")
@@ -79,25 +82,34 @@ export default function BrandingContent({
     }
   }
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleRequestDelete = (item: BrandingListItem) => {
     if (deletingId) return
-    const ok = window.confirm(
-      `Delete "${name}"? Games using this brand will lose their styling.`,
-    )
-    if (!ok) return
-    setDeletingId(id)
+    setDeleteError("")
+    setDeleteTarget(item)
+  }
+
+  const handleCancelDelete = () => {
+    if (deletingId) return
+    setDeleteTarget(null)
+  }
+
+  const handleConfirmDelete = async () => {
+    const target = deleteTarget
+    if (!target || deletingId) return
+    setDeletingId(target.id)
     setDeleteError("")
     try {
-      const res = await fetch(`/api/branding?id=${encodeURIComponent(id)}`, {
+      const res = await fetch(`/api/branding?id=${encodeURIComponent(target.id)}`, {
         method: "DELETE",
       })
       if (!res.ok) {
-        setDeleteError(`Failed to delete "${name}". Please try again.`)
+        setDeleteError(`Failed to delete "${target.name}". Please try again.`)
         return
       }
-      setPresets((prev) => prev.filter((p) => p.id !== id))
+      setPresets((prev) => prev.filter((p) => p.id !== target.id))
+      setDeleteTarget(null)
     } catch {
-      setDeleteError(`Failed to delete "${name}". Please try again.`)
+      setDeleteError(`Failed to delete "${target.name}". Please try again.`)
     } finally {
       setDeletingId(null)
     }
@@ -182,6 +194,13 @@ export default function BrandingContent({
                     Edited {formatRelativeTime(p.lastEditedAt)}
                   </div>
 
+                  <div className="text-[11px] text-[#64748b] inline-flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] leading-none">
+                      extension
+                    </span>
+                    {formatUsageLabel(p.usageCount)}
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <Swatch color={primary} label="Primary" />
                     <Swatch color={surface} label="Surface" />
@@ -210,7 +229,7 @@ export default function BrandingContent({
                       size="sm"
                       icon="delete"
                       disabled={deletingId === p.id}
-                      onClick={() => handleDelete(p.id, p.name || "Untitled")}
+                      onClick={() => handleRequestDelete(p)}
                     >
                       {deletingId === p.id ? "Deleting…" : "Delete"}
                     </Button>
@@ -261,6 +280,44 @@ export default function BrandingContent({
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={deleteTarget != null}
+        onClose={handleCancelDelete}
+        title="Delete brand"
+        icon="delete"
+        size="sm"
+      >
+        {deleteTarget && (
+          <div className="p-4 sm:p-6 flex flex-col gap-4">
+            <p className="text-sm text-[#0f172a]">
+              Delete <strong>&ldquo;{deleteTarget.name || "Untitled"}&rdquo;</strong>?
+            </p>
+            {deleteTarget.usageCount > 0 ? (
+              <p className="text-sm bg-yellow-50 text-yellow-800 px-3 py-2 rounded-[4px]">
+                <span className="font-medium">{formatUsageLabel(deleteTarget.usageCount)}.</span>{" "}
+                Those games will lose their custom styling and fall back to platform defaults.
+              </p>
+            ) : (
+              <p className="text-sm text-[#64748b]">
+                This brand isn&rsquo;t attached to any games, so nothing else will change.
+              </p>
+            )}
+            <p className="text-xs text-[#64748b]">This cannot be undone.</p>
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
+              <Button variant="outline" onClick={handleCancelDelete} disabled={deletingId === deleteTarget.id}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmDelete}
+                disabled={deletingId === deleteTarget.id}
+              >
+                {deletingId === deleteTarget.id ? "Deleting…" : "Delete brand"}
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )
