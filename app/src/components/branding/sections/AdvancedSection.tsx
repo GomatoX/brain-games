@@ -3,6 +3,7 @@ import { useMemo } from "react"
 import type { DraftState } from "../BrandingEditor"
 import { deriveTokens } from "@/lib/branding/derive"
 import { TOKEN_REGISTRY } from "@/lib/branding/token-registry"
+import HelpHint from "../fields/HelpHint"
 
 type Props = {
   draft: DraftState
@@ -41,11 +42,7 @@ export default function AdvancedSection({ draft, update, onTokenHover }: Props) 
             >
               <span className="inline-block w-4 h-4 border rounded shrink-0" style={{ background: value }} />
               <span className="font-medium truncate">{t.label}</span>
-              <span
-                className="text-slate-400 cursor-help shrink-0"
-                title={t.description}
-                aria-label={t.description}
-              >ⓘ</span>
+              <HelpHint text={t.description} />
               <span className="font-mono text-[10px] text-slate-400 ml-auto truncate">{t.id}</span>
               {isPinned ? (
                 <>

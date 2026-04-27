@@ -1,6 +1,7 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
 import SelectField from "../fields/SelectField"
+import HelpHint from "../fields/HelpHint"
 
 const SANS_FONTS = [
   "Inter, sans-serif", "Roboto, sans-serif", "Open Sans, sans-serif",
@@ -20,6 +21,9 @@ const SCALE_OPTIONS = [
   { value: "default", label: "Default" },
   { value: "relaxed", label: "Relaxed" },
 ]
+
+const SCALE_HELP =
+  "Adjusts how big body text and headings render. Compact for dense layouts; Relaxed for showcase pages."
 
 const fontOptions = (fonts: string[]) =>
   [{ value: "", label: "(default)" }, ...fonts.map((f) => ({ value: f, label: f.split(",")[0] }))]
@@ -46,12 +50,19 @@ export default function TypographySection({ draft, update }: Props) {
           options={fontOptions(SERIF_FONTS)}
           onChange={(v) => update("typography", { ...draft.typography, fontSerif: v || null })}
         />
-        <SelectField
-          label="Scale"
-          value={draft.typography.scale}
-          options={SCALE_OPTIONS}
-          onChange={(v) => update("typography", { ...draft.typography, scale: v as DraftState["typography"]["scale"] })}
-        />
+        <div className="flex items-center gap-1">
+          <div className="flex-1">
+            <SelectField
+              label="Type scale"
+              value={draft.typography.scale}
+              options={SCALE_OPTIONS}
+              onChange={(v) => update("typography", { ...draft.typography, scale: v as DraftState["typography"]["scale"] })}
+            />
+          </div>
+          <div className="self-end pb-2">
+            <HelpHint text={SCALE_HELP} />
+          </div>
+        </div>
       </div>
     </details>
   )
