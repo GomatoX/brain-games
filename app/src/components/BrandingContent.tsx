@@ -156,7 +156,7 @@ export default function BrandingContent({
 
                 <div className="p-4 flex flex-col gap-3 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-[#0f172a] truncate">
+                    <h3 className="font-semibold text-[#0f172a] truncate min-w-0">
                       {p.name || "Untitled"}
                     </h3>
                     {p.hasDraft ? (
