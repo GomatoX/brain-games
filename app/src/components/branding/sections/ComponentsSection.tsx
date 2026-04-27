@@ -7,10 +7,10 @@ const BUTTON_VARIANT = [
   { value: "outline", label: "Outline" },
   { value: "ghost-fill", label: "Ghost-fill" },
 ]
-const BUTTON_SHADOW = [
-  { value: "none", label: "None" },
+const BUTTON_ELEVATION = [
+  { value: "none", label: "Flat" },
   { value: "subtle", label: "Subtle" },
-  { value: "pronounced", label: "Pronounced" },
+  { value: "pronounced", label: "Lifted" },
 ]
 const INPUT_VARIANT = [
   { value: "outlined", label: "Outlined" },
@@ -43,9 +43,9 @@ export default function ComponentsSection({ draft, update }: Props) {
           })}
         />
         <SelectField
-          label="Button shadow"
+          label="Button elevation"
           value={draft.components.button.shadow}
-          options={BUTTON_SHADOW}
+          options={BUTTON_ELEVATION}
           onChange={(v) => update("components", {
             ...draft.components,
             button: { ...draft.components.button, shadow: v as DraftState["components"]["button"]["shadow"] },
