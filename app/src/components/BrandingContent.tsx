@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { PageHeader, Panel, Modal, Button, Input, Select } from "@/components/ui"
 import { PRESETS } from "@/lib/branding/presets"
 import { formatRelativeTime } from "@/lib/branding/relative-time"
-import { formatUsageLabel } from "@/lib/branding/usage"
+import { formatUsageLabel } from "@/lib/branding/usage-format"
 import type { BrandingTokens, BrandingTypography } from "@/lib/branding/tokens"
 
 const FALLBACK_PRIMARY = "#c25e40"
