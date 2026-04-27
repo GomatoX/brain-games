@@ -14,12 +14,12 @@ describe("<FileUploadField />", () => {
     vi.unstubAllGlobals()
   })
 
-  it("renders the label and 'No image' placeholder when path is null", () => {
+  it("renders the label and dropzone hint when path is null", () => {
     const { getByText } = render(
       <FileUploadField label="Logo (light)" kind="logo" path={null} onChange={() => {}} />,
     )
     expect(getByText("Logo (light)")).toBeTruthy()
-    expect(getByText("No image")).toBeTruthy()
+    expect(getByText("Drop an image here, or")).toBeTruthy()
   })
 
   it("renders the preview img when path is set", () => {
@@ -67,5 +67,63 @@ describe("<FileUploadField />", () => {
     fireEvent.change(input, { target: { files: [new File(["x"], "x.png", { type: "image/png" })] } })
     await waitFor(() => expect(global.alert).toHaveBeenCalled())
     expect(handle).not.toHaveBeenCalled()
+  })
+})
+
+describe("<FileUploadField /> drag and drop", () => {
+  it("calls onChange when a file is dropped onto the dropzone", async () => {
+    const onChange = vi.fn()
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ path: "uploads/abc.png" }), { status: 200 }),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    const { getByTestId } = render(
+      <FileUploadField label="Logo" kind="logo" path={null} onChange={onChange} />,
+    )
+    const zone = getByTestId("file-upload-dropzone")
+    const file = new File(["x"], "logo.png", { type: "image/png" })
+
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } })
+
+    await new Promise((r) => setTimeout(r, 0))
+    expect(fetchMock).toHaveBeenCalled()
+    expect(onChange).toHaveBeenCalledWith("uploads/abc.png")
+
+    vi.unstubAllGlobals()
+  })
+
+  it("applies a 'dragging' style while a file is hovering over the dropzone", () => {
+    const { getByTestId } = render(
+      <FileUploadField label="Logo" kind="logo" path={null} onChange={() => {}} />,
+    )
+    const zone = getByTestId("file-upload-dropzone")
+    fireEvent.dragEnter(zone)
+    expect(zone.className).toContain("border-blue")
+    fireEvent.dragLeave(zone)
+    expect(zone.className).not.toContain("border-blue")
+  })
+
+  it("shows an 'Uploading…' indicator while the request is in flight", async () => {
+    let resolveFetch: (r: Response) => void = () => {}
+    const fetchMock = vi.fn(() => new Promise<Response>((r) => { resolveFetch = r }))
+    vi.stubGlobal("fetch", fetchMock)
+
+    const { getByTestId, queryByText } = render(
+      <FileUploadField label="Logo" kind="logo" path={null} onChange={() => {}} />,
+    )
+    const zone = getByTestId("file-upload-dropzone")
+    const file = new File(["x"], "logo.png", { type: "image/png" })
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } })
+
+    await new Promise((r) => setTimeout(r, 0))
+    expect(queryByText("Uploading…")).toBeTruthy()
+
+    resolveFetch(new Response(JSON.stringify({ path: "uploads/x.png" }), { status: 200 }))
+    await new Promise((r) => setTimeout(r, 0))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(queryByText("Uploading…")).toBeNull()
+
+    vi.unstubAllGlobals()
   })
 })
