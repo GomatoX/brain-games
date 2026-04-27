@@ -8,6 +8,11 @@ import {
   PLATFORM_USER_ID,
   PLATFORM_PUZZLE_IDS,
 } from "@/lib/branding/platform-defaults"
+import {
+  BRAND_DEFAULT_PRIMARY,
+  BRAND_DEFAULT_SURFACE,
+  BRAND_DEFAULT_TEXT,
+} from "@/lib/branding/defaults"
 
 // Hand-authored sample puzzles used by the branding editor preview pane.
 // Inserted once at startup if the platform org doesn't exist yet.
@@ -86,9 +91,9 @@ if (isPostgres) {
         console.log(`[migrate] backfilling ${rows.length} branding rows`)
 
         const PLATFORM_DEFAULTS = {
-          primary: process.env.PLATFORM_ACCENT || "#c25e40",
-          surface: "#ffffff",
-          text: "#0f172a",
+          primary: process.env.PLATFORM_ACCENT || BRAND_DEFAULT_PRIMARY,
+          surface: BRAND_DEFAULT_SURFACE,
+          text: BRAND_DEFAULT_TEXT,
         }
 
         const client = await pool.connect()
@@ -380,9 +385,9 @@ if (isPostgres) {
         console.log(`[migrate] backfilling ${rows.length} branding rows`)
 
         const PLATFORM_DEFAULTS = {
-          primary: process.env.PLATFORM_ACCENT || "#c25e40",
-          surface: "#ffffff",
-          text: "#0f172a",
+          primary: process.env.PLATFORM_ACCENT || BRAND_DEFAULT_PRIMARY,
+          surface: BRAND_DEFAULT_SURFACE,
+          text: BRAND_DEFAULT_TEXT,
         }
 
         const update = sqlite.prepare(

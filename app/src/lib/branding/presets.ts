@@ -1,4 +1,9 @@
 import type { BrandingTokens } from "./tokens"
+import {
+  BRAND_DEFAULT_PRIMARY,
+  BRAND_DEFAULT_SURFACE,
+  BRAND_DEFAULT_TEXT,
+} from "./defaults"
 
 export interface BrandingPreset {
   id: string
@@ -10,7 +15,12 @@ export const PRESETS: BrandingPreset[] = [
   {
     id: "coral",
     name: "Coral",
-    tokens: { primary: "#c25e40", surface: "#ffffff", text: "#0f172a", overrides: {} },
+    tokens: {
+      primary: BRAND_DEFAULT_PRIMARY,
+      surface: BRAND_DEFAULT_SURFACE,
+      text: BRAND_DEFAULT_TEXT,
+      overrides: {},
+    },
   },
   {
     id: "ocean",

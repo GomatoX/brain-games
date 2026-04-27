@@ -13,6 +13,12 @@ import AdvancedSection from "./sections/AdvancedSection"
 import type {
   BrandingTokens, BrandingTypography, BrandingSpacing, BrandingComponents,
 } from "@/lib/branding/tokens"
+import {
+  PLATFORM_DEFAULT_TOKENS as DEFAULT_TOKENS,
+  PLATFORM_DEFAULT_TYPOGRAPHY as DEFAULT_TYPOGRAPHY,
+  PLATFORM_DEFAULT_SPACING as DEFAULT_SPACING,
+  PLATFORM_DEFAULT_COMPONENTS as DEFAULT_COMPONENTS,
+} from "@/lib/branding/defaults"
 import { hasPendingSave } from "@/lib/branding/unload-guard"
 
 export interface DraftState {
@@ -61,24 +67,6 @@ type Props = {
 }
 
 type SaveState = "idle" | "saving" | "just-saved" | "just-published" | "just-discarded"
-
-const DEFAULT_TOKENS: BrandingTokens = {
-  primary: "#c25e40",
-  surface: "#ffffff",
-  text: "#0f172a",
-  overrides: {},
-}
-const DEFAULT_TYPOGRAPHY: BrandingTypography = {
-  fontSans: null,
-  fontSerif: null,
-  scale: "default",
-}
-const DEFAULT_SPACING: BrandingSpacing = { density: "cozy", radius: 8 }
-const DEFAULT_COMPONENTS: BrandingComponents = {
-  button: { variant: "solid", shadow: "subtle" },
-  input: { variant: "outlined" },
-  card: { elevation: "subtle" },
-}
 
 const AUTOSAVE_DEBOUNCE_MS = 800
 const JUST_SAVED_DISPLAY_MS = 1500
