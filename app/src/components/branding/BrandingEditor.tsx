@@ -13,6 +13,7 @@ import AdvancedSection from "./sections/AdvancedSection"
 import type {
   BrandingTokens, BrandingTypography, BrandingSpacing, BrandingComponents,
 } from "@/lib/branding/tokens"
+import { hasPendingSave } from "@/lib/branding/unload-guard"
 
 export interface DraftState {
   tokens: BrandingTokens
@@ -132,6 +133,53 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     }
   }, [])
 
+  const dirtyRef = useRef(false)
+  const draftRef = useRef(draft)
+  const draftUpdatedAtRef = useRef(draftUpdatedAt)
+
+  useEffect(() => {
+    draftRef.current = draft
+  }, [draft])
+
+  useEffect(() => {
+    draftUpdatedAtRef.current = draftUpdatedAt
+  }, [draftUpdatedAt])
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!hasPendingSave({ dirty: dirtyRef.current, saving: saveState === "saving" })) return
+      e.preventDefault()
+      // Some browsers still require returnValue to be set.
+      e.returnValue = ""
+    }
+
+    const handlePageHide = () => {
+      if (!dirtyRef.current) return
+      // Best-effort flush; keepalive lets the request complete after page unload.
+      try {
+        const body = JSON.stringify({
+          ...draftRef.current,
+          expectedUpdatedAt: draftUpdatedAtRef.current,
+        })
+        fetch(`/api/branding/${brandingId}/draft`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body,
+          keepalive: true,
+        })
+      } catch {
+        // No-op: page is unloading anyway.
+      }
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    window.addEventListener("pagehide", handlePageHide)
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      window.removeEventListener("pagehide", handlePageHide)
+    }
+  }, [brandingId, saveState])
+
   async function saveDraft() {
     setSaveState("saving")
     let res: Response
@@ -157,6 +205,7 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     const body = (await res.json()) as { draft: { updatedAt: string } | null }
     if (body.draft) setDraftUpdatedAt(body.draft.updatedAt)
     setHasDraft(true)
+    dirtyRef.current = false
     setSaveState("just-saved")
     if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
     justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
@@ -189,8 +238,10 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     }
   }
 
-  const update = <K extends keyof DraftState>(key: K, val: DraftState[K]) =>
+  const update = <K extends keyof DraftState>(key: K, val: DraftState[K]) => {
+    dirtyRef.current = true
     setDraft((d) => ({ ...d, [key]: val }))
+  }
 
   const publishDisabled = !hasDraft || saveState === "saving" || publishing || conflicted
   const editorLocked = conflicted || publishing
