@@ -1,0 +1,1200 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Modal } from "@/components/ui"
+import type { Game, GameType } from "@/lib/game-types"
+
+const PLAY_BASE =
+  typeof window !== "undefined" ? `${window.location.origin}/play` : "/play"
+const API_URL = typeof window !== "undefined" ? window.location.origin : ""
+
+export function GameModal({
+  mode,
+  type,
+  game,
+  orgId,
+  onClose,
+  onSaved,
+}: {
+  mode: "create" | "edit"
+  type: GameType
+  game?: Game
+  orgId: string
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [createdGame, setCreatedGame] = useState<{
+    id: string | number
+    title: string
+  } | null>(null)
+  const [embedCopied, setEmbedCopied] = useState(false)
+
+  // Form fields
+  const [title, setTitle] = useState(game?.title || "")
+  const [status, setStatus] = useState(game?.status || "draft")
+  const [scheduledDate, setScheduledDate] = useState(
+    game?.scheduled_date || "",
+  )
+  const [difficulty, setDifficulty] = useState(game?.difficulty || "medium")
+  // Word game fields
+  const [word, setWord] = useState(game?.word || "")
+  const [definition, setDefinition] = useState(game?.definition || "")
+  const [maxAttempts, setMaxAttempts] = useState(game?.max_attempts || 6)
+  // Crossword words
+  const [wordsInput, setWordsInput] = useState("")
+  const [clueInput, setClueInput] = useState("")
+  const [mainWord, setMainWord] = useState(game?.main_word || "")
+  const [wordsList, setWordsList] = useState<
+    {
+      word: string
+      clue: string
+      main_word_index?: number
+      x?: number
+      y?: number
+      direction?: string
+    }[]
+  >(game?.words || [])
+  // AI generation state
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState("")
+  const [layoutLoading, setLayoutLoading] = useState(false)
+  const [layoutError, setLayoutError] = useState("")
+  const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
+  const [aiWordCount, setAiWordCount] = useState(
+    difficulty === "easy" ? 5 : difficulty === "hard" ? 12 : 8,
+  )
+  const [aiLanguage, setAiLanguage] = useState<"lt" | "en">("lt")
+  // Branding
+  const [brandingPresets, setBrandingPresets] = useState<
+    { id: string | number; name: string }[]
+  >([])
+  const [selectedBranding, setSelectedBranding] = useState<string>(
+    game?.branding ? String(game.branding) : "",
+  )
+
+  useEffect(() => {
+    fetch("/api/branding")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setBrandingPresets(data)
+        }
+      })
+      .catch(() => {})
+
+    // Pre-select default branding when creating a new game
+    if (!game) {
+      fetch("/api/settings")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.default_branding) {
+            setSelectedBranding(String(data.default_branding))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [game])
+
+  async function generateWithAI() {
+    if (!mainWord.trim()) return
+    setAiLoading(true)
+    setAiError("")
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mainWord: mainWord.trim(),
+          wordCount: aiWordCount,
+          difficulty,
+          language: aiLanguage,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "Generation failed")
+      }
+      const { words } = await res.json()
+      // Merge: add AI words that don't already exist
+      const existing = new Set(wordsList.map((w) => w.word))
+      const newWords = words
+        .filter((w: { word: string; clue: string }) => !existing.has(w.word))
+        .map((w: { word: string; clue: string }) => ({
+          word: w.word,
+          clue: w.clue,
+          main_word_index: undefined as number | undefined,
+        }))
+
+      // Auto-assign main_word_index: match each main word letter to a word
+      const mw = mainWord.trim().toUpperCase()
+      const allWords = [...wordsList, ...newWords]
+      const usedWordIndices = new Set<number>()
+
+      for (let mi = 0; mi < mw.length; mi++) {
+        const letter = mw[mi]
+        // Find a word that contains this letter and hasn't been assigned yet
+        for (let wi = 0; wi < allWords.length; wi++) {
+          if (usedWordIndices.has(wi)) continue
+          if (allWords[wi].main_word_index !== undefined) continue
+          const letterIdx = allWords[wi].word.indexOf(letter)
+          if (letterIdx !== -1) {
+            allWords[wi].main_word_index = letterIdx
+            usedWordIndices.add(wi)
+            break
+          }
+        }
+      }
+
+      setWordsList(allWords)
+      setAiSettingsOpen(false)
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Generation failed")
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  async function generateLayoutWithAI() {
+    if (wordsList.length < 2) return
+    setLayoutLoading(true)
+    setLayoutError("")
+    try {
+      const res = await fetch("/api/ai/layout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words: wordsList }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "Layout generation failed")
+      }
+      const data = await res.json()
+      if (data.words) {
+        setWordsList(data.words)
+      }
+      if (data.stats) {
+        setLayoutError(
+          `✓ ${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words, balance ${data.stats.balance}`,
+        )
+      }
+    } catch (err) {
+      setLayoutError(
+        err instanceof Error ? err.message : "Layout generation failed",
+      )
+    } finally {
+      setLayoutLoading(false)
+    }
+  }
+
+  async function generateLayoutWithGemini() {
+    if (wordsList.length < 2) return
+    setLayoutLoading(true)
+    setLayoutError("")
+    try {
+      const res = await fetch("/api/ai/layout-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words: wordsList }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "AI layout generation failed")
+      }
+      const data = await res.json()
+      if (data.words) {
+        setWordsList(data.words)
+      }
+      const validLabel = data.valid ? "✓ Valid" : "⚠ Has conflicts"
+      if (data.stats) {
+        setLayoutError(
+          `${validLabel} | AI Layout: ${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words`,
+        )
+      }
+    } catch (err) {
+      setLayoutError(
+        err instanceof Error ? err.message : "AI layout generation failed",
+      )
+    } finally {
+      setLayoutLoading(false)
+    }
+  }
+
+  function addWord() {
+    const w = wordsInput.trim().toUpperCase()
+    if (w && !wordsList.some((entry) => entry.word === w)) {
+      setWordsList([
+        ...wordsList,
+        {
+          word: w,
+          clue: clueInput.trim() || `Clue for ${w}`,
+          main_word_index: undefined,
+        },
+      ])
+      setWordsInput("")
+      setClueInput("")
+    }
+  }
+
+  function removeWord(w: string) {
+    setWordsList(wordsList.filter((entry) => entry.word !== w))
+  }
+
+  function getEmbedCode(gameId: string | number): string {
+    const tagMap: Record<GameType, { tag: string; script: string }> = {
+      crosswords: {
+        tag: "crossword-game",
+        script: `${PLAY_BASE}/dist/crossword-engine.iife.js`,
+      },
+      wordgames: {
+        tag: "word-game",
+        script: `${PLAY_BASE}/dist/word-game.iife.js`,
+      },
+      sudoku: {
+        tag: "sudoku-game",
+        script: `${PLAY_BASE}/dist/sudoku-engine.iife.js`,
+      },
+      wordsearches: {
+        tag: "word-search-game",
+        script: `${PLAY_BASE}/dist/word-search-engine.iife.js`,
+      },
+    }
+    const { tag, script } = tagMap[type]
+    return `<script src="${script}"><\/script>
+
+<${tag}
+  puzzle-id="${gameId}"
+  api-url="${API_URL}"
+  user-id="${orgId}"
+  theme="light"></${tag}>`
+  }
+
+  function copyEmbed() {
+    if (!createdGame) return
+    navigator.clipboard.writeText(getEmbedCode(createdGame.id))
+    setEmbedCopied(true)
+    setTimeout(() => setEmbedCopied(false), 2000)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    setError("")
+
+    try {
+      const baseData: Record<string, unknown> = {
+        collection: type,
+        title,
+        status,
+        branding: selectedBranding || null,
+        scheduled_date:
+          status === "scheduled" && scheduledDate
+            ? new Date(scheduledDate).toISOString()
+            : null,
+      }
+
+      if (type === "crosswords") {
+        if (mode === "create" && wordsList.length < 2) {
+          setError("Add at least 2 words for the crossword")
+          setSaving(false)
+          return
+        }
+        baseData.difficulty = difficulty
+        if (mainWord.trim()) {
+          baseData.main_word = mainWord.trim().toUpperCase()
+        }
+        if (wordsList.length > 0) {
+          baseData.words = wordsList.map((w) => {
+            const entry: Record<string, unknown> = {
+              word: w.word,
+              clue: w.clue,
+            }
+            if (w.main_word_index !== undefined) {
+              entry.main_word_index = w.main_word_index
+            }
+            if (w.x !== undefined) entry.x = w.x
+            if (w.y !== undefined) entry.y = w.y
+            if (w.direction) entry.direction = w.direction
+            return entry
+          })
+        }
+      } else if (type === "wordgames") {
+        if (!word) {
+          setError("Word is required")
+          setSaving(false)
+          return
+        }
+        baseData.word = word.toUpperCase()
+        baseData.definition = definition
+        baseData.max_attempts = maxAttempts
+      } else if (type === "wordsearches") {
+        if (mode === "create" && wordsList.length < 3) {
+          setError("Add at least 3 words for the word search")
+          setSaving(false)
+          return
+        }
+        baseData.difficulty = difficulty
+        if (wordsList.length > 0) {
+          baseData.words = wordsList.map((w) => ({
+            word: w.word,
+            clue: w.clue,
+          }))
+        }
+      } else if (type === "sudoku") {
+        baseData.difficulty = difficulty
+      }
+
+      if (mode === "edit" && game) {
+        baseData.id = game.id
+        await fetch("/api/games", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(baseData),
+        })
+        onSaved()
+        onClose()
+      } else {
+        const res = await fetch("/api/games", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(baseData),
+        })
+        const result = await res.json()
+        onSaved()
+        setCreatedGame({ id: result.data?.id || result.id, title })
+      }
+    } catch {
+      setError("Failed to save game")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const typeLabels: Record<GameType, string> = {
+    crosswords: "Crossword",
+    wordgames: "Word Game",
+    sudoku: "Sudoku",
+    wordsearches: "Word Search",
+  }
+
+  // Success view with embed code
+  if (createdGame) {
+    return (
+      <Modal
+        open
+        onClose={onClose}
+        title={`${typeLabels[type]} Created!`}
+        size="md"
+      >
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-green-600">
+                check_circle
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="font-medium text-[#0f172a] truncate">
+                &ldquo;{createdGame.title}&rdquo;
+              </p>
+              <p className="text-xs text-[#64748b]">ID: {createdGame.id}</p>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <label className="text-sm font-medium text-[#0f172a]">
+                Embed Code
+              </label>
+              <button
+                onClick={copyEmbed}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-[#0f172a] transition-colors flex items-center gap-1.5 flex-shrink-0"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {embedCopied ? "check" : "content_copy"}
+                </span>
+                {embedCopied ? "Copied!" : "Copy Snippet"}
+              </button>
+            </div>
+            <pre className="bg-[#1e293b] text-slate-300 rounded-lg p-4 text-xs overflow-x-auto leading-relaxed">
+              <code>{getEmbedCode(createdGame.id)}</code>
+            </pre>
+          </div>
+
+          <p className="text-xs text-[#64748b] mb-5">
+            Paste this snippet into your website&apos;s HTML to display the
+            game. Make sure your API token is active on the{" "}
+            <span className="font-medium text-rust">
+              API Keys &amp; Embeds
+            </span>{" "}
+            page.
+          </p>
+
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors font-medium"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={`${mode === "create" ? "Create" : "Edit"} ${typeLabels[type]}`}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* Title */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+              Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+              placeholder="Game title"
+              required
+            />
+          </div>
+
+          {/* Status */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value)
+                if (e.target.value !== "scheduled") {
+                  setScheduledDate("")
+                }
+              }}
+              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+            >
+              <option value="draft">Draft</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="published">Published</option>
+            </select>
+          </div>
+
+          {/* Scheduled Date */}
+          {status === "scheduled" && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                Publish Date &amp; Time
+              </label>
+              <div className="relative">
+                <input
+                  type="datetime-local"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                  required
+                  aria-label="Schedule publish date and time"
+                />
+              </div>
+              <p className="text-xs text-[#64748b] mt-1.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">info</span>
+                The game will automatically become public at this date and time.
+              </p>
+            </div>
+          )}
+
+          {/* Difficulty (crosswords / sudoku / wordsearches) */}
+          {(type === "crosswords" || type === "sudoku" || type === "wordsearches") && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                Difficulty
+              </label>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+              >
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+          )}
+
+          {/* Branding Preset */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+              Branding Preset{" "}
+              <span className="text-xs text-[#64748b] font-normal">
+                (optional)
+              </span>
+            </label>
+            <select
+              value={selectedBranding}
+              onChange={(e) => setSelectedBranding(e.target.value)}
+              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+            >
+              <option value="">Default (no branding)</option>
+              {brandingPresets.map((p) => (
+                <option key={String(p.id)} value={String(p.id)}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Crossword — Words + Clues */}
+          {type === "crosswords" && (
+            <>
+              {/* Main Word */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Main Word{" "}
+                  <span className="text-xs text-[#64748b] font-normal">
+                    (hidden word players discover)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={mainWord}
+                  onChange={(e) => setMainWord(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                  placeholder="e.g. BRAIN"
+                />
+              </div>
+
+              {/* AI Generation */}
+              <div className="mb-4">
+                {mainWord.trim() && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
+                      disabled={aiLoading}
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-rust to-rust-dark text-white rounded-lg text-sm font-medium transition-all hover:shadow-md hover:shadow-rust/20 disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {aiLoading ? (
+                        <>
+                          <span className="material-symbols-outlined text-base animate-spin">
+                            progress_activity
+                          </span>
+                          Generating…
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-base">✨</span>
+                          Generate with AI
+                          <span className="material-symbols-outlined text-sm">
+                            {aiSettingsOpen ? "expand_less" : "expand_more"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+
+                    {aiSettingsOpen && !aiLoading && (
+                      <div className="mt-2 p-4 bg-slate-50 rounded-lg border border-[#e2e8f0] space-y-3">
+                        {/* Word Count */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-medium text-[#0f172a]">
+                              Number of words
+                            </label>
+                            <span className="text-xs font-mono font-bold text-rust">
+                              {aiWordCount}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={3}
+                            max={20}
+                            value={aiWordCount}
+                            onChange={(e) =>
+                              setAiWordCount(Number(e.target.value))
+                            }
+                            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rust"
+                          />
+                          <div className="flex justify-between text-[10px] text-[#94a3b8] mt-0.5">
+                            <span>3</span>
+                            <span>20</span>
+                          </div>
+                        </div>
+
+                        {/* Language */}
+                        <div>
+                          <label className="text-xs font-medium text-[#0f172a] block mb-1">
+                            Language
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setAiLanguage("lt")}
+                              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                aiLanguage === "lt"
+                                  ? "bg-rust text-white border-rust"
+                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust"
+                              }`}
+                            >
+                              🇱🇹 Lithuanian
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAiLanguage("en")}
+                              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                aiLanguage === "en"
+                                  ? "bg-rust text-white border-rust"
+                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust"
+                              }`}
+                            >
+                              🇬🇧 English
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Generate Action */}
+                        <button
+                          type="button"
+                          onClick={generateWithAI}
+                          className="w-full px-4 py-2 bg-[#0f172a] text-white rounded-lg text-sm font-medium hover:bg-[#1e293b] transition-colors"
+                        >
+                          Generate {aiWordCount} words
+                        </button>
+                      </div>
+                    )}
+
+                    {aiError && (
+                      <p className="text-xs text-red-600 mt-1.5">{aiError}</p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Words & Clues */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Words &amp; Clues
+                </label>
+                <div className="flex flex-col gap-2 mb-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={wordsInput}
+                      onChange={(e) => setWordsInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          addWord()
+                        }
+                      }}
+                      className="w-36 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                      placeholder="Word"
+                    />
+                    <input
+                      type="text"
+                      value={clueInput}
+                      onChange={(e) => setClueInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          addWord()
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                      placeholder="Clue (optional)"
+                    />
+                    <button
+                      type="button"
+                      onClick={addWord}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+                {wordsList.length > 0 && (
+                  <div className="border border-[#e2e8f0] rounded-lg divide-y divide-[#e2e8f0] mb-2">
+                    {wordsList.map((entry, idx) => (
+                      <div key={idx} className="px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="text"
+                            value={entry.word}
+                            onChange={(e) => {
+                              const updated = [...wordsList]
+                              updated[idx] = {
+                                ...updated[idx],
+                                word: e.target.value.toUpperCase(),
+                              }
+                              setWordsList(updated)
+                            }}
+                            className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 px-1.5 py-1 border border-transparent hover:border-[#e2e8f0] focus:border-rust focus:outline-none rounded bg-transparent uppercase"
+                          />
+                          <input
+                            type="text"
+                            value={entry.clue}
+                            onChange={(e) => {
+                              const updated = [...wordsList]
+                              updated[idx] = {
+                                ...updated[idx],
+                                clue: e.target.value,
+                              }
+                              setWordsList(updated)
+                            }}
+                            className="text-xs text-[#64748b] flex-1 px-1.5 py-1 border border-transparent hover:border-[#e2e8f0] focus:border-rust focus:outline-none rounded bg-transparent"
+                            placeholder="Clue"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeWord(entry.word)}
+                            className="text-[#94a3b8] hover:text-red-500 transition-colors shrink-0"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              close
+                            </span>
+                          </button>
+                        </div>
+                        {/* Letter picker for main word */}
+                        {mainWord && (
+                          <div className="flex gap-1 mt-1.5">
+                            {entry.word.split("").map((letter, letterIdx) => {
+                              const isSelected =
+                                entry.main_word_index === letterIdx
+                              return (
+                                <button
+                                  key={letterIdx}
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...wordsList]
+                                    updated[idx] = {
+                                      ...updated[idx],
+                                      main_word_index: isSelected
+                                        ? undefined
+                                        : letterIdx,
+                                    }
+                                    setWordsList(updated)
+                                  }}
+                                  className={`w-6 h-6 flex items-center justify-center text-xs font-mono font-bold rounded border transition-all ${
+                                    isSelected
+                                      ? "bg-rust text-white border-rust ring-2 ring-rust/30"
+                                      : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust hover:bg-rust-light"
+                                  }`}
+                                  title={`Select letter "${letter}" for main word`}
+                                >
+                                  {letter}
+                                </button>
+                              )
+                            })}
+                            <span className="text-[10px] text-[#94a3b8] ml-1 self-center">
+                              {entry.main_word_index !== undefined
+                                ? "✓"
+                                : "click a letter"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-[#64748b]">
+                    {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
+                    added
+                    {mode === "create" && wordsList.length < 2 && (
+                      <span className="text-amber-600 ml-1">
+                        (min 2 required)
+                      </span>
+                    )}
+                    {wordsList.some(
+                      (w) => w.x !== undefined && w.y !== undefined,
+                    ) && (
+                      <span className="text-green-600 ml-1">
+                        ✓ Layout ready
+                      </span>
+                    )}
+                  </p>
+                  {wordsList.length >= 2 && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={generateLayoutWithAI}
+                        disabled={layoutLoading}
+                        className="px-3 py-1.5 bg-[#0f172a] text-white rounded-lg text-xs font-medium hover:bg-[#1e293b] transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {layoutLoading ? (
+                          <>
+                            <span className="animate-spin">⟳</span>
+                            Generating…
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-sm">
+                              grid_on
+                            </span>
+                            Layout
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={generateLayoutWithGemini}
+                        disabled={layoutLoading}
+                        className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-xs font-medium hover:from-blue-700 hover:to-purple-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {layoutLoading ? (
+                          <>
+                            <span className="animate-spin">⟳</span>
+                            AI…
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-sm">
+                              auto_awesome
+                            </span>
+                            AI Layout
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {layoutError && (
+                  <p className="text-xs text-amber-600 mt-1">{layoutError}</p>
+                )}
+                {/* Mini Map Preview */}
+                {wordsList.some(
+                  (w) => w.x !== undefined && w.y !== undefined,
+                ) && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-[#64748b]">
+                        Layout Preview
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWordsList(
+                            wordsList.map((w) => ({
+                              ...w,
+                              x: undefined,
+                              y: undefined,
+                              direction: undefined,
+                            })),
+                          )
+                          setLayoutError("")
+                        }}
+                        className="text-[10px] text-red-500 hover:text-red-700 transition-colors flex items-center gap-0.5"
+                      >
+                        <span className="material-symbols-outlined text-xs">
+                          close
+                        </span>
+                        Discard Layout
+                      </button>
+                    </div>
+                    {(() => {
+                      const positioned = wordsList.filter(
+                        (w) =>
+                          w.x !== undefined && w.y !== undefined && w.direction,
+                      )
+                      if (!positioned.length) return null
+
+                      // Build grid
+                      const grid: Record<
+                        string,
+                        { letter: string; number?: number }
+                      > = {}
+                      let minX = Infinity,
+                        minY = Infinity,
+                        maxX = -Infinity,
+                        maxY = -Infinity
+
+                      positioned.forEach((w, idx) => {
+                        const dx = w.direction === "across" ? 1 : 0
+                        const dy = w.direction === "down" ? 1 : 0
+                        for (let i = 0; i < w.word.length; i++) {
+                          const cx = w.x! + i * dx
+                          const cy = w.y! + i * dy
+                          const key = `${cx},${cy}`
+                          if (!grid[key]) {
+                            grid[key] = { letter: w.word[i] }
+                          }
+                          if (i === 0) {
+                            grid[key].number = idx + 1
+                          }
+                          minX = Math.min(minX, cx)
+                          minY = Math.min(minY, cy)
+                          maxX = Math.max(maxX, cx)
+                          maxY = Math.max(maxY, cy)
+                        }
+                      })
+
+                      const cols = maxX - minX + 1
+                      const rows = maxY - minY + 1
+                      const cellSize = Math.min(
+                        20,
+                        Math.floor(280 / Math.max(cols, rows)),
+                      )
+
+                      return (
+                        <div
+                          className="border border-[#e2e8f0] rounded-lg p-2 bg-[#f8fafc] overflow-auto"
+                          style={{ maxHeight: "220px" }}
+                        >
+                          <div
+                            className="mx-auto"
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
+                              gap: "1px",
+                              width: "fit-content",
+                            }}
+                          >
+                            {Array.from({ length: rows }, (_, row) =>
+                              Array.from({ length: cols }, (_, col) => {
+                                const key = `${col + minX},${row + minY}`
+                                const cell = grid[key]
+                                return (
+                                  <div
+                                    key={key}
+                                    style={{
+                                      width: cellSize,
+                                      height: cellSize,
+                                    }}
+                                    className={`flex items-center justify-center relative ${
+                                      cell
+                                        ? "bg-white border border-[#cbd5e1]"
+                                        : "bg-transparent"
+                                    }`}
+                                  >
+                                    {cell && (
+                                      <>
+                                        {cell.number && (
+                                          <span
+                                            className="absolute text-[#94a3b8] font-bold leading-none"
+                                            style={{
+                                              fontSize: `${Math.max(5, cellSize * 0.3)}px`,
+                                              top: 0,
+                                              left: 1,
+                                            }}
+                                          >
+                                            {cell.number}
+                                          </span>
+                                        )}
+                                        <span
+                                          className="font-mono font-bold text-[#0f172a]"
+                                          style={{
+                                            fontSize: `${Math.max(6, cellSize * 0.45)}px`,
+                                          }}
+                                        >
+                                          {cell.letter}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                )
+                              }),
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Word Game fields */}
+          {/* Word Search fields */}
+          {type === "wordsearches" && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Words to Find
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={wordsInput}
+                    onChange={(e) => setWordsInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        const w = wordsInput.trim().toUpperCase()
+                        if (w && !wordsList.some((entry) => entry.word === w)) {
+                          setWordsList([
+                            ...wordsList,
+                            { word: w, clue: clueInput.trim() || "" },
+                          ])
+                          setWordsInput("")
+                          setClueInput("")
+                        }
+                      }
+                    }}
+                    className="w-36 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                    placeholder="Word"
+                    aria-label="Word to add"
+                    tabIndex={0}
+                  />
+                  <input
+                    type="text"
+                    value={clueInput}
+                    onChange={(e) => setClueInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        const w = wordsInput.trim().toUpperCase()
+                        if (w && !wordsList.some((entry) => entry.word === w)) {
+                          setWordsList([
+                            ...wordsList,
+                            { word: w, clue: clueInput.trim() || "" },
+                          ])
+                          setWordsInput("")
+                          setClueInput("")
+                        }
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                    placeholder="Hint (optional)"
+                    aria-label="Hint for the word"
+                    tabIndex={0}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const w = wordsInput.trim().toUpperCase()
+                      if (w && !wordsList.some((entry) => entry.word === w)) {
+                        setWordsList([
+                          ...wordsList,
+                          { word: w, clue: clueInput.trim() || "" },
+                        ])
+                        setWordsInput("")
+                        setClueInput("")
+                      }
+                    }}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
+                    aria-label="Add word"
+                    tabIndex={0}
+                  >
+                    Add
+                  </button>
+                </div>
+                {wordsList.length > 0 && (
+                  <div className="border border-[#e2e8f0] rounded-lg divide-y divide-[#e2e8f0] mb-2">
+                    {wordsList.map((entry, idx) => (
+                      <div key={idx} className="px-3 py-2 flex items-center gap-3">
+                        <span className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 uppercase">
+                          {entry.word}
+                        </span>
+                        <span className="text-xs text-[#64748b] flex-1 truncate">
+                          {entry.clue || "—"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setWordsList(wordsList.filter((_, i) => i !== idx))}
+                          className="text-[#94a3b8] hover:text-red-500 transition-colors shrink-0"
+                          aria-label={`Remove word ${entry.word}`}
+                          tabIndex={0}
+                        >
+                          <span className="material-symbols-outlined text-sm">
+                            close
+                          </span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-[#64748b]">
+                  {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
+                  added
+                  {mode === "create" && wordsList.length < 3 && (
+                    <span className="text-amber-600 ml-1">
+                      (min 3 required)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Word Game fields */}
+          {type === "wordgames" && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Word
+                </label>
+                <input
+                  type="text"
+                  value={word}
+                  onChange={(e) => setWord(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                  placeholder="e.g. HELLO"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Definition / Hint
+                </label>
+                <textarea
+                  value={definition}
+                  onChange={(e) => setDefinition(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust resize-none"
+                  rows={2}
+                  placeholder="Optional hint for the player"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                  Max Attempts
+                </label>
+                <input
+                  type="number"
+                  value={maxAttempts}
+                  onChange={(e) => setMaxAttempts(Number(e.target.value))}
+                  min={1}
+                  max={10}
+                  className="w-24 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-4 border-t border-[#e2e8f0]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark disabled:opacity-50 transition-colors font-medium"
+            >
+              {saving
+                ? "Saving…"
+                : mode === "create"
+                  ? "Create"
+                  : "Save Changes"}
+            </button>
+          </div>
+      </form>
+    </Modal>
+  )
+}
