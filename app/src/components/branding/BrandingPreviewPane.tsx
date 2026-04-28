@@ -10,6 +10,7 @@ import {
 } from "@/lib/branding/css-vars"
 import { TOKEN_REGISTRY } from "@/lib/branding/token-registry"
 import GamePreview from "./preview/GamePreview"
+import type { PreviewGameType } from "@/lib/branding/platform-defaults"
 
 function buildVars(draft: DraftState): Record<string, string> {
   const derived = deriveTokens(draft.tokens)
@@ -30,9 +31,16 @@ function buildVars(draft: DraftState): Record<string, string> {
 type PreviewProps = {
   draft: DraftState
   hoveredToken?: string | null
+  availableGameTypes: PreviewGameType[]
+  defaultGameType: PreviewGameType | null
 }
 
-export default function BrandingPreviewPane({ draft, hoveredToken }: PreviewProps) {
+export default function BrandingPreviewPane({
+  draft,
+  hoveredToken,
+  availableGameTypes,
+  defaultGameType,
+}: PreviewProps) {
   const cssVars = useMemo(() => buildVars(draft), [draft])
   return (
     <div className="p-6">
@@ -46,7 +54,10 @@ export default function BrandingPreviewPane({ draft, hoveredToken }: PreviewProp
         `}</style>
       )}
       <div data-brand-preview style={cssVars as React.CSSProperties}>
-        <GamePreview />
+        <GamePreview
+          availableTypes={availableGameTypes}
+          defaultType={defaultGameType}
+        />
       </div>
     </div>
   )

@@ -20,6 +20,7 @@ import {
   PLATFORM_DEFAULT_COMPONENTS as DEFAULT_COMPONENTS,
 } from "@/lib/branding/defaults"
 import { hasPendingSave } from "@/lib/branding/unload-guard"
+import type { PreviewGameType } from "@/lib/branding/platform-defaults"
 
 export interface DraftState {
   tokens: BrandingTokens
@@ -64,6 +65,8 @@ type Props = {
     ogImagePath: string | null
     customCssGames: string | null
   } | null
+  availableGameTypes: PreviewGameType[]
+  defaultGameType: PreviewGameType | null
 }
 
 type SaveState = "idle" | "saving" | "just-saved" | "just-published" | "just-discarded"
@@ -95,7 +98,9 @@ const liveToDraft = (src: {
   customCssGames: src.customCssGames,
 })
 
-export default function BrandingEditor({ brandingId, live, initialDraft }: Props) {
+export default function BrandingEditor({
+  brandingId, live, initialDraft, availableGameTypes, defaultGameType,
+}: Props) {
   const startState: DraftState = useMemo(() => liveToDraft(initialDraft ?? live), [initialDraft, live])
 
   const [draft, setDraft] = useState<DraftState>(startState)
@@ -364,7 +369,12 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
           <CustomCssSection draft={draft} update={update} />
         </aside>
         <section className="flex-1 overflow-y-auto">
-          <BrandingPreviewPane draft={draft} hoveredToken={hoveredToken} />
+          <BrandingPreviewPane
+            draft={draft}
+            hoveredToken={hoveredToken}
+            availableGameTypes={availableGameTypes}
+            defaultGameType={defaultGameType}
+          />
         </section>
       </div>
     </div>
