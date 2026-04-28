@@ -1,7 +1,7 @@
 export { Panel, PanelHeader } from "./Panel";
 export { PageHeader } from "./PageHeader";
 export { Badge } from "./Badge";
-export { Button } from "./Button";
+export { Button } from "./ButtonLegacy";
 export { Input } from "./Input";
 export { Select } from "./Select";
 export { FileUpload } from "./FileUpload";

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Button } from "./Button";
+import { Button } from "./ButtonLegacy";
 
 interface FileUploadProps {
   label?: string;
