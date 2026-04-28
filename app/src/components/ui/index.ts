@@ -2,7 +2,7 @@ export { Panel, PanelHeader } from "./Panel";
 export { PageHeader } from "./PageHeader";
 export { Badge } from "./Badge";
 export { Button } from "./ButtonLegacy";
-export { Input } from "./Input";
+export { Input } from "./InputLegacy";
 export { Select } from "./Select";
 export { FileUpload } from "./FileUpload";
 export { CodeBlock } from "./CodeBlock";
