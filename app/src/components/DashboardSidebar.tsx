@@ -33,34 +33,42 @@ export default function DashboardSidebar({
   const [loggingOut, setLoggingOut] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Lock body scroll + ESC to close while drawer open
-  useEffect(() => {
-    if (!drawerOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
-    };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", handleKey);
-    };
-  }, [drawerOpen]);
+  const GAME_ROUTES = [
+    "/dashboard/crosswords",
+    "/dashboard/word-game",
+    "/dashboard/word-search",
+  ]
+  const isOnGameRoute = GAME_ROUTES.some((r) => pathname.startsWith(r))
+  const [gamesOpen, setGamesOpen] = useState(isOnGameRoute)
 
-  async function handleLogout() {
-    setLoggingOut(true);
-    await signOut({ redirect: false });
-    router.push("/login");
-  }
-
-  const navItems = [
+  const topNavItems = [
     {
       href: "/dashboard",
-      label: "Games",
-      icon: "stacks",
+      label: "Overview",
+      icon: "home",
       active: pathname === "/dashboard",
     },
+  ]
+
+  const gamesSubItems = [
+    {
+      href: "/dashboard/crosswords",
+      label: "Crosswords",
+      active: pathname.startsWith("/dashboard/crosswords"),
+    },
+    {
+      href: "/dashboard/word-game",
+      label: "Word Game",
+      active: pathname.startsWith("/dashboard/word-game"),
+    },
+    {
+      href: "/dashboard/word-search",
+      label: "Word Search",
+      active: pathname.startsWith("/dashboard/word-search"),
+    },
+  ]
+
+  const bottomNavItems = [
     {
       href: "/dashboard/branding",
       label: "Branding",
@@ -85,7 +93,28 @@ export default function DashboardSidebar({
       icon: "settings",
       active: pathname === "/dashboard/settings",
     },
-  ];
+  ]
+
+  // Lock body scroll + ESC to close while drawer open
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [drawerOpen]);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await signOut({ redirect: false });
+    router.push("/login");
+  }
 
   const initials = (
     user.first_name?.[0] ||
@@ -111,7 +140,8 @@ export default function DashboardSidebar({
       </Link>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {/* Top items */}
+        {topNavItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -124,16 +154,96 @@ export default function DashboardSidebar({
           >
             <span
               className={`material-symbols-outlined text-[20px] ${
-                item.active
-                  ? "text-navy-900"
-                  : "text-[#94a3b8] group-hover:text-navy-900"
+                item.active ? "text-navy-900" : "text-[#94a3b8] group-hover:text-navy-900"
               }`}
             >
               {item.icon}
             </span>
+            <span className={`text-[14px] ${item.active ? "font-semibold" : "font-medium"}`}>
+              {item.label}
+            </span>
+          </Link>
+        ))}
+
+        {/* Collapsible Games group */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setGamesOpen((o) => !o)}
+            className={`w-full flex items-center gap-3 px-3 py-2 transition-all rounded-[4px] border ${
+              isOnGameRoute
+                ? "border-transparent text-navy-900"
+                : "border-transparent text-[#64748b] hover:text-navy-900 hover:bg-white"
+            }`}
+            aria-expanded={gamesOpen}
+            aria-label="Toggle Games menu"
+          >
             <span
-              className={`text-[14px] ${item.active ? "font-semibold" : "font-medium"}`}
+              className={`material-symbols-outlined text-[20px] ${
+                isOnGameRoute ? "text-navy-900" : "text-[#94a3b8]"
+              }`}
             >
+              stacks
+            </span>
+            <span className={`text-[14px] flex-1 text-left ${isOnGameRoute ? "font-semibold" : "font-medium"}`}>
+              Games
+            </span>
+            <span
+              className={`material-symbols-outlined text-[16px] text-[#94a3b8] transition-transform ${
+                gamesOpen ? "rotate-180" : ""
+              }`}
+            >
+              expand_more
+            </span>
+          </button>
+
+          {gamesOpen && (
+            <div className="mt-0.5 ml-3 pl-3 border-l border-[#e2e8f0] space-y-0.5">
+              {gamesSubItems.map((sub) => (
+                <Link
+                  key={sub.href}
+                  href={sub.href}
+                  onClick={() => setDrawerOpen(false)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-[4px] border transition-all ${
+                    sub.active
+                      ? "bg-white text-navy-900 shadow-sharp border-[#e2e8f0] font-semibold"
+                      : "border-transparent text-[#64748b] hover:text-navy-900 hover:bg-white font-medium"
+                  } text-[13px]`}
+                >
+                  {sub.label}
+                </Link>
+              ))}
+              {/* Sudoku — coming soon */}
+              <div className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-[#94a3b8] cursor-not-allowed">
+                Sudoku
+                <span className="ml-auto text-[9px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full font-medium">
+                  soon
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom items */}
+        {bottomNavItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={() => setDrawerOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2 transition-all group rounded-[4px] border ${
+              item.active
+                ? "bg-white text-navy-900 shadow-sharp border-[#e2e8f0]"
+                : "border-transparent text-[#64748b] hover:text-navy-900 hover:bg-white"
+            }`}
+          >
+            <span
+              className={`material-symbols-outlined text-[20px] ${
+                item.active ? "text-navy-900" : "text-[#94a3b8] group-hover:text-navy-900"
+              }`}
+            >
+              {item.icon}
+            </span>
+            <span className={`text-[14px] ${item.active ? "font-semibold" : "font-medium"}`}>
               {item.label}
             </span>
           </Link>
