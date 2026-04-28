@@ -3,7 +3,7 @@ export { PageHeader } from "./PageHeader";
 export { Badge } from "./Badge";
 export { Button } from "./ButtonLegacy";
 export { Input } from "./InputLegacy";
-export { Select } from "./Select";
+export { Select } from "./SelectLegacy";
 export { FileUpload } from "./FileUpload";
 export { CodeBlock } from "./CodeBlock";
 export { ListItem } from "./ListItem";
