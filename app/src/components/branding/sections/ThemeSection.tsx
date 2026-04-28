@@ -1,7 +1,15 @@
 "use client"
+import { useMemo } from "react"
 import type { DraftState } from "../BrandingEditor"
 import { PRESETS } from "@/lib/branding/presets"
 import SelectField from "../fields/SelectField"
+import TokenRow from "./TokenRow"
+import { deriveTokens } from "@/lib/branding/derive"
+import { TOKEN_REGISTRY } from "@/lib/branding/token-registry"
+import {
+  THEME_DETAIL_TOKENS,
+  hasThemeDetailOverrides,
+} from "@/lib/branding/section-groups"
 
 type Props = {
   draft: DraftState
@@ -17,6 +25,24 @@ export default function ThemeSection({ draft, update, onTokenHover }: Props) {
     const p = PRESETS.find((x) => x.id === id)
     if (p) update("tokens", { ...p.tokens, overrides: draft.tokens.overrides })
   }
+
+  const setOverride = (key: string, value: string | null) => {
+    const next = { ...draft.tokens.overrides }
+    if (value === null) delete next[key]
+    else next[key] = value
+    update("tokens", { ...draft.tokens, overrides: next })
+  }
+
+  const derived = useMemo(() => deriveTokens(draft.tokens), [draft.tokens])
+  const detailTokens = useMemo(
+    () =>
+      THEME_DETAIL_TOKENS.map((id) => TOKEN_REGISTRY.find((t) => t.id === id)!),
+    [],
+  )
+  // Open the details panel automatically if the user has already pinned any
+  // derivative — otherwise keep it closed so a typical session shows just the
+  // three brand seeds.
+  const detailsOpen = hasThemeDetailOverrides(draft.tokens.overrides)
 
   return (
     <details open className="mb-4">
@@ -54,6 +80,31 @@ export default function ThemeSection({ draft, update, onTokenHover }: Props) {
             </div>
           </label>
         ))}
+
+        <details open={detailsOpen} className="mt-2 border-t pt-2">
+          <summary className="text-sm cursor-pointer text-slate-600">
+            Theme details (auto-derived) ·{" "}
+            <span className="text-slate-400">{THEME_DETAIL_TOKENS.length} tokens</span>
+          </summary>
+          <div className="mt-2 space-y-1">
+            {detailTokens.map((t) => {
+              const isPinned = t.id in draft.tokens.overrides
+              const value = isPinned ? draft.tokens.overrides[t.id] : derived[t.id]
+              return (
+                <TokenRow
+                  key={t.id}
+                  token={t}
+                  value={value}
+                  isPinned={isPinned}
+                  onPin={(v) => setOverride(t.id, v)}
+                  onReset={() => setOverride(t.id, null)}
+                  onChange={(v) => setOverride(t.id, v)}
+                  onHover={onTokenHover}
+                />
+              )
+            })}
+          </div>
+        </details>
       </div>
     </details>
   )
