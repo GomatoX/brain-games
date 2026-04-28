@@ -10,8 +10,19 @@ describe("BRANDING_SECTION_ORDER", () => {
     expect(BRANDING_SECTION_ORDER[1]).toBe("identity")
   })
 
-  it("ends with advanced so power-user options are out of the way", () => {
-    expect(BRANDING_SECTION_ORDER[BRANDING_SECTION_ORDER.length - 1]).toBe("advanced")
+  it("ends with custom-css so the CSS escape hatch is the last thing offered", () => {
+    expect(BRANDING_SECTION_ORDER[BRANDING_SECTION_ORDER.length - 1]).toBe("custom-css")
+  })
+
+  it("places game-colors immediately after components", () => {
+    const idx = BRANDING_SECTION_ORDER.indexOf("game-colors")
+    expect(idx).toBeGreaterThan(0)
+    expect(BRANDING_SECTION_ORDER[idx - 1]).toBe("components")
+    expect(BRANDING_SECTION_ORDER[idx + 1]).toBe("imagery")
+  })
+
+  it("does not include the deprecated 'advanced' section", () => {
+    expect(BRANDING_SECTION_ORDER).not.toContain("advanced" as never)
   })
 
   it("contains all eight sections with no duplicates", () => {
@@ -21,9 +32,9 @@ describe("BRANDING_SECTION_ORDER", () => {
       "typography",
       "spacing",
       "components",
+      "game-colors",
       "imagery",
       "custom-css",
-      "advanced",
     ])
     expect(new Set(BRANDING_SECTION_ORDER).size).toBe(BRANDING_SECTION_ORDER.length)
   })

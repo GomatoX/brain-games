@@ -7,9 +7,9 @@ import ThemeSection from "./sections/ThemeSection"
 import TypographySection from "./sections/TypographySection"
 import SpacingSection from "./sections/SpacingSection"
 import ComponentsSection from "./sections/ComponentsSection"
+import GameColorsSection from "./sections/GameColorsSection"
 import ImagerySection from "./sections/ImagerySection"
 import CustomCssSection from "./sections/CustomCssSection"
-import AdvancedSection from "./sections/AdvancedSection"
 import type {
   BrandingTokens, BrandingTypography, BrandingSpacing, BrandingComponents,
 } from "@/lib/branding/tokens"
@@ -359,9 +359,9 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
           <TypographySection draft={draft} update={update} />
           <SpacingSection draft={draft} update={update} />
           <ComponentsSection draft={draft} update={update} />
+          <GameColorsSection draft={draft} update={update} onTokenHover={setHoveredToken} />
           <ImagerySection draft={draft} update={update} />
           <CustomCssSection draft={draft} update={update} />
-          <AdvancedSection draft={draft} update={update} onTokenHover={setHoveredToken} />
         </aside>
         <section className="flex-1 overflow-y-auto">
           <BrandingPreviewPane draft={draft} hoveredToken={hoveredToken} />
