@@ -35,6 +35,9 @@ clients
 # Superpowers brainstorming sessions
 .superpowers/
 
+# Git worktrees
+.worktrees/
+
 # Playwright MCP scratch
 .playwright-mcp/
 
