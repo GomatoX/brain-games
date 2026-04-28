@@ -12,17 +12,15 @@ describe("branding section groups", () => {
     expect(THEME_CORE_TOKENS).toEqual(["primary", "surface", "text"])
   })
 
-  it("Theme details has the six derivatives", () => {
-    expect(new Set(THEME_DETAIL_TOKENS)).toEqual(
-      new Set([
-        "primary-hover",
-        "primary-light",
-        "primary-foreground",
-        "text-muted",
-        "surface-elevated",
-        "surface-muted",
-      ]),
-    )
+  it("Theme details lists the six derivatives in display order", () => {
+    expect(THEME_DETAIL_TOKENS).toEqual([
+      "primary-hover",
+      "primary-light",
+      "primary-foreground",
+      "text-muted",
+      "surface-elevated",
+      "surface-muted",
+    ])
   })
 
   it("Game colors expose sub-groups in display order", () => {
@@ -31,6 +29,12 @@ describe("branding section groups", () => {
       "grid",
       "sidebar",
     ])
+  })
+
+  it("Game colors sub-groups carry the expected token counts", () => {
+    // Catches a token silently moving between sub-groups — the partition
+    // coverage test below cannot detect that on its own.
+    expect(GAME_COLOR_GROUPS.map((g) => g.tokenIds.length)).toEqual([8, 4, 2])
   })
 
   it("every TOKEN_REGISTRY id is accounted for in exactly one group", () => {
