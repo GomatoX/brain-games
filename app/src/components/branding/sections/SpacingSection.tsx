@@ -1,5 +1,16 @@
 "use client"
 import type { DraftState } from "../BrandingEditor"
+import SelectField from "../fields/SelectField"
+import HelpHint from "../fields/HelpHint"
+
+const DENSITY_OPTIONS = [
+  { value: "compact", label: "Compact" },
+  { value: "cozy", label: "Cozy" },
+  { value: "comfortable", label: "Comfortable" },
+]
+
+const DENSITY_HELP =
+  "Controls the breathing room around buttons, cards, and form fields. Compact = tighter; Comfortable = roomier."
 
 type Props = {
   draft: DraftState
@@ -11,25 +22,23 @@ export default function SpacingSection({ draft, update }: Props) {
     <details open className="mb-4">
       <summary className="font-semibold cursor-pointer">Spacing</summary>
       <div className="mt-3 space-y-3">
+        <div className="flex items-center gap-1">
+          <div className="flex-1">
+            <SelectField
+              label="Density"
+              value={draft.spacing.density}
+              options={DENSITY_OPTIONS}
+              onChange={(v) =>
+                update("spacing", { ...draft.spacing, density: v as DraftState["spacing"]["density"] })
+              }
+            />
+          </div>
+          <div className="self-end pb-2">
+            <HelpHint text={DENSITY_HELP} />
+          </div>
+        </div>
         <label className="block text-sm">
-          <span className="block mb-1">Density</span>
-          <select
-            className="border rounded px-2 py-1 w-full"
-            value={draft.spacing.density}
-            onChange={(e) =>
-              update("spacing", {
-                ...draft.spacing,
-                density: e.target.value as DraftState["spacing"]["density"],
-              })
-            }
-          >
-            <option value="compact">Compact</option>
-            <option value="cozy">Cozy</option>
-            <option value="comfortable">Comfortable</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="block mb-1">Radius (px): {draft.spacing.radius}</span>
+          <span className="block mb-1">Corner radius: {draft.spacing.radius} px</span>
           <input
             type="range"
             min={0}

@@ -4,9 +4,9 @@ export type BrandingSectionId =
   | "typography"
   | "spacing"
   | "components"
+  | "game-colors"
   | "imagery"
   | "custom-css"
-  | "advanced"
 
 export const BRANDING_SECTION_ORDER: readonly BrandingSectionId[] = [
   "theme",
@@ -14,7 +14,7 @@ export const BRANDING_SECTION_ORDER: readonly BrandingSectionId[] = [
   "typography",
   "spacing",
   "components",
+  "game-colors",
   "imagery",
   "custom-css",
-  "advanced",
 ] as const

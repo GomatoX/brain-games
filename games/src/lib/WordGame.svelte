@@ -206,9 +206,9 @@
     <div class="game-container">
       <!-- Header -->
       <header class="game-header">
-        <h1 class="game-title">{game.title || "Word Game"}</h1>
+        <h1 class="game-title" data-brand-token="text">{game.title || "Word Game"}</h1>
         {#if isPreviewMode}
-          <span class="preview-badge">{$t("wordgame.preview")}</span>
+          <span class="preview-badge" data-brand-token="primary">{$t("wordgame.preview")}</span>
         {/if}
       </header>
 

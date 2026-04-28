@@ -15,8 +15,8 @@ export default function CustomCssSection({ draft, update }: Props) {
       <summary className="font-semibold cursor-pointer">Custom CSS (games only)</summary>
       <div className="mt-3 space-y-2">
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          CSS injected into game embeds. Auto-scoped to your org.
-          Max {MAX_CSS_BYTES.toLocaleString()} bytes.
+          Extra styles applied inside game embeds for this brand only —
+          your CSS won&apos;t affect other tenants. Max {MAX_CSS_BYTES.toLocaleString()} bytes.
         </p>
         <textarea
           className="w-full font-mono text-xs border rounded p-2"

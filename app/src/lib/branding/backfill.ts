@@ -1,3 +1,15 @@
+import { TOKEN_REGISTRY } from "./token-registry"
+
+// Derived once at module load. Equivalent to the pre-2026-04-27 hardcoded
+// OVERRIDE_FIELD_MAP, but driven by the token registry so adding/removing
+// a legacy column is a single-place edit on TokenDef.
+export const LEGACY_COLUMN_TO_TOKEN_ID: Record<string, string> =
+  Object.fromEntries(
+    TOKEN_REGISTRY
+      .filter((t): t is typeof t & { legacyKey: string } => Boolean(t.legacyKey))
+      .map((t) => [t.legacyKey, t.id]),
+  )
+
 export interface OldBrandingRow {
   id: string
   accent_color: string | null
@@ -39,30 +51,9 @@ export interface BackfilledRow {
   components: { button: { variant: "solid"; shadow: "subtle" }; input: { variant: "outlined" }; card: { elevation: "subtle" } }
 }
 
-const OVERRIDE_FIELD_MAP: Record<string, string> = {
-  accent_hover_color: "primary-hover",
-  accent_light_color: "primary-light",
-  selection_color: "selection",
-  selection_ring_color: "selection-ring",
-  highlight_color: "highlight",
-  correct_color: "correct",
-  correct_light_color: "correct-light",
-  present_color: "present",
-  absent_color: "absent",
-  bg_secondary_color: "surface-elevated",
-  text_secondary_color: "text-muted",
-  border_color: "border",
-  cell_bg_color: "cell-bg",
-  cell_blocked_color: "cell-blocked",
-  sidebar_active_color: "sidebar-active",
-  sidebar_active_bg_color: "sidebar-active-bg",
-  grid_border_color: "grid-border",
-  main_word_marker_color: "main-word-marker",
-}
-
 export function backfillRow(row: OldBrandingRow, defaults: BackfillDefaults): BackfilledRow {
   const overrides: Record<string, string> = {}
-  for (const [oldKey, newKey] of Object.entries(OVERRIDE_FIELD_MAP)) {
+  for (const [oldKey, newKey] of Object.entries(LEGACY_COLUMN_TO_TOKEN_ID)) {
     const v = row[oldKey as keyof OldBrandingRow]
     if (v) overrides[newKey] = v as string
   }

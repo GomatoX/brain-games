@@ -1,12 +1,7 @@
-import { TOKEN_REGISTRY } from "./token-registry"
-
-// Token name → list of CSS custom property names it sets.
-// Multiple CSS vars per token allow legacy game CSS to still work
-// (e.g. selection sets both --cell-selected-bg and --cell-selected).
-// Derived from TOKEN_REGISTRY (the source of truth) for back-compat.
-export const FIELD_MAP: Record<string, string[]> = Object.fromEntries(
-  TOKEN_REGISTRY.map((t) => [t.id, t.cssVars]),
-)
+// CSS custom property emitters for branding axes that are NOT individual
+// design tokens — typography stack, scale, density, and radius.
+// These are kept separate from the token registry because they emit grouped
+// var sets rather than 1:1 token → var mappings.
 
 export const TYPOGRAPHY_VARS = {
   fontSans: "--font-sans",

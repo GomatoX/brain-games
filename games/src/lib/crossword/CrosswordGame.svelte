@@ -1139,12 +1139,13 @@
           <div class="history-nav">
             <button
               class="history-btn"
+              data-brand-token="primary"
               disabled={!historyMeta.hasOlder}
               on:click={() => navigateHistory("older")}
             >
               ← {$t("crossword.older")}
             </button>
-            <span class="history-count">
+            <span class="history-count" data-brand-token="text">
               {historyMeta.current + 1} / {historyMeta.total}
             </span>
             <button

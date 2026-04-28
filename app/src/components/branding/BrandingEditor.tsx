@@ -7,13 +7,20 @@ import ThemeSection from "./sections/ThemeSection"
 import TypographySection from "./sections/TypographySection"
 import SpacingSection from "./sections/SpacingSection"
 import ComponentsSection from "./sections/ComponentsSection"
+import GameColorsSection from "./sections/GameColorsSection"
 import ImagerySection from "./sections/ImagerySection"
 import CustomCssSection from "./sections/CustomCssSection"
-import AdvancedSection from "./sections/AdvancedSection"
 import type {
   BrandingTokens, BrandingTypography, BrandingSpacing, BrandingComponents,
 } from "@/lib/branding/tokens"
+import {
+  PLATFORM_DEFAULT_TOKENS as DEFAULT_TOKENS,
+  PLATFORM_DEFAULT_TYPOGRAPHY as DEFAULT_TYPOGRAPHY,
+  PLATFORM_DEFAULT_SPACING as DEFAULT_SPACING,
+  PLATFORM_DEFAULT_COMPONENTS as DEFAULT_COMPONENTS,
+} from "@/lib/branding/defaults"
 import { hasPendingSave } from "@/lib/branding/unload-guard"
+import type { PreviewGameType } from "@/lib/branding/platform-defaults"
 
 export interface DraftState {
   tokens: BrandingTokens
@@ -58,27 +65,11 @@ type Props = {
     ogImagePath: string | null
     customCssGames: string | null
   } | null
+  availableGameTypes: PreviewGameType[]
+  defaultGameType: PreviewGameType | null
 }
 
 type SaveState = "idle" | "saving" | "just-saved" | "just-published" | "just-discarded"
-
-const DEFAULT_TOKENS: BrandingTokens = {
-  primary: "#c25e40",
-  surface: "#ffffff",
-  text: "#0f172a",
-  overrides: {},
-}
-const DEFAULT_TYPOGRAPHY: BrandingTypography = {
-  fontSans: null,
-  fontSerif: null,
-  scale: "default",
-}
-const DEFAULT_SPACING: BrandingSpacing = { density: "cozy", radius: 8 }
-const DEFAULT_COMPONENTS: BrandingComponents = {
-  button: { variant: "solid", shadow: "subtle" },
-  input: { variant: "outlined" },
-  card: { elevation: "subtle" },
-}
 
 const AUTOSAVE_DEBOUNCE_MS = 800
 const JUST_SAVED_DISPLAY_MS = 1500
@@ -107,7 +98,9 @@ const liveToDraft = (src: {
   customCssGames: src.customCssGames,
 })
 
-export default function BrandingEditor({ brandingId, live, initialDraft }: Props) {
+export default function BrandingEditor({
+  brandingId, live, initialDraft, availableGameTypes, defaultGameType,
+}: Props) {
   const startState: DraftState = useMemo(() => liveToDraft(initialDraft ?? live), [initialDraft, live])
 
   const [draft, setDraft] = useState<DraftState>(startState)
@@ -117,9 +110,48 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(initialDraft?.updatedAt ?? null)
   const [conflicted, setConflicted] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  // Refs — declared up front so every effect/handler can reference them
+  // without temporal-dead-zone or "Cannot access variable before declared"
+  // errors.
   const saveTimer = useRef<NodeJS.Timeout | null>(null)
   const justSavedTimer = useRef<NodeJS.Timeout | null>(null)
   const isInitialMount = useRef(true)
+  const dirtyRef = useRef(false)
+  const savingRef = useRef(false)
+  const draftRef = useRef(draft)
+  const draftUpdatedAtRef = useRef(draftUpdatedAt)
+  const discardingRef = useRef(false)
+
+  async function saveDraft() {
+    setSaveState("saving")
+    let res: Response
+    try {
+      res = await fetch(`/api/branding/${brandingId}/draft`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...draft, expectedUpdatedAt: draftUpdatedAt }),
+      })
+    } catch {
+      setSaveState("idle")
+      return
+    }
+    if (res.status === 409) {
+      setConflicted(true)
+      setSaveState("idle")
+      return
+    }
+    if (!res.ok) {
+      setSaveState("idle")
+      return
+    }
+    const body = (await res.json()) as { draft: { updatedAt: string } | null }
+    if (body.draft) setDraftUpdatedAt(body.draft.updatedAt)
+    setHasDraft(true)
+    dirtyRef.current = false
+    setSaveState("just-saved")
+    if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
+    justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
+  }
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -135,6 +167,10 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current)
     }
+    // saveDraft is intentionally omitted: it closes over draft/draftUpdatedAt
+    // and re-creating it every render would defeat the debounce. The ref
+    // chain (draftRef/draftUpdatedAtRef) is what actually keeps the request
+    // body fresh during the keepalive flush in the unload handler.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft])
 
@@ -143,12 +179,6 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
     }
   }, [])
-
-  const dirtyRef = useRef(false)
-  const savingRef = useRef(false)
-  const draftRef = useRef(draft)
-  const draftUpdatedAtRef = useRef(draftUpdatedAt)
-  const discardingRef = useRef(false)
 
   useEffect(() => {
     draftRef.current = draft
@@ -196,37 +226,6 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
       window.removeEventListener("pagehide", handlePageHide)
     }
   }, [brandingId])
-
-  async function saveDraft() {
-    setSaveState("saving")
-    let res: Response
-    try {
-      res = await fetch(`/api/branding/${brandingId}/draft`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...draft, expectedUpdatedAt: draftUpdatedAt }),
-      })
-    } catch {
-      setSaveState("idle")
-      return
-    }
-    if (res.status === 409) {
-      setConflicted(true)
-      setSaveState("idle")
-      return
-    }
-    if (!res.ok) {
-      setSaveState("idle")
-      return
-    }
-    const body = (await res.json()) as { draft: { updatedAt: string } | null }
-    if (body.draft) setDraftUpdatedAt(body.draft.updatedAt)
-    setHasDraft(true)
-    dirtyRef.current = false
-    setSaveState("just-saved")
-    if (justSavedTimer.current) clearTimeout(justSavedTimer.current)
-    justSavedTimer.current = setTimeout(() => setSaveState("idle"), JUST_SAVED_DISPLAY_MS)
-  }
 
   async function publish() {
     if (publishing) return
@@ -360,17 +359,22 @@ export default function BrandingEditor({ brandingId, live, initialDraft }: Props
           style={{ borderColor: "var(--border)", pointerEvents: editorLocked ? "none" : undefined, opacity: editorLocked ? 0.5 : 1 }}
         >
           {/* Section order is canonically defined in @/lib/branding/section-order.ts */}
-          <ThemeSection draft={draft} update={update} />
+          <ThemeSection draft={draft} update={update} onTokenHover={setHoveredToken} />
           <IdentitySection draft={draft} update={update} />
           <TypographySection draft={draft} update={update} />
           <SpacingSection draft={draft} update={update} />
           <ComponentsSection draft={draft} update={update} />
+          <GameColorsSection draft={draft} update={update} onTokenHover={setHoveredToken} />
           <ImagerySection draft={draft} update={update} />
           <CustomCssSection draft={draft} update={update} />
-          <AdvancedSection draft={draft} update={update} onTokenHover={setHoveredToken} />
         </aside>
         <section className="flex-1 overflow-y-auto">
-          <BrandingPreviewPane draft={draft} hoveredToken={hoveredToken} />
+          <BrandingPreviewPane
+            draft={draft}
+            hoveredToken={hoveredToken}
+            availableGameTypes={availableGameTypes}
+            defaultGameType={defaultGameType}
+          />
         </section>
       </div>
     </div>

@@ -90,6 +90,9 @@ export default function BrandingContent({
 
   const handleCancelDelete = () => {
     if (deletingId) return
+    // Clear stale error so a previous failure doesn't reappear when the
+    // user opens the delete modal a second time.
+    setDeleteError("")
     setDeleteTarget(null)
   }
 
@@ -99,7 +102,7 @@ export default function BrandingContent({
     setDeletingId(target.id)
     setDeleteError("")
     try {
-      const res = await fetch(`/api/branding?id=${encodeURIComponent(target.id)}`, {
+      const res = await fetch(`/api/branding/${encodeURIComponent(target.id)}`, {
         method: "DELETE",
       })
       if (!res.ok) {
@@ -184,6 +187,11 @@ export default function BrandingContent({
                     )}
                   </div>
 
+                  {/* suppressHydrationWarning: formatRelativeTime() reads
+                      Date.now() on the client; the server snapshot is built
+                      at request time. The two strings ("5m ago" vs "6m ago")
+                      can disagree when the page is hydrated more than 60s
+                      after SSR — that's correct, not a hydration bug. */}
                   <div className="text-[11px] text-[#64748b]" suppressHydrationWarning>
                     Edited {formatRelativeTime(p.lastEditedAt)}
                   </div>

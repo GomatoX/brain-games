@@ -8,18 +8,30 @@ import {
   SCALE_VARS,
   DENSITY_VARS,
   radiusVars,
-  FIELD_MAP,
-} from "./field-map"
+} from "./css-vars"
+import { TOKEN_REGISTRY } from "./token-registry"
 import type { BrandingTokens, BrandingTypography, BrandingSpacing } from "./tokens"
+import {
+  PLATFORM_DEFAULT_TOKENS,
+  PLATFORM_DEFAULT_TYPOGRAPHY,
+  PLATFORM_DEFAULT_SPACING,
+  BRAND_DEFAULT_PRIMARY,
+} from "./defaults"
 
-const PLATFORM_DEFAULT_TOKENS: BrandingTokens = {
-  primary: process.env.PLATFORM_ACCENT || "#c25e40",
-  surface: "#ffffff",
-  text: "#0f172a",
+// The PLATFORM_ACCENT env var still wins at runtime — copy the frozen default
+// into a fresh object here so we can override `primary` without mutating the
+// shared frozen constant.
+const RUNTIME_DEFAULT_TOKENS = {
+  ...PLATFORM_DEFAULT_TOKENS,
+  primary: process.env.PLATFORM_ACCENT || BRAND_DEFAULT_PRIMARY,
   overrides: {},
 }
-const PLATFORM_DEFAULT_TYPOGRAPHY: BrandingTypography = { fontSans: null, fontSerif: null, scale: "default" }
-const PLATFORM_DEFAULT_SPACING: BrandingSpacing = { density: "cozy", radius: 8 }
+
+const PLATFORM_DEFAULT_CSS_VARS = tokensToCssVars(
+  RUNTIME_DEFAULT_TOKENS,
+  PLATFORM_DEFAULT_TYPOGRAPHY,
+  PLATFORM_DEFAULT_SPACING,
+)
 
 export async function resolveBrandForUser(userId: string, orgId: string): Promise<{
   cssVars: Record<string, string>
@@ -32,7 +44,7 @@ export async function resolveBrandForUser(userId: string, orgId: string): Promis
     .limit(1)
 
   if (user?.usePlatformChrome) {
-    return { cssVars: tokensToCssVars(PLATFORM_DEFAULT_TOKENS, PLATFORM_DEFAULT_TYPOGRAPHY, PLATFORM_DEFAULT_SPACING), orgId }
+    return { cssVars: PLATFORM_DEFAULT_CSS_VARS, orgId }
   }
 
   const [org] = await db
@@ -42,7 +54,7 @@ export async function resolveBrandForUser(userId: string, orgId: string): Promis
     .limit(1)
 
   if (!org?.defaultBranding) {
-    return { cssVars: tokensToCssVars(PLATFORM_DEFAULT_TOKENS, PLATFORM_DEFAULT_TYPOGRAPHY, PLATFORM_DEFAULT_SPACING), orgId }
+    return { cssVars: PLATFORM_DEFAULT_CSS_VARS, orgId }
   }
 
   const [b] = await db
@@ -52,7 +64,7 @@ export async function resolveBrandForUser(userId: string, orgId: string): Promis
     .limit(1)
 
   if (!b?.tokens) {
-    return { cssVars: tokensToCssVars(PLATFORM_DEFAULT_TOKENS, PLATFORM_DEFAULT_TYPOGRAPHY, PLATFORM_DEFAULT_SPACING), orgId }
+    return { cssVars: PLATFORM_DEFAULT_CSS_VARS, orgId }
   }
 
   return {
@@ -72,10 +84,10 @@ function tokensToCssVars(
 ): Record<string, string> {
   const derived = deriveTokens(tokens)
   const out: Record<string, string> = {}
-  for (const [tokenName, cssVars] of Object.entries(FIELD_MAP)) {
-    const v = derived[tokenName]
+  for (const t of TOKEN_REGISTRY) {
+    const v = derived[t.id]
     if (!v) continue
-    for (const cssVar of cssVars) out[cssVar] = v
+    for (const cssVar of t.cssVars) out[cssVar] = v
   }
   if (typography.fontSans) out[TYPOGRAPHY_VARS.fontSans] = typography.fontSans
   if (typography.fontSerif) out[TYPOGRAPHY_VARS.fontSerif] = typography.fontSerif

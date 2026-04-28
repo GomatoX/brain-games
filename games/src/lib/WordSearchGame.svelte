@@ -382,7 +382,7 @@
                 <span class="clue-num"
                   >{String(i + 1).padStart(2, "0")}.</span
                 >
-                <span class="clue-text">{w.word}</span>
+                <span class="clue-text" data-brand-token="text">{w.word}</span>
               </li>
             {/each}
           </ul>
@@ -493,6 +493,7 @@
           <div class="history-nav">
             <button
               class="history-btn"
+              data-brand-token="primary"
               disabled={!historyMeta.hasOlder}
               on:click={() => navigateHistory("older")}
               aria-label="Older puzzle"

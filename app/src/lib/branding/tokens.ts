@@ -21,16 +21,3 @@ export interface BrandingComponents {
   input: { variant: "outlined" | "filled" | "underlined" }
   card: { elevation: "flat" | "subtle" | "lifted" }
 }
-
-export interface ResolvedBrand {
-  tokens: Record<string, string>
-  typography: BrandingTypography
-  spacing: BrandingSpacing
-  components: BrandingComponents
-  logoPath: string | null
-  logoDarkPath: string | null
-  faviconPath: string | null
-  backgroundPath: string | null
-  ogImagePath: string | null
-  customCssGames: string | null
-}
