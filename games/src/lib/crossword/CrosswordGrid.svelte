@@ -176,7 +176,7 @@
             <span class="cell-number">{cell.number}</span>
           {/if}
           {#if mainWordCellSet.has(cellKey)}
-            <span class="main-word-dot"></span>
+            <span class="main-word-dot" data-brand-token="main-word-marker"></span>
           {/if}
           {#if isSelected}
             <span class="cell-ring-marker" data-brand-token="selection-ring" aria-hidden="true"></span>
