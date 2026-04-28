@@ -124,17 +124,27 @@ export function GameListClient({
     }
   }
 
+  const colorMap: Record<string, string> = {
+    blue: "bg-blue-50 text-blue-600",
+    green: "bg-green-50 text-green-600",
+    purple: "bg-purple-50 text-purple-600",
+    orange: "bg-orange-50 text-orange-600",
+  }
+
   return (
     <div>
-      <div className="px-4 sm:px-6 py-4 border-b border-[#e2e8f0]">
-        <h1 className="text-xl font-bold text-[#0f172a] mb-0.5">{title}</h1>
-        <p className="text-sm text-[#64748b]">{total} total · page {page} of {Math.max(1, totalPages)}</p>
+      <div className="px-4 sm:px-6 py-4 border-b border-[#e2e8f0] flex items-center gap-3">
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${colorMap[iconColor] ?? "bg-slate-100 text-slate-600"}`}>
+          <span className="material-symbols-outlined text-[18px]">{icon}</span>
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[#0f172a] leading-tight">{title}</h1>
+          <p className="text-sm text-[#64748b]">{total} total · page {page} of {Math.max(1, totalPages)}</p>
+        </div>
       </div>
 
       <GameSection
         title={title}
-        icon={icon}
-        iconColor={iconColor}
         games={games}
         type={type}
         onAdd={() => setModal({ open: true, mode: "create" })}

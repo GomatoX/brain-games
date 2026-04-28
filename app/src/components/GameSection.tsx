@@ -5,8 +5,6 @@ import type { Game, GameType } from "@/lib/game-types"
 
 export function GameSection({
   title,
-  icon,
-  iconColor,
   games,
   type,
   onAdd,
@@ -19,8 +17,6 @@ export function GameSection({
   orgId,
 }: {
   title: string
-  icon: string
-  iconColor: string
   games: Game[]
   type: GameType
   onAdd: () => void
