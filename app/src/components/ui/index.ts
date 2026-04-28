@@ -1,6 +1,6 @@
 export { Panel, PanelHeader } from "./Panel";
 export { PageHeader } from "./PageHeader";
-export { Badge } from "./Badge";
+export { Badge } from "./BadgeLegacy";
 export { Button } from "./ButtonLegacy";
 export { Input } from "./InputLegacy";
 export { Select } from "./SelectLegacy";
