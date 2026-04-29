@@ -65,7 +65,6 @@ export default function TeamContent({
 }) {
   const [data, setData] = useState<TeamData>(initialData)
   const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteLink, setInviteLink] = useState("")
   const [copied, setCopied] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
@@ -87,8 +86,6 @@ export default function TeamContent({
     firstName: string
     lastName: string
   }) => {
-    setInviteLoading(true)
-
     try {
       const res = await fetch("/api/team", {
         method: "POST",
@@ -102,13 +99,12 @@ export default function TeamContent({
       // Build the invite link
       const link = `${window.location.origin}/invite/${d.invite_token}`
       setInviteLink(link)
+      toast.success("Invite link generated")
       await fetchTeam()
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to invite member",
       )
-    } finally {
-      setInviteLoading(false)
     }
   }
 
@@ -132,9 +128,12 @@ export default function TeamContent({
 
       const link = `${window.location.origin}/invite/${d.invite_token}`
       setInviteLink(link)
+      toast.success("New invite link generated")
       await fetchTeam()
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to resend invite",
+      )
     }
   }
 
@@ -151,10 +150,17 @@ export default function TeamContent({
 
   const handleRemove = async (memberId: string) => {
     try {
-      await fetch(`/api/team?id=${memberId}`, { method: "DELETE" })
+      const res = await fetch(`/api/team?id=${memberId}`, { method: "DELETE" })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d.error || "Failed to remove member")
+      }
+      toast.success("Member removed")
       await fetchTeam()
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to remove member",
+      )
     }
     setDeleteConfirm(null)
   }
@@ -336,7 +342,6 @@ export default function TeamContent({
           ) : (
             <InviteMemberForm
               onSubmit={handleInvite}
-              loading={inviteLoading}
               onCancel={closeInviteModal}
             />
           )}
@@ -420,7 +425,6 @@ export default function TeamContent({
 
 const InviteMemberForm = ({
   onSubmit,
-  loading,
   onCancel,
 }: {
   onSubmit: (values: {
@@ -428,7 +432,6 @@ const InviteMemberForm = ({
     firstName: string
     lastName: string
   }) => Promise<void>
-  loading: boolean
   onCancel: () => void
 }) => {
   const form = useForm<InviteValues>({
@@ -496,11 +499,16 @@ const InviteMemberForm = ({
           )}
         />
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={form.formState.isSubmitting}
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Sending…" : "Send Invite"}
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "Sending…" : "Send Invite"}
           </Button>
         </div>
       </form>
