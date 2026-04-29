@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import {
   PLATFORM_PUZZLE_IDS,
   type PreviewGameType,
@@ -108,19 +109,16 @@ export default function GamePreview({ availableTypes, defaultType }: Props) {
         <div className="mb-3 flex gap-2 text-sm">
           <span className="self-center mr-1">Game type:</span>
           {availableTypes.map((t) => (
-            <button
+            <Button
               key={t}
               type="button"
+              size="sm"
+              variant={type === t ? "default" : "outline"}
+              aria-pressed={type === t}
               onClick={() => setType(t)}
-              className="px-3 py-1 border rounded text-sm"
-              style={{
-                background: type === t ? "var(--primary)" : "transparent",
-                color: type === t ? "var(--primary-foreground)" : "var(--text)",
-                borderColor: "var(--border)",
-              }}
             >
               {TYPE_LABELS[t]}
-            </button>
+            </Button>
           ))}
         </div>
       )}
