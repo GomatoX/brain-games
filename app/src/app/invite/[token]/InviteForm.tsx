@@ -6,6 +6,7 @@ import PlatformLogo from "@/components/PlatformLogo"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { UserPlus } from "lucide-react"
 import {
   Form,
   FormControl,
@@ -102,9 +103,7 @@ const InviteForm = ({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-center w-12 h-12 bg-rust/10 rounded-xl mx-auto mb-2">
-              <span className="material-symbols-outlined text-rust text-2xl">
-                person_add
-              </span>
+              <UserPlus className="text-rust size-6" />
             </div>
             <CardTitle className="text-2xl font-serif text-center">
               Join {orgName}
