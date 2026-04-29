@@ -29,8 +29,9 @@ const KeysContent = ({
 }) => {
   const [token, setToken] = useState<string | null>(initialToken)
   const [generating, setGenerating] = useState(false)
+  const [revoking, setRevoking] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [lang] = useState(initialLang)
+  const lang = initialLang
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -40,7 +41,7 @@ const KeysContent = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "generate-token" }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
         setToken(data.token)
         toast.success("API token generated")
@@ -55,6 +56,7 @@ const KeysContent = ({
   }
 
   const handleRevoke = async () => {
+    setRevoking(true)
     try {
       const res = await fetch("/api/auth-actions", {
         method: "POST",
@@ -70,10 +72,12 @@ const KeysContent = ({
       }
     } catch {
       toast.error("Failed to revoke token")
+    } finally {
+      setRevoking(false)
     }
   }
 
-  const copyToClipboard = (text: string, label: string) => {
+  const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
     toast.success("Copied to clipboard")
     setCopied(label)
@@ -129,7 +133,7 @@ const KeysContent = ({
                 </code>
                 <Button
                   variant="secondary"
-                  onClick={() => copyToClipboard(token, "token")}
+                  onClick={() => handleCopy(token, "token")}
                 >
                   {copied === "token" ? (
                     <Check className="size-4" />
@@ -148,9 +152,10 @@ const KeysContent = ({
                   variant="ghost"
                   size="sm"
                   onClick={handleRevoke}
+                  disabled={revoking}
                   className="text-red-600 hover:text-red-700 self-start sm:self-auto"
                 >
-                  Revoke Token
+                  {revoking ? "Revoking..." : "Revoke Token"}
                 </Button>
               </div>
             </div>
@@ -177,19 +182,19 @@ const KeysContent = ({
           title="Crossword"
           code={crosswordEmbed}
           copied={copied}
-          onCopy={copyToClipboard}
+          onCopy={handleCopy}
         />
         <EmbedCard
           title="Word Game"
           code={wordGameEmbed}
           copied={copied}
-          onCopy={copyToClipboard}
+          onCopy={handleCopy}
         />
         <EmbedCard
           title="Word Search"
           code={wordSearchEmbed}
           copied={copied}
-          onCopy={copyToClipboard}
+          onCopy={handleCopy}
         />
       </div>
     </div>
