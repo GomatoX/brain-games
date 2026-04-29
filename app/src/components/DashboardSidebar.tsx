@@ -1,11 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import type { ComponentType } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import {
+  ChevronDown,
+  Home,
+  Key,
+  LayoutGrid,
+  LogOut,
+  Palette,
+  Settings,
+  Users,
+} from "lucide-react";
 import PlatformLogo from "@/components/PlatformLogo";
 import DashboardTopbar from "@/components/DashboardTopbar";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 
 interface User {
@@ -21,6 +34,13 @@ interface SidebarProps {
   isWhiteLabel: boolean;
   orgLogoUrl?: string | null;
 }
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  active: boolean;
+};
 
 export default function DashboardSidebar({
   user,
@@ -41,11 +61,11 @@ export default function DashboardSidebar({
   const isOnGameRoute = GAME_ROUTES.some((r) => pathname.startsWith(r))
   const [gamesOpen, setGamesOpen] = useState(isOnGameRoute)
 
-  const topNavItems = [
+  const topNavItems: NavItem[] = [
     {
       href: "/dashboard",
       label: "Overview",
-      icon: "home",
+      icon: Home,
       active: pathname === "/dashboard",
     },
   ]
@@ -68,47 +88,32 @@ export default function DashboardSidebar({
     },
   ]
 
-  const bottomNavItems = [
+  const bottomNavItems: NavItem[] = [
     {
       href: "/dashboard/branding",
       label: "Branding",
-      icon: "branding_watermark",
+      icon: Palette,
       active: pathname === "/dashboard/branding",
     },
     {
       href: "/dashboard/team",
       label: "Team",
-      icon: "groups",
+      icon: Users,
       active: pathname === "/dashboard/team",
     },
     {
       href: "/dashboard/keys",
       label: "API Keys & Embeds",
-      icon: "key",
+      icon: Key,
       active: pathname === "/dashboard/keys",
     },
     {
       href: "/dashboard/settings",
       label: "Settings",
-      icon: "settings",
+      icon: Settings,
       active: pathname === "/dashboard/settings",
     },
   ]
-
-  // Lock body scroll + ESC to close while drawer open
-  useEffect(() => {
-    if (!drawerOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
-    };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", handleKey);
-    };
-  }, [drawerOpen]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -152,13 +157,11 @@ export default function DashboardSidebar({
                 : "border-transparent text-[#64748b] hover:text-navy-900 hover:bg-white"
             }`}
           >
-            <span
-              className={`material-symbols-outlined text-[20px] ${
+            <item.icon
+              className={`size-5 ${
                 item.active ? "text-navy-900" : "text-[#94a3b8] group-hover:text-navy-900"
               }`}
-            >
-              {item.icon}
-            </span>
+            />
             <span className={`text-[14px] ${item.active ? "font-semibold" : "font-medium"}`}>
               {item.label}
             </span>
@@ -178,23 +181,19 @@ export default function DashboardSidebar({
             aria-expanded={gamesOpen}
             aria-label="Toggle Games menu"
           >
-            <span
-              className={`material-symbols-outlined text-[20px] ${
+            <LayoutGrid
+              className={`size-5 ${
                 isOnGameRoute ? "text-navy-900" : "text-[#94a3b8]"
               }`}
-            >
-              stacks
-            </span>
+            />
             <span className={`text-[14px] flex-1 text-left ${isOnGameRoute ? "font-semibold" : "font-medium"}`}>
               Games
             </span>
-            <span
-              className={`material-symbols-outlined text-[16px] text-[#94a3b8] transition-transform ${
+            <ChevronDown
+              className={`size-4 text-[#94a3b8] transition-transform ${
                 gamesOpen ? "rotate-180" : ""
               }`}
-            >
-              expand_more
-            </span>
+            />
           </button>
 
           {gamesOpen && (
@@ -236,13 +235,11 @@ export default function DashboardSidebar({
                 : "border-transparent text-[#64748b] hover:text-navy-900 hover:bg-white"
             }`}
           >
-            <span
-              className={`material-symbols-outlined text-[20px] ${
+            <item.icon
+              className={`size-5 ${
                 item.active ? "text-navy-900" : "text-[#94a3b8] group-hover:text-navy-900"
               }`}
-            >
-              {item.icon}
-            </span>
+            />
             <span className={`text-[14px] ${item.active ? "font-semibold" : "font-medium"}`}>
               {item.label}
             </span>
@@ -265,16 +262,18 @@ export default function DashboardSidebar({
               </span>
             </div>
           </div>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={handleLogout}
             disabled={loggingOut}
-            className="text-[#94a3b8] hover:text-navy-900 p-1 transition-colors disabled:opacity-50 flex-shrink-0"
+            aria-label="Sign Out"
             title="Sign Out"
+            className="text-[#94a3b8] hover:text-navy-900 flex-shrink-0"
           >
-            <span className="material-symbols-outlined text-[18px]">
-              logout
-            </span>
-          </button>
+            <LogOut className="size-[18px]" />
+          </Button>
         </div>
         <p className="text-[9px] text-[#cbd5e1] mt-2 pl-11">
           v{process.env.NEXT_PUBLIC_APP_VERSION || "dev"}
@@ -299,24 +298,14 @@ export default function DashboardSidebar({
       />
 
       {/* Mobile drawer */}
-      <div
-        className={`lg:hidden fixed inset-0 z-40 transition-opacity ${
-          drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        aria-hidden={!drawerOpen}
-      >
-        <div
-          className="absolute inset-0 bg-black/40"
-          onClick={() => setDrawerOpen(false)}
-        />
-        <aside
-          className={`absolute inset-y-0 left-0 w-[280px] max-w-[85vw] flex flex-col bg-[#F8FAFC] border-r border-[#e2e8f0] shadow-xl transform transition-transform ${
-            drawerOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent
+          side="left"
+          className="w-[280px] max-w-[85vw] flex flex-col bg-[#F8FAFC] border-r border-[#e2e8f0] p-0"
         >
           {sidebarBody}
-        </aside>
-      </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
