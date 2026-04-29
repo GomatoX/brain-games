@@ -3,7 +3,26 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { PageHeader, Panel, Modal, Button, Input, Select } from "@/components/ui"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Plus, Trash2, Pencil, Palette } from "lucide-react"
+import { toast } from "sonner"
 import { PRESETS } from "@/lib/branding/presets"
 import { formatRelativeTime } from "@/lib/branding/relative-time"
 import { formatUsageLabel } from "@/lib/branding/usage-format"
@@ -36,15 +55,12 @@ export default function BrandingContent({
   const [createName, setCreateName] = useState("")
   const [createPresetId, setCreatePresetId] = useState(PRESETS[0]?.id ?? "")
   const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState("")
   const [deleteTarget, setDeleteTarget] = useState<BrandingListItem | null>(null)
 
   const handleOpenCreate = () => {
     setCreateName("")
     setCreatePresetId(PRESETS[0]?.id ?? "")
-    setCreateError("")
     setShowCreateModal(true)
   }
 
@@ -58,11 +74,10 @@ export default function BrandingContent({
     if (creating) return
     const name = createName.trim()
     if (!name) {
-      setCreateError("Name is required")
+      toast.error("Name is required")
       return
     }
     setCreating(true)
-    setCreateError("")
     try {
       const res = await fetch("/api/branding", {
         method: "POST",
@@ -70,29 +85,25 @@ export default function BrandingContent({
         body: JSON.stringify({ name, presetId: createPresetId }),
       })
       if (!res.ok) {
-        setCreateError("Failed to create brand")
+        toast.error("Failed to create brand")
         setCreating(false)
         return
       }
       const data = (await res.json()) as { id: string; name: string }
       router.push(`/dashboard/branding/${data.id}/edit`)
     } catch {
-      setCreateError("Failed to create brand")
+      toast.error("Failed to create brand")
       setCreating(false)
     }
   }
 
   const handleRequestDelete = (item: BrandingListItem) => {
     if (deletingId) return
-    setDeleteError("")
     setDeleteTarget(item)
   }
 
   const handleCancelDelete = () => {
     if (deletingId) return
-    // Clear stale error so a previous failure doesn't reappear when the
-    // user opens the delete modal a second time.
-    setDeleteError("")
     setDeleteTarget(null)
   }
 
@@ -100,19 +111,18 @@ export default function BrandingContent({
     const target = deleteTarget
     if (!target || deletingId) return
     setDeletingId(target.id)
-    setDeleteError("")
     try {
       const res = await fetch(`/api/branding/${encodeURIComponent(target.id)}`, {
         method: "DELETE",
       })
       if (!res.ok) {
-        setDeleteError(`Failed to delete "${target.name}". Please try again.`)
+        toast.error(`Failed to delete "${target.name}". Please try again.`)
         return
       }
       setPresets((prev) => prev.filter((p) => p.id !== target.id))
       setDeleteTarget(null)
     } catch {
-      setDeleteError(`Failed to delete "${target.name}". Please try again.`)
+      toast.error(`Failed to delete "${target.name}". Please try again.`)
     } finally {
       setDeletingId(null)
     }
@@ -124,15 +134,16 @@ export default function BrandingContent({
         title="Branding"
         description="Create and manage reusable brand presets for your games."
         action={
-          <Button icon="add" onClick={handleOpenCreate}>
+          <Button onClick={handleOpenCreate}>
+            <Plus className="size-4" />
             New brand
           </Button>
         }
       />
 
       {presets.length === 0 ? (
-        <Panel>
-          <div className="p-12 text-center">
+        <Card>
+          <CardContent className="p-12 text-center">
             <span className="material-symbols-outlined text-4xl text-[#cbd5e1] mb-3 block">
               palette
             </span>
@@ -140,8 +151,8 @@ export default function BrandingContent({
               No brands yet. Create one to start customizing your games.
             </p>
             <Button onClick={handleOpenCreate}>Create first brand</Button>
-          </div>
-        </Panel>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {presets.map((p) => {
@@ -217,22 +228,19 @@ export default function BrandingContent({
                   )}
 
                   <div className="mt-auto pt-2 flex items-center gap-2">
-                    <Link
-                      href={`/dashboard/branding/${p.id}/edit`}
-                      className="btn btn-secondary btn--sm"
-                    >
-                      <span className="material-symbols-outlined text-sm">
-                        edit
-                      </span>
-                      Edit
-                    </Link>
+                    <Button asChild variant="secondary" size="sm">
+                      <Link href={`/dashboard/branding/${p.id}/edit`}>
+                        <Pencil className="size-4" />
+                        Edit
+                      </Link>
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      icon="delete"
                       disabled={deletingId === p.id}
                       onClick={() => handleRequestDelete(p)}
                     >
+                      <Trash2 className="size-4" />
                       {deletingId === p.id ? "Deleting…" : "Delete"}
                     </Button>
                   </div>
@@ -243,89 +251,105 @@ export default function BrandingContent({
         </div>
       )}
 
-      <Modal
+      <Dialog
         open={showCreateModal}
-        onClose={creating ? () => {} : handleCloseCreate}
-        title="New brand"
-        icon="palette"
-        size="md"
+        onOpenChange={(open) => {
+          if (!open && !creating) handleCloseCreate()
+        }}
       >
-        <form onSubmit={handleCreate} className="p-4 sm:p-6 flex flex-col gap-4">
-          <Input
-            id="brand-name"
-            label="Name"
-            value={createName}
-            onChange={(e) => setCreateName(e.target.value)}
-            placeholder="e.g. Default, Dark theme, LRT"
-          />
-
-          <Select
-            id="brand-preset"
-            label="Starter preset"
-            value={createPresetId}
-            onChange={(e) => setCreatePresetId(e.target.value)}
-            options={PRESETS.map((p) => ({ value: p.id, label: p.name }))}
-          />
-
-          {createError && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-[4px]">
-              {createError}
-            </p>
-          )}
-
-          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
-            <Button variant="outline" onClick={handleCloseCreate}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={creating}>
-              {creating ? "Creating…" : "Create brand"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
-        open={deleteTarget != null}
-        onClose={handleCancelDelete}
-        title="Delete brand"
-        icon="delete"
-        size="sm"
-      >
-        {deleteTarget && (
-          <div className="p-4 sm:p-6 flex flex-col gap-4">
-            <p className="text-sm text-[#0f172a]">
-              Delete <strong>&ldquo;{deleteTarget.name || "Untitled"}&rdquo;</strong>?
-            </p>
-            {deleteTarget.usageCount > 0 ? (
-              <p className="text-sm bg-yellow-50 text-yellow-800 px-3 py-2 rounded-[4px]">
-                <span className="font-medium">{formatUsageLabel(deleteTarget.usageCount)}.</span>{" "}
-                Those games will lose their custom styling and fall back to platform defaults.
-              </p>
-            ) : (
-              <p className="text-sm text-[#64748b]">
-                This brand isn&rsquo;t attached to any games, so nothing else will change.
-              </p>
-            )}
-            <p className="text-xs text-[#64748b]">This cannot be undone.</p>
-            {deleteError && (
-              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-[4px]">
-                {deleteError}
-              </p>
-            )}
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Palette className="size-5" />
+              New brand
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="brand-name">Name</Label>
+              <Input
+                id="brand-name"
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
+                placeholder="e.g. Default, Dark theme, LRT"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brand-preset">Starter preset</Label>
+              <Select value={createPresetId} onValueChange={setCreatePresetId}>
+                <SelectTrigger id="brand-preset">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESETS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
-              <Button variant="outline" onClick={handleCancelDelete} disabled={deletingId === deleteTarget.id}>
+              <Button type="button" variant="outline" onClick={handleCloseCreate}>
                 Cancel
               </Button>
-              <Button
-                onClick={handleConfirmDelete}
-                disabled={deletingId === deleteTarget.id}
-              >
-                {deletingId === deleteTarget.id ? "Deleting…" : "Delete brand"}
+              <Button type="submit" disabled={creating}>
+                {creating ? "Creating…" : "Create brand"}
               </Button>
             </div>
-          </div>
-        )}
-      </Modal>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) handleCancelDelete()
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="size-5" />
+              Delete brand
+            </DialogTitle>
+          </DialogHeader>
+          {deleteTarget && (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm">
+                Delete <strong>&ldquo;{deleteTarget.name || "Untitled"}&rdquo;</strong>?
+              </p>
+              {deleteTarget.usageCount > 0 ? (
+                <p className="text-sm bg-yellow-50 text-yellow-800 px-3 py-2 rounded-[4px]">
+                  <span className="font-medium">{formatUsageLabel(deleteTarget.usageCount)}.</span>{" "}
+                  Those games will lose their custom styling and fall back to platform defaults.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  This brand isn&rsquo;t attached to any games, so nothing else will change.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">This cannot be undone.</p>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelDelete}
+                  disabled={deletingId === deleteTarget.id}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmDelete}
+                  disabled={deletingId === deleteTarget.id}
+                >
+                  {deletingId === deleteTarget.id ? "Deleting…" : "Delete brand"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
