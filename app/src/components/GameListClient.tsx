@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import type { ComponentType } from "react"
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,7 @@ interface Props {
   orgId: string
   initialLang: string
   title: string
-  icon: string
+  icon: ComponentType<{ className?: string }>
   iconColor: string
   basePath: string
 }
@@ -44,7 +45,7 @@ export const GameListClient = ({
   orgId,
   initialLang,
   title,
-  icon,
+  icon: Icon,
   iconColor,
   basePath,
 }: Props) => {
@@ -179,7 +180,7 @@ export const GameListClient = ({
         <div
           className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${colorMap[iconColor] ?? "bg-slate-100 text-slate-600"}`}
         >
-          <span className="material-symbols-outlined text-[18px]">{icon}</span>
+          <Icon className="size-[18px]" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-[#0f172a] leading-tight">

@@ -2,6 +2,7 @@ import { getAuthenticatedUser } from "@/lib/auth-server"
 import { db } from "@/db"
 import { wordsearches, users, organizations } from "@/db/schema"
 import { eq, desc, count } from "drizzle-orm"
+import { Search } from "lucide-react"
 import DashboardContainer from "@/components/DashboardContainer"
 import { GameListClient } from "@/components/GameListClient"
 import { mapGame } from "@/lib/game-types"
@@ -72,7 +73,7 @@ export default async function WordSearchPage({
         orgId={user.orgId}
         initialLang={orgRow?.language || "lt"}
         title="Word Search"
-        icon="search"
+        icon={Search}
         iconColor="purple"
         basePath="/dashboard/word-search"
       />
