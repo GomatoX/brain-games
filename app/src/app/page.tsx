@@ -1,5 +1,7 @@
 import Script from "next/script";
 import { platformConfig } from "@/lib/platform";
+import { Settings2, LayoutGrid, Eye, SpellCheck, Hash, Lock, Code, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const PLAY_BASE = "/play";
 
@@ -13,9 +15,7 @@ export default function Home() {
             <header className="flex items-center justify-between whitespace-nowrap px-6 py-4 md:px-10">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center text-rust">
-                  <span className="material-symbols-outlined text-3xl">
-                    settings_suggest
-                  </span>
+                  <Settings2 className="size-8" />
                 </div>
                 <h2 className="text-[#0f172a] text-xl font-bold font-serif tracking-tight">
                   {platformConfig.name}
@@ -43,12 +43,10 @@ export default function Home() {
                   </a>
                 </div>
                 <div className="flex gap-3">
-                  <a
-                    href="/login"
-                    className="flex cursor-pointer items-center justify-center rounded-lg h-10 px-5 text-[#0f172a] hover:text-rust transition-all text-sm font-semibold border border-transparent hover:bg-[#f9fafb]"
-                  >
-                    <span className="truncate">Publisher Login</span>
-                  </a>
+                  <Button asChild variant="ghost" size="sm">
+                    <a href="/login">Publisher Login</a>
+                  </Button>
+                  {/* TODO(landing): unify CTA styling once branding tokens land */}
                   <a
                     href="/register"
                     className="flex cursor-pointer items-center justify-center rounded-lg h-10 px-6 bg-rust hover:bg-rust-dark transition-all text-white text-sm font-semibold shadow-sm hover:shadow-md"
@@ -85,6 +83,7 @@ export default function Home() {
                   and Word Challenges directly into your platform.
                 </p>
               </div>
+              {/* TODO(landing): unify CTA styling once branding tokens land */}
               <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <a
                   href="/register"
@@ -197,9 +196,7 @@ export default function Home() {
                     Daily Crossword
                   </h3>
                   <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                    <span className="material-symbols-outlined text-lg">
-                      grid_on
-                    </span>
+                    <LayoutGrid className="size-5" />
                   </div>
                 </div>
                 <div className="p-6">
@@ -240,9 +237,7 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="relative z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-rust group-hover:text-rust transition-colors"
                   >
-                    <span className="material-symbols-outlined text-lg">
-                      visibility
-                    </span>
+                    <Eye className="size-5" />
                     Live Demo
                   </a>
                 </div>
@@ -255,9 +250,7 @@ export default function Home() {
                     Word of the Day
                   </h3>
                   <div className="h-8 w-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                    <span className="material-symbols-outlined text-lg">
-                      spellcheck
-                    </span>
+                    <SpellCheck className="size-5" />
                   </div>
                 </div>
                 <div className="p-6">
@@ -290,9 +283,7 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="absolute z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#0f172a] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 group-hover:border-rust group-hover:text-rust transition-colors top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
                   >
-                    <span className="material-symbols-outlined text-lg">
-                      visibility
-                    </span>
+                    <Eye className="size-5" />
                     Live Demo
                   </a>
                 </div>
@@ -310,9 +301,7 @@ export default function Home() {
                     </span>
                   </div>
                   <div className="h-8 w-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                    <span className="material-symbols-outlined text-lg">
-                      tag
-                    </span>
+                    <Hash className="size-5" />
                   </div>
                 </div>
                 <div className="p-6">
@@ -344,9 +333,7 @@ export default function Home() {
                     <div className="bg-white"></div>
                   </div>
                   <span className="absolute z-10 bg-white border border-[#e2e8f0] shadow-sm text-[#94a3b8] px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 cursor-default">
-                    <span className="material-symbols-outlined text-lg">
-                      lock
-                    </span>
+                    <Lock className="size-5" />
                     Coming Soon
                   </span>
                 </div>
@@ -360,9 +347,7 @@ export default function Home() {
           <div className="max-w-[1280px] mx-auto px-4 md:px-10 flex flex-col lg:flex-row gap-16 items-center">
             <div className="lg:w-1/2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 w-fit mb-6">
-                <span className="material-symbols-outlined text-rust text-sm">
-                  code
-                </span>
+                <Code className="size-4 text-rust" />
                 <span className="text-xs font-bold uppercase tracking-wider text-[#64748b]">
                   Developer Friendly
                 </span>
@@ -377,9 +362,7 @@ export default function Home() {
               </p>
               <ul className="flex flex-col gap-4 mb-8">
                 <li className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-green-600 mt-0.5">
-                    check_circle
-                  </span>
+                  <CheckCircle2 className="size-5 text-green-600 mt-0.5" />
                   <div>
                     <h4 className="font-bold text-[#0f172a]">
                       White-label Ready
@@ -390,9 +373,7 @@ export default function Home() {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-green-600 mt-0.5">
-                    check_circle
-                  </span>
+                  <CheckCircle2 className="size-5 text-green-600 mt-0.5" />
                   <div>
                     <h4 className="font-bold text-[#0f172a]">
                       Single Sign-On (SSO)
@@ -403,9 +384,7 @@ export default function Home() {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-green-600 mt-0.5">
-                    check_circle
-                  </span>
+                  <CheckCircle2 className="size-5 text-green-600 mt-0.5" />
                   <div>
                     <h4 className="font-bold text-[#0f172a]">
                       Zero Maintenance
@@ -491,6 +470,7 @@ export default function Home() {
               Create your free publisher account, add your games, and start
               embedding them anywhere in minutes.
             </p>
+            {/* TODO(landing): unify CTA styling once branding tokens land */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a
                 href="/register"
@@ -515,9 +495,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-2 text-[#0f172a] mb-4">
-                <span className="material-symbols-outlined text-rust text-2xl">
-                  settings_suggest
-                </span>
+                <Settings2 className="size-7 text-rust" />
                 <h3 className="text-lg font-bold font-serif">
                   {platformConfig.name}
                 </h3>
