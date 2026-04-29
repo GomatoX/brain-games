@@ -318,11 +318,11 @@ export default function TeamContent({
                 their own password and join your organization.
               </p>
               <div className="flex items-center gap-2 bg-slate-50 border rounded-md px-3 py-2.5">
-                <input
+                <Input
                   type="text"
                   readOnly
                   value={inviteLink}
-                  className="flex-1 bg-transparent text-sm outline-none truncate"
+                  className="flex-1 border-0 bg-transparent shadow-none px-0 focus-visible:ring-0"
                 />
                 <Button size="sm" onClick={handleCopy}>
                   {copied ? "Copied!" : "Copy"}
@@ -367,11 +367,11 @@ export default function TeamContent({
               Share this updated link with the member.
             </p>
             <div className="flex items-center gap-2 bg-slate-50 border rounded-md px-3 py-2.5">
-              <input
+              <Input
                 type="text"
                 readOnly
                 value={inviteLink}
-                className="flex-1 bg-transparent text-sm outline-none truncate"
+                className="flex-1 border-0 bg-transparent shadow-none px-0 focus-visible:ring-0"
               />
               <Button size="sm" onClick={handleCopy}>
                 {copied ? "Copied!" : "Copy"}
