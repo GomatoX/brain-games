@@ -611,6 +611,7 @@ export const GameModal = ({
               <div className="mb-4">
                 {mainWord.trim() && (
                   <>
+                    {/* TODO(games): unify "Generate with AI" CTA styling once branding tokens land */}
                     <button
                       type="button"
                       onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
@@ -666,30 +667,26 @@ export const GameModal = ({
                             Language
                           </Label>
                           <div className="flex gap-2">
-                            <button
+                            <Button
                               type="button"
-                              onClick={() => setAiLanguage("lt")}
+                              size="sm"
+                              variant={aiLanguage === "lt" ? "default" : "outline"}
                               aria-pressed={aiLanguage === "lt"}
-                              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                                aiLanguage === "lt"
-                                  ? "bg-rust text-white border-rust"
-                                  : "bg-white text-[#0f172a] border-border hover:border-rust"
-                              }`}
+                              onClick={() => setAiLanguage("lt")}
+                              className="flex-1"
                             >
                               🇱🇹 Lithuanian
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
-                              onClick={() => setAiLanguage("en")}
+                              size="sm"
+                              variant={aiLanguage === "en" ? "default" : "outline"}
                               aria-pressed={aiLanguage === "en"}
-                              className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                                aiLanguage === "en"
-                                  ? "bg-rust text-white border-rust"
-                                  : "bg-white text-[#0f172a] border-border hover:border-rust"
-                              }`}
+                              onClick={() => setAiLanguage("en")}
+                              className="flex-1"
                             >
                               🇬🇧 English
-                            </button>
+                            </Button>
                           </div>
                         </div>
 
@@ -793,6 +790,7 @@ export const GameModal = ({
                         {/* Letter picker for main word */}
                         {mainWord && (
                           <div className="flex gap-1 mt-1.5">
+                            {/* TODO(games): the main-word letter picker uses bespoke per-letter selection styling — defer migration */}
                             {entry.word.split("").map((letter, letterIdx) => {
                               const isSelected =
                                 entry.main_word_index === letterIdx
