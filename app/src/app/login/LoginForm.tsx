@@ -1,134 +1,144 @@
-"use client";
+"use client"
 
-import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
-import Link from "next/link";
-import PlatformLogo from "@/components/PlatformLogo";
+import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
+import Link from "next/link"
+import PlatformLogo from "@/components/PlatformLogo"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { toast } from "sonner"
+
+const schema = z.object({
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+})
+type Values = z.infer<typeof schema>
 
 interface LoginFormProps {
-  platformName: string;
-  isWhiteLabel: boolean;
-  hideRegister: boolean;
-  orgLogoUrl?: string | null;
+  platformName: string
+  isWhiteLabel: boolean
+  hideRegister: boolean
+  orgLogoUrl?: string | null
 }
 
-export default function LoginForm({
+const LoginForm = ({
   platformName,
   isWhiteLabel,
   hideRegister,
   orgLogoUrl,
-}: LoginFormProps) {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+}: LoginFormProps) => {
+  const router = useRouter()
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: "", password: "" },
+  })
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Invalid email or password");
-        return;
-      }
-
-      router.push("/dashboard");
-    } catch {
-      setError("Login failed");
-    } finally {
-      setLoading(false);
+  const onSubmit = async (values: Values) => {
+    const result = await signIn("credentials", {
+      email: values.email,
+      password: values.password,
+      redirect: false,
+    })
+    if (result?.error) {
+      toast.error("Invalid email or password")
+      return
     }
+    router.push("/dashboard")
   }
 
   return (
     <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-4 font-[family-name:var(--font-inter)]">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <Link
           href={isWhiteLabel ? "/dashboard" : "/"}
           className="flex items-center justify-center gap-2 mb-8"
         >
           <PlatformLogo platformName={platformName} orgLogoUrl={orgLogoUrl} />
         </Link>
-
-        {/* Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-[#e2e8f0] p-8">
-          <h1 className="text-2xl font-serif font-medium text-[#0f172a] text-center mb-2">
-            Sign In
-          </h1>
-          <p className="text-[#64748b] text-sm text-center mb-8">
-            Sign in to manage your games
-          </p>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-6">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-[#0f172a] mb-1.5"
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-serif text-center">
+              Sign In
+            </CardTitle>
+            <CardDescription className="text-center">
+              Sign in to manage your games
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex flex-col gap-5"
               >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
-                placeholder="you@company.com"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-[#0f172a] mb-1.5"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-rust hover:bg-rust-dark disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm"
-            >
-              {loading ? "Signing in…" : "Sign In"}
-            </button>
-          </form>
-        </div>
-
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="you@company.com"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="w-full"
+                >
+                  {form.formState.isSubmitting ? "Signing in…" : "Sign In"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
         {!hideRegister && (
-          <p className="text-center text-sm text-[#64748b] mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="text-rust hover:text-rust-dark font-medium"
+              className="text-primary hover:underline font-medium"
             >
               Create one free
             </Link>
@@ -136,5 +146,7 @@ export default function LoginForm({
         )}
       </div>
     </div>
-  );
+  )
 }
+
+export default LoginForm
