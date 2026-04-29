@@ -1,10 +1,3 @@
-export { Panel, PanelHeader } from "./Panel";
 export { PageHeader } from "./PageHeader";
-export { Badge } from "./BadgeLegacy";
-export { Button } from "./ButtonLegacy";
-export { Input } from "./InputLegacy";
-export { Select } from "./SelectLegacy";
 export { FileUpload } from "./FileUpload";
 export { CodeBlock } from "./CodeBlock";
-export { ListItem } from "./ListItem";
-export { Modal } from "./Modal";
