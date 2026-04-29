@@ -88,19 +88,27 @@ describe("<FileUploadField /> drag and drop", () => {
     )
     vi.stubGlobal("fetch", fetchMock)
 
-    const { container } = render(
+    const { getByTestId } = render(
       <FileUploadField label="Logo" kind="logo" path={null} onChange={onChange} />,
     )
-    // Use the hidden file input rather than a drop event, since react-dropzone
-    // processes drop events asynchronously through file-selector and requires
-    // dataTransfer.types to be set — which jsdom's fireEvent does not do for DragEvents.
-    const input = container.querySelector('input[type="file"]') as HTMLInputElement
-    const file = new File(["x"], "logo.png", { type: "image/png" })
+    const zone = getByTestId("file-upload-dropzone")
+    const file = new File(["hello"], "logo.png", { type: "image/png" })
 
-    fireEvent.change(input, { target: { files: [file] } })
+    fireEvent.drop(zone, {
+      dataTransfer: {
+        types: ["Files"],
+        files: [file],
+        items: [
+          {
+            kind: "file",
+            type: "image/png",
+            getAsFile: () => file,
+          },
+        ],
+      },
+    })
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
-    expect(onChange).toHaveBeenCalledWith("uploads/abc.png")
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("uploads/abc.png"))
   })
 
   it("applies an active drag style while a file is hovering over the dropzone", async () => {
