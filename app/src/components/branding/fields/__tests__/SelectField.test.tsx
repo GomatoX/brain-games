@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from "vitest"
+import { describe, it, expect, vi, beforeAll } from "vitest"
 import { render } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import SelectField from "../SelectField"
+
+beforeAll(() => {
+  Element.prototype.hasPointerCapture = vi.fn()
+  Element.prototype.scrollIntoView = vi.fn()
+})
 
 describe("<SelectField />", () => {
   it("renders the label", () => {
@@ -36,9 +42,10 @@ describe("<SelectField />", () => {
     expect(trigger.textContent).toContain("Compact")
   })
 
-  it("accepts an onChange callback and renders without errors", () => {
+  it("calls onChange with the new value when an option is picked", async () => {
     const handle = vi.fn()
-    const { getByRole } = render(
+    const user = userEvent.setup()
+    const { getByRole, findByRole } = render(
       <SelectField
         label="Density"
         value="compact"
@@ -49,8 +56,10 @@ describe("<SelectField />", () => {
         ]}
       />,
     )
-    expect(getByRole("combobox")).toBeTruthy()
-    expect(handle).not.toHaveBeenCalled()
+    await user.click(getByRole("combobox"))
+    const cozyOption = await findByRole("option", { name: "Cozy" })
+    await user.click(cozyOption)
+    expect(handle).toHaveBeenCalledWith("cozy")
   })
 
   it("shows placeholder when value is empty", () => {
