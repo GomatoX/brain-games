@@ -33,6 +33,19 @@ import { toast } from "sonner"
 const MAX_LOGO_SIZE_KB = 500
 const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_KB * 1024
 
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters"),
+    confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters"),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
+type PasswordValues = z.infer<typeof passwordSchema>
+
 interface SettingsProps {
   isOwner: boolean
   initialSettings: {
@@ -64,7 +77,7 @@ export default function SettingsContent({
   const [logoPreview, setLogoPreview] = useState<string | null>(
     initialSettings.logo_url,
   )
-  const [brandingOptions] = useState(initialBrandingOptions)
+  const brandingOptions = initialBrandingOptions
   const [saving, setSaving] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState(
     initialSettings.share_image_url,
@@ -376,20 +389,8 @@ export default function SettingsContent({
 }
 
 function PasswordSection() {
-  const schema = z
-    .object({
-      currentPassword: z.string().min(1, "Current password is required"),
-      newPassword: z.string().min(8, "Min. 8 characters"),
-      confirmPassword: z.string().min(8, "Min. 8 characters"),
-    })
-    .refine((d) => d.newPassword === d.confirmPassword, {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    })
-  type Values = z.infer<typeof schema>
-
-  const form = useForm<Values>({
-    resolver: zodResolver(schema),
+  const form = useForm<PasswordValues>({
+    resolver: zodResolver(passwordSchema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -397,7 +398,7 @@ function PasswordSection() {
     },
   })
 
-  const onSubmit = async (values: Values) => {
+  const onSubmit = async (values: PasswordValues) => {
     try {
       const res = await fetch("/api/settings/password", {
         method: "POST",
@@ -474,7 +475,7 @@ function PasswordSection() {
           </form>
         </Form>
       </CardContent>
-      <div className="px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
         <Button
           variant="outline"
           form="password-form"
