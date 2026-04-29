@@ -1,6 +1,10 @@
 "use client"
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CheckCircle2, Rocket, Undo2, AlertTriangle } from "lucide-react"
+import { toast } from "sonner"
 import BrandingPreviewPane from "./BrandingPreviewPane"
 import IdentitySection from "./sections/IdentitySection"
 import ThemeSection from "./sections/ThemeSection"
@@ -233,7 +237,7 @@ export default function BrandingEditor({
     try {
       const res = await fetch(`/api/branding/${brandingId}/publish`, { method: "POST" })
       if (!res.ok) {
-        window.alert("Failed to publish. Please try again.")
+        toast.error("Failed to publish. Please try again.")
         return
       }
       // Server returned the new live snapshot timestamp; mirror locally so the
@@ -251,11 +255,12 @@ export default function BrandingEditor({
 
   async function discard() {
     if (!hasDraft) return
+    // TODO(branding): replace native confirm with shadcn AlertDialog in a future round.
     const ok = window.confirm("Discard unpublished changes? This cannot be undone.")
     if (!ok) return
     const res = await fetch(`/api/branding/${brandingId}/draft`, { method: "DELETE" })
     if (!res.ok) {
-      window.alert("Failed to discard draft. Please try again.")
+      toast.error("Failed to discard draft. Please try again.")
       return
     }
     // Reset draft state to whatever is currently live. The discardingRef is set
@@ -291,19 +296,19 @@ export default function BrandingEditor({
           {saveState === "saving" && "Saving…"}
           {saveState === "just-saved" && (
             <span className="inline-flex items-center gap-1 text-green-600">
-              <span className="material-symbols-outlined text-sm">check_circle</span>
+              <CheckCircle2 className="size-4" />
               Saved
             </span>
           )}
           {saveState === "just-published" && (
             <span className="inline-flex items-center gap-1 text-green-600">
-              <span className="material-symbols-outlined text-sm">rocket_launch</span>
+              <Rocket className="size-4" />
               Published
             </span>
           )}
           {saveState === "just-discarded" && (
             <span className="inline-flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-              <span className="material-symbols-outlined text-sm">undo</span>
+              <Undo2 className="size-4" />
               Discarded
             </span>
           )}
@@ -319,38 +324,38 @@ export default function BrandingEditor({
           )}
         </span>
         <div className="ml-auto flex gap-2">
-          <button
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={discard}
             disabled={!hasDraft || editorLocked}
-            className="px-3 py-1 border rounded disabled:opacity-50"
           >
             Discard
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            size="sm"
             onClick={publish}
-            className="px-3 py-1 rounded text-white disabled:opacity-50"
-            style={{ background: "var(--primary)" }}
             disabled={publishDisabled}
           >
             {publishing ? "Publishing…" : "Publish"}
-          </button>
+          </Button>
         </div>
       </header>
 
       {conflicted && (
-        <div className="px-6 py-3 border-b bg-yellow-50 text-sm flex items-center gap-3" style={{ borderColor: "var(--border)" }}>
-          <span className="material-symbols-outlined text-yellow-700">warning</span>
-          <span className="flex-1">
-            Another tab saved changes to this brand. Your edits can&apos;t be auto-saved. Reload to see the latest draft.
-          </span>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-3 py-1 rounded text-white"
-            style={{ background: "var(--primary)" }}
-          >
-            Reload
-          </button>
-        </div>
+        <Alert variant="default" className="rounded-none border-x-0 border-t-0 bg-yellow-50">
+          <AlertTriangle className="size-4 text-yellow-700" />
+          <AlertDescription className="flex items-center gap-3">
+            <span className="flex-1">
+              Another tab saved changes to this brand. Your edits can&apos;t be auto-saved. Reload to see the latest draft.
+            </span>
+            <Button type="button" size="sm" onClick={() => window.location.reload()}>
+              Reload
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       <div className="flex flex-1 overflow-hidden">
