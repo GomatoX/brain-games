@@ -1,94 +1,120 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
-  Panel,
-  PanelHeader,
-  Badge,
-  Button,
-  Modal,
-  PageHeader,
-} from "@/components/ui";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  UserPlus,
+  UserMinus,
+  RefreshCw,
+  Mail,
+  CheckCircle2,
+} from "lucide-react"
+import { toast } from "sonner"
 
 interface Member {
-  id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  org_role: string;
-  invite_pending: boolean;
-  invite_expired: boolean;
-  created_at: string;
+  id: string
+  email: string
+  first_name: string | null
+  last_name: string | null
+  org_role: string
+  invite_pending: boolean
+  invite_expired: boolean
+  created_at: string
 }
 
 interface TeamData {
-  org: { id: string; name: string };
-  members: Member[];
-  currentUserId: string;
-  isOwner: boolean;
+  org: { id: string; name: string }
+  members: Member[]
+  currentUserId: string
+  isOwner: boolean
 }
+
+const inviteSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+})
+
+type InviteValues = z.infer<typeof inviteSchema>
 
 export default function TeamContent({
   initialData,
 }: {
-  initialData: TeamData;
+  initialData: TeamData
 }) {
-  const [data, setData] = useState<TeamData>(initialData);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-  });
-  const [inviteError, setInviteError] = useState("");
-  const [inviteLoading, setInviteLoading] = useState(false);
-  const [inviteLink, setInviteLink] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [data, setData] = useState<TeamData>(initialData)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteLink, setInviteLink] = useState("")
+  const [copied, setCopied] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
-  async function fetchTeam() {
+  const fetchTeam = async () => {
     try {
-      const res = await fetch("/api/team");
+      const res = await fetch("/api/team")
       if (res.ok) {
-        const d = await res.json();
-        setData(d);
+        const d = await res.json()
+        setData(d)
       }
     } catch {
       // ignore
     }
   }
 
-  async function handleInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setInviteLoading(true);
-    setInviteError("");
+  const handleInvite = async (values: {
+    email: string
+    firstName: string
+    lastName: string
+  }) => {
+    setInviteLoading(true)
 
     try {
       const res = await fetch("/api/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(inviteForm),
-      });
+        body: JSON.stringify(values),
+      })
 
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Failed to invite member");
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || "Failed to invite member")
 
       // Build the invite link
-      const link = `${window.location.origin}/invite/${d.invite_token}`;
-      setInviteLink(link);
-      await fetchTeam();
+      const link = `${window.location.origin}/invite/${d.invite_token}`
+      setInviteLink(link)
+      await fetchTeam()
     } catch (err) {
-      setInviteError(
+      toast.error(
         err instanceof Error ? err.message : "Failed to invite member",
-      );
+      )
     } finally {
-      setInviteLoading(false);
+      setInviteLoading(false)
     }
   }
 
-  async function handleResendInvite(memberId: string) {
-    const member = data?.members.find((m) => m.id === memberId);
-    if (!member) return;
+  const handleResendInvite = async (memberId: string) => {
+    const member = data?.members.find((m) => m.id === memberId)
+    if (!member) return
 
     try {
       const res = await fetch("/api/team", {
@@ -99,44 +125,39 @@ export default function TeamContent({
           firstName: member.first_name || "",
           lastName: member.last_name || "",
         }),
-      });
+      })
 
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error);
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error)
 
-      const link = `${window.location.origin}/invite/${d.invite_token}`;
-      setInviteLink(link);
-      setInviteForm({ email: "", firstName: "", lastName: "" });
-      await fetchTeam();
+      const link = `${window.location.origin}/invite/${d.invite_token}`
+      setInviteLink(link)
+      await fetchTeam()
     } catch {
       // ignore
     }
   }
 
-  function handleCopy() {
-    navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  function closeInviteModal() {
-    setInviteOpen(false);
-    setInviteError("");
-    setInviteLink("");
-    setInviteForm({ email: "", firstName: "", lastName: "" });
+  const closeInviteModal = () => {
+    setInviteOpen(false)
+    setInviteLink("")
   }
 
-  async function handleRemove(memberId: string) {
+  const handleRemove = async (memberId: string) => {
     try {
-      await fetch(`/api/team?id=${memberId}`, { method: "DELETE" });
-      await fetchTeam();
+      await fetch(`/api/team?id=${memberId}`, { method: "DELETE" })
+      await fetchTeam()
     } catch {
       // ignore
     }
-    setDeleteConfirm(null);
+    setDeleteConfirm(null)
   }
-
-  const currentUser = data.members.find((m) => m.id === data.currentUserId);
 
   return (
     <div>
@@ -152,29 +173,26 @@ export default function TeamContent({
       />
 
       {/* Members List */}
-      <Panel>
-        <PanelHeader
-          title="Members"
-          count={data.members.length}
-          action={
-            data.isOwner ? (
-              <Button
-                size="sm"
-                icon="person_add"
-                onClick={() => setInviteOpen(true)}
-              >
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-[15px]">Members</CardTitle>
+          <Badge variant="secondary">{data.members.length}</Badge>
+          {data.isOwner && (
+            <CardAction>
+              <Button size="sm" onClick={() => setInviteOpen(true)}>
+                <UserPlus className="size-4" />
                 Invite Member
               </Button>
-            ) : undefined
-          }
-        />
+            </CardAction>
+          )}
+        </CardHeader>
 
         <div className="divide-y divide-[#e2e8f0]">
           {data.members.map((member) => {
             const name =
               [member.first_name, member.last_name].filter(Boolean).join(" ") ||
-              member.email;
-            const isCurrentUser = member.id === data.currentUserId;
+              member.email
+            const isCurrentUser = member.id === data.currentUserId
 
             return (
               <div
@@ -190,9 +208,7 @@ export default function TeamContent({
                     }`}
                   >
                     {member.invite_pending ? (
-                      <span className="material-symbols-outlined text-lg">
-                        mail
-                      </span>
+                      <Mail className="size-4" />
                     ) : (
                       (
                         member.first_name?.[0] ||
@@ -222,15 +238,19 @@ export default function TeamContent({
                 <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
                   {/* Status badges */}
                   {member.invite_pending ? (
-                    <Badge variant={member.invite_expired ? "error" : "warning"}>
+                    <Badge
+                      variant={member.invite_expired ? "destructive" : "warning"}
+                    >
+                      <span className="size-1.5 rounded-full bg-current opacity-70" />
                       {member.invite_expired ? "Expired" : "Pending"}
                     </Badge>
                   ) : (
                     <Badge
                       variant={
-                        member.org_role === "owner" ? "warning" : "neutral"
+                        member.org_role === "owner" ? "warning" : "secondary"
                       }
                     >
+                      <span className="size-1.5 rounded-full bg-current opacity-70" />
                       {member.org_role}
                     </Badge>
                   )}
@@ -239,228 +259,251 @@ export default function TeamContent({
                   {data.isOwner && !isCurrentUser && (
                     <div className="flex items-center gap-1">
                       {member.invite_pending && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleResendInvite(member.id)}
-                          className="p-1.5 text-[#64748b] hover:text-navy-900 transition-colors rounded-[4px] hover:bg-slate-100"
                           title="Regenerate invite link"
                         >
-                          <span className="material-symbols-outlined text-lg">
-                            refresh
-                          </span>
-                        </button>
+                          <RefreshCw className="size-4" />
+                        </Button>
                       )}
                       {member.org_role !== "owner" && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => setDeleteConfirm(member.id)}
-                          className="p-1.5 text-[#64748b] hover:text-red-600 transition-colors rounded-lg hover:bg-slate-100"
                           title="Remove member"
+                          className="hover:text-red-600"
                         >
-                          <span className="material-symbols-outlined text-lg">
-                            person_remove
-                          </span>
-                        </button>
+                          <UserMinus className="size-4" />
+                        </Button>
                       )}
                     </div>
                   )}
                 </div>
               </div>
-            );
+            )
           })}
         </div>
-      </Panel>
+      </Card>
 
       {/* Invite Modal */}
-      <Modal
+      <Dialog
         open={inviteOpen}
-        onClose={closeInviteModal}
-        title={inviteLink ? "Invite Link Ready" : "Invite Member"}
-        icon="person_add"
+        onOpenChange={(open) => {
+          if (!open) closeInviteModal()
+        }}
       >
-        {inviteLink ? (
-          /* Success: show invite link */
-          <div className="p-4 sm:p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
-              <span className="material-symbols-outlined text-green-600 text-2xl">
-                check_circle
-              </span>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="size-5" />
+              {inviteLink ? "Invite Link Ready" : "Invite Member"}
+            </DialogTitle>
+          </DialogHeader>
+          {inviteLink ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
+                <CheckCircle2 className="size-6 text-green-600" />
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Share this link with the new member. They&apos;ll be able to set
+                their own password and join your organization.
+              </p>
+              <div className="flex items-center gap-2 bg-slate-50 border rounded-md px-3 py-2.5">
+                <input
+                  type="text"
+                  readOnly
+                  value={inviteLink}
+                  className="flex-1 bg-transparent text-sm outline-none truncate"
+                />
+                <Button size="sm" onClick={handleCopy}>
+                  {copied ? "Copied!" : "Copy"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                This link expires in 7 days.
+              </p>
+              <Button
+                variant="outline"
+                onClick={closeInviteModal}
+                className="w-full"
+              >
+                Done
+              </Button>
             </div>
-            <p className="text-sm text-[#64748b] text-center">
-              Share this link with the new member. They&apos;ll be able to set
-              their own password and join your organization.
+          ) : (
+            <InviteMemberForm
+              onSubmit={handleInvite}
+              loading={inviteLoading}
+              onCancel={closeInviteModal}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite link modal (from resend) */}
+      <Dialog
+        open={!!inviteLink && !inviteOpen}
+        onOpenChange={(open) => {
+          if (!open) setInviteLink("")
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="size-5" />
+              New Invite Link
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Share this updated link with the member.
             </p>
-            <div className="flex items-center gap-2 bg-slate-50 border border-[#e2e8f0] rounded-lg px-3 py-2.5">
+            <div className="flex items-center gap-2 bg-slate-50 border rounded-md px-3 py-2.5">
               <input
                 type="text"
                 readOnly
                 value={inviteLink}
-                className="flex-1 bg-transparent text-sm text-[#0f172a] outline-none truncate"
+                className="flex-1 bg-transparent text-sm outline-none truncate"
               />
-              <button
-                onClick={handleCopy}
-                className="shrink-0 px-3 py-1 text-xs font-medium bg-navy-900 text-white rounded-[4px] hover:bg-navy-800 transition-colors"
-              >
+              <Button size="sm" onClick={handleCopy}>
                 {copied ? "Copied!" : "Copy"}
-              </button>
+              </Button>
             </div>
-            <p className="text-xs text-[#94a3b8] text-center">
+            <p className="text-xs text-muted-foreground text-center">
               This link expires in 7 days.
             </p>
-            <button
-              onClick={closeInviteModal}
-              className="w-full px-4 py-2 text-sm font-medium border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
+            <Button
+              variant="outline"
+              onClick={() => setInviteLink("")}
+              className="w-full"
             >
               Done
-            </button>
-          </div>
-        ) : (
-          /* Form: collect email + name */
-          <form onSubmit={handleInvite} className="p-4 sm:p-6 flex flex-col gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-[#64748b] mb-1 block">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  value={inviteForm.firstName}
-                  onChange={(e) =>
-                    setInviteForm({
-                      ...inviteForm,
-                      firstName: e.target.value,
-                    })
-                  }
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-                  placeholder="John"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[#64748b] mb-1 block">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  value={inviteForm.lastName}
-                  onChange={(e) =>
-                    setInviteForm({
-                      ...inviteForm,
-                      lastName: e.target.value,
-                    })
-                  }
-                  className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-                  placeholder="Doe"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-[#64748b] mb-1 block">
-                Email *
-              </label>
-              <input
-                type="email"
-                required
-                value={inviteForm.email}
-                onChange={(e) =>
-                  setInviteForm({ ...inviteForm, email: e.target.value })
-                }
-                className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rust/30 focus:border-rust"
-                placeholder="member@example.com"
-              />
-            </div>
-
-            {inviteError && (
-              <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-                {inviteError}
-              </div>
-            )}
-
-            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
-              <button
-                type="button"
-                onClick={closeInviteModal}
-                className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={inviteLoading}
-                className="px-4 py-2 text-sm bg-navy-900 text-white rounded-[4px] hover:bg-navy-800 disabled:opacity-50 transition-colors"
-              >
-                {inviteLoading ? "Sending…" : "Send Invite"}
-              </button>
-            </div>
-          </form>
-        )}
-      </Modal>
-
-      {/* Invite link modal (from resend) */}
-      <Modal
-        open={!!inviteLink && !inviteOpen}
-        onClose={() => setInviteLink("")}
-      >
-        <div className="p-4 sm:p-6 flex flex-col gap-4">
-          <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
-            <span className="material-symbols-outlined text-green-600 text-2xl">
-              check_circle
-            </span>
-          </div>
-          <h3 className="text-lg font-semibold text-[#0f172a] text-center">
-            New Invite Link
-          </h3>
-          <p className="text-sm text-[#64748b] text-center">
-            Share this updated link with the member.
-          </p>
-          <div className="flex items-center gap-2 bg-slate-50 border border-[#e2e8f0] rounded-[4px] px-3 py-2.5">
-            <input
-              type="text"
-              readOnly
-              value={inviteLink}
-              className="flex-1 bg-transparent text-sm text-[#0f172a] outline-none truncate"
-            />
-            <Button size="sm" onClick={handleCopy}>
-              {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
-          <p className="text-xs text-[#94a3b8] text-center">
-            This link expires in 7 days.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => setInviteLink("")}
-            className="w-full"
-          >
-            Done
-          </Button>
-        </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
-      <Modal
+      <Dialog
         open={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        size="sm"
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null)
+        }}
       >
-        <div className="p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-[#0f172a] mb-2">
-            Remove Member
-          </h3>
-          <p className="text-sm text-[#64748b] mb-6">
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remove Member</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
             Are you sure you want to remove this member? They will lose access
             to all shared games and data.
           </p>
-          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-4">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
               Cancel
             </Button>
             <Button
-              variant="danger"
+              variant="destructive"
               onClick={() => deleteConfirm && handleRemove(deleteConfirm)}
             >
               Remove
             </Button>
           </div>
-        </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
+}
+
+const InviteMemberForm = ({
+  onSubmit,
+  loading,
+  onCancel,
+}: {
+  onSubmit: (values: {
+    email: string
+    firstName: string
+    lastName: string
+  }) => Promise<void>
+  loading: boolean
+  onCancel: () => void
+}) => {
+  const form = useForm<InviteValues>({
+    resolver: zodResolver(inviteSchema),
+    defaultValues: { email: "", firstName: "", lastName: "" },
+  })
+
+  const handle = async (values: InviteValues) => {
+    await onSubmit({
+      email: values.email,
+      firstName: values.firstName ?? "",
+      lastName: values.lastName ?? "",
+    })
+  }
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(handle)}
+        className="flex flex-col gap-4"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email *</FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="member@example.com"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Sending…" : "Send Invite"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  )
 }
