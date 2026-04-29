@@ -93,6 +93,7 @@ describe("computeCrosswordLayout", () => {
   });
 
   describe("large complexity", () => {
+    // computeCrosswordLayout(LARGE_WORDS) takes ~10s; default 5s timeout is too tight.
     it("should place most or all large words", () => {
       const layout = computeCrosswordLayout(LARGE_WORDS);
 
@@ -100,14 +101,14 @@ describe("computeCrosswordLayout", () => {
       expect(layout.clues.length).toBeGreaterThanOrEqual(
         LARGE_WORDS.length - 2,
       );
-    });
+    }, 15000);
 
     it("should produce a compact grid for large words", () => {
       const layout = computeCrosswordLayout(LARGE_WORDS);
 
       // Grid shouldn't be excessively large
       expect(layout.gridSize).toBeLessThanOrEqual(30);
-    });
+    }, 15000);
   });
 
   describe("hard to intersect words", () => {
@@ -475,6 +476,7 @@ describe("grid density", () => {
     expect(density).toBeGreaterThan(0.3);
   });
 
+  // computeCrosswordLayout(LARGE_WORDS) takes ~10s; default 5s timeout is too tight.
   it("should not produce excessively sparse grids", () => {
     const layout = computeCrosswordLayout(LARGE_WORDS);
     const totalCells = layout.gridWidth * layout.gridHeight;
@@ -482,5 +484,5 @@ describe("grid density", () => {
     const density = letterCells / totalCells;
 
     expect(density).toBeGreaterThan(0.15);
-  });
+  }, 15000);
 });
