@@ -73,7 +73,7 @@ export const GameModal = ({
   const [scheduledDate, setScheduledDate] = useState(
     game?.scheduled_date || "",
   )
-  const [difficulty, setDifficulty] = useState(game?.difficulty || "medium")
+  const [difficulty, setDifficulty] = useState(game?.difficulty || "Medium")
   // Word game fields
   const [word, setWord] = useState(game?.word || "")
   const [definition, setDefinition] = useState(game?.definition || "")
@@ -96,9 +96,10 @@ export const GameModal = ({
   const [aiLoading, setAiLoading] = useState(false)
   const [layoutLoading, setLayoutLoading] = useState(false)
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
-  const [aiWordCount, setAiWordCount] = useState(
-    difficulty === "easy" ? 5 : difficulty === "hard" ? 12 : 8,
-  )
+  const [aiWordCount, setAiWordCount] = useState(() => {
+    const d = difficulty.toLowerCase()
+    return d === "easy" ? 5 : d === "hard" ? 12 : 8
+  })
   const [aiLanguage, setAiLanguage] = useState<"lt" | "en">("lt")
   // Branding
   const [brandingPresets, setBrandingPresets] = useState<
@@ -131,7 +132,7 @@ export const GameModal = ({
     }
   }, [game])
 
-  const generateWithAI = async () => {
+  const handleGenerateWithAI = async () => {
     if (!mainWord.trim()) return
     setAiLoading(true)
     try {
@@ -190,7 +191,7 @@ export const GameModal = ({
     }
   }
 
-  const generateLayoutWithAI = async () => {
+  const handleGenerateLayoutWithAI = async () => {
     if (wordsList.length < 2) return
     setLayoutLoading(true)
     try {
@@ -221,7 +222,7 @@ export const GameModal = ({
     }
   }
 
-  const generateLayoutWithGemini = async () => {
+  const handleGenerateLayoutWithGemini = async () => {
     if (wordsList.length < 2) return
     setLayoutLoading(true)
     try {
@@ -256,7 +257,7 @@ export const GameModal = ({
     }
   }
 
-  const addWord = () => {
+  const handleAddWord = () => {
     const w = wordsInput.trim().toUpperCase()
     if (w && !wordsList.some((entry) => entry.word === w)) {
       setWordsList([
@@ -647,6 +648,7 @@ export const GameModal = ({
                             </span>
                           </div>
                           <Slider
+                            aria-label="Number of words"
                             min={3}
                             max={20}
                             value={[aiWordCount]}
@@ -667,6 +669,7 @@ export const GameModal = ({
                             <button
                               type="button"
                               onClick={() => setAiLanguage("lt")}
+                              aria-pressed={aiLanguage === "lt"}
                               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                                 aiLanguage === "lt"
                                   ? "bg-rust text-white border-rust"
@@ -678,6 +681,7 @@ export const GameModal = ({
                             <button
                               type="button"
                               onClick={() => setAiLanguage("en")}
+                              aria-pressed={aiLanguage === "en"}
                               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                                 aiLanguage === "en"
                                   ? "bg-rust text-white border-rust"
@@ -692,7 +696,7 @@ export const GameModal = ({
                         {/* Generate Action */}
                         <Button
                           type="button"
-                          onClick={generateWithAI}
+                          onClick={handleGenerateWithAI}
                           className="w-full bg-[#0f172a] hover:bg-[#1e293b]"
                         >
                           Generate {aiWordCount} words
@@ -715,7 +719,7 @@ export const GameModal = ({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault()
-                          addWord()
+                          handleAddWord()
                         }
                       }}
                       className="w-36 font-mono uppercase"
@@ -728,7 +732,7 @@ export const GameModal = ({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault()
-                          addWord()
+                          handleAddWord()
                         }
                       }}
                       className="flex-1"
@@ -737,7 +741,7 @@ export const GameModal = ({
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={addWord}
+                      onClick={handleAddWord}
                     >
                       Add
                     </Button>
@@ -850,7 +854,7 @@ export const GameModal = ({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={generateLayoutWithAI}
+                        onClick={handleGenerateLayoutWithAI}
                         disabled={layoutLoading}
                       >
                         {layoutLoading ? (
@@ -863,7 +867,7 @@ export const GameModal = ({
                       <Button
                         type="button"
                         size="sm"
-                        onClick={generateLayoutWithGemini}
+                        onClick={handleGenerateLayoutWithGemini}
                         disabled={layoutLoading}
                         className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                       >
