@@ -1,14 +1,51 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Modal } from "@/components/ui"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import {
+  Loader2,
+  X,
+  Sparkles,
+  Grid3x3,
+  Copy,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Wand2,
+} from "lucide-react"
+import { toast } from "sonner"
 import type { Game, GameType } from "@/lib/game-types"
 
 const PLAY_BASE =
   typeof window !== "undefined" ? `${window.location.origin}/play` : "/play"
 const API_URL = typeof window !== "undefined" ? window.location.origin : ""
 
-export function GameModal({
+const typeLabels: Record<GameType, string> = {
+  crosswords: "Crossword",
+  wordgames: "Word Game",
+  sudoku: "Sudoku",
+  wordsearches: "Word Search",
+}
+
+export const GameModal = ({
   mode,
   type,
   game,
@@ -22,9 +59,8 @@ export function GameModal({
   orgId: string
   onClose: () => void
   onSaved: () => void
-}) {
+}) => {
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState("")
   const [createdGame, setCreatedGame] = useState<{
     id: string | number
     title: string
@@ -58,9 +94,7 @@ export function GameModal({
   >(game?.words || [])
   // AI generation state
   const [aiLoading, setAiLoading] = useState(false)
-  const [aiError, setAiError] = useState("")
   const [layoutLoading, setLayoutLoading] = useState(false)
-  const [layoutError, setLayoutError] = useState("")
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
   const [aiWordCount, setAiWordCount] = useState(
     difficulty === "easy" ? 5 : difficulty === "hard" ? 12 : 8,
@@ -97,10 +131,9 @@ export function GameModal({
     }
   }, [game])
 
-  async function generateWithAI() {
+  const generateWithAI = async () => {
     if (!mainWord.trim()) return
     setAiLoading(true)
-    setAiError("")
     try {
       const res = await fetch("/api/ai/generate", {
         method: "POST",
@@ -149,17 +182,17 @@ export function GameModal({
 
       setWordsList(allWords)
       setAiSettingsOpen(false)
+      toast.success(`Generated ${newWords.length} word${newWords.length === 1 ? "" : "s"}`)
     } catch (err) {
-      setAiError(err instanceof Error ? err.message : "Generation failed")
+      toast.error(err instanceof Error ? err.message : "Generation failed")
     } finally {
       setAiLoading(false)
     }
   }
 
-  async function generateLayoutWithAI() {
+  const generateLayoutWithAI = async () => {
     if (wordsList.length < 2) return
     setLayoutLoading(true)
-    setLayoutError("")
     try {
       const res = await fetch("/api/ai/layout", {
         method: "POST",
@@ -175,12 +208,12 @@ export function GameModal({
         setWordsList(data.words)
       }
       if (data.stats) {
-        setLayoutError(
-          `✓ ${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words, balance ${data.stats.balance}`,
+        toast.success(
+          `${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words, balance ${data.stats.balance}`,
         )
       }
     } catch (err) {
-      setLayoutError(
+      toast.error(
         err instanceof Error ? err.message : "Layout generation failed",
       )
     } finally {
@@ -188,10 +221,9 @@ export function GameModal({
     }
   }
 
-  async function generateLayoutWithGemini() {
+  const generateLayoutWithGemini = async () => {
     if (wordsList.length < 2) return
     setLayoutLoading(true)
-    setLayoutError("")
     try {
       const res = await fetch("/api/ai/layout-ai", {
         method: "POST",
@@ -206,14 +238,17 @@ export function GameModal({
       if (data.words) {
         setWordsList(data.words)
       }
-      const validLabel = data.valid ? "✓ Valid" : "⚠ Has conflicts"
+      const validLabel = data.valid ? "Valid" : "Has conflicts"
       if (data.stats) {
-        setLayoutError(
-          `${validLabel} | AI Layout: ${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words`,
-        )
+        const message = `${validLabel} | AI Layout: ${data.stats.density}% density, ${data.stats.wordsPlaced}/${data.stats.totalWords} words`
+        if (data.valid) {
+          toast.success(message)
+        } else {
+          toast.error(message)
+        }
       }
     } catch (err) {
-      setLayoutError(
+      toast.error(
         err instanceof Error ? err.message : "AI layout generation failed",
       )
     } finally {
@@ -221,7 +256,7 @@ export function GameModal({
     }
   }
 
-  function addWord() {
+  const addWord = () => {
     const w = wordsInput.trim().toUpperCase()
     if (w && !wordsList.some((entry) => entry.word === w)) {
       setWordsList([
@@ -237,11 +272,11 @@ export function GameModal({
     }
   }
 
-  function removeWord(w: string) {
+  const removeWord = (w: string) => {
     setWordsList(wordsList.filter((entry) => entry.word !== w))
   }
 
-  function getEmbedCode(gameId: string | number): string {
+  const getEmbedCode = (gameId: string | number): string => {
     const tagMap: Record<GameType, { tag: string; script: string }> = {
       crosswords: {
         tag: "crossword-game",
@@ -270,17 +305,17 @@ export function GameModal({
   theme="light"></${tag}>`
   }
 
-  function copyEmbed() {
+  const handleCopyEmbed = () => {
     if (!createdGame) return
     navigator.clipboard.writeText(getEmbedCode(createdGame.id))
     setEmbedCopied(true)
+    toast.success("Embed code copied")
     setTimeout(() => setEmbedCopied(false), 2000)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    setError("")
 
     try {
       const baseData: Record<string, unknown> = {
@@ -296,7 +331,7 @@ export function GameModal({
 
       if (type === "crosswords") {
         if (mode === "create" && wordsList.length < 2) {
-          setError("Add at least 2 words for the crossword")
+          toast.error("Add at least 2 words for the crossword")
           setSaving(false)
           return
         }
@@ -321,7 +356,7 @@ export function GameModal({
         }
       } else if (type === "wordgames") {
         if (!word) {
-          setError("Word is required")
+          toast.error("Word is required")
           setSaving(false)
           return
         }
@@ -330,7 +365,7 @@ export function GameModal({
         baseData.max_attempts = maxAttempts
       } else if (type === "wordsearches") {
         if (mode === "create" && wordsList.length < 3) {
-          setError("Add at least 3 words for the word search")
+          toast.error("Add at least 3 words for the word search")
           setSaving(false)
           return
         }
@@ -347,11 +382,13 @@ export function GameModal({
 
       if (mode === "edit" && game) {
         baseData.id = game.id
-        await fetch("/api/games", {
+        const res = await fetch("/api/games", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(baseData),
         })
+        if (!res.ok) throw new Error("Failed to save")
+        toast.success(`${typeLabels[type]} updated`)
         onSaved()
         onClose()
       } else {
@@ -360,114 +397,94 @@ export function GameModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(baseData),
         })
+        if (!res.ok) throw new Error("Failed to save")
         const result = await res.json()
         onSaved()
         setCreatedGame({ id: result.data?.id || result.id, title })
       }
     } catch {
-      setError("Failed to save game")
+      toast.error("Failed to save game")
     } finally {
       setSaving(false)
     }
   }
 
-  const typeLabels: Record<GameType, string> = {
-    crosswords: "Crossword",
-    wordgames: "Word Game",
-    sudoku: "Sudoku",
-    wordsearches: "Word Search",
-  }
-
   // Success view with embed code
   if (createdGame) {
     return (
-      <Modal
+      <Dialog
         open
-        onClose={onClose}
-        title={`${typeLabels[type]} Created!`}
-        size="md"
+        onOpenChange={(open) => {
+          if (!open) onClose()
+        }}
       >
-        <div className="p-4 sm:p-6">
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{`${typeLabels[type]} Created!`}</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-green-600">
-                check_circle
-              </span>
+            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
+              <CheckCircle2 className="size-5 text-green-600" />
             </div>
             <div className="min-w-0">
-              <p className="font-medium text-[#0f172a] truncate">
+              <p className="font-medium truncate">
                 &ldquo;{createdGame.title}&rdquo;
               </p>
-              <p className="text-xs text-[#64748b]">ID: {createdGame.id}</p>
+              <p className="text-xs text-muted-foreground">
+                ID: {createdGame.id}
+              </p>
             </div>
           </div>
-
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2 gap-2">
-              <label className="text-sm font-medium text-[#0f172a]">
-                Embed Code
-              </label>
-              <button
-                onClick={copyEmbed}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-[#0f172a] transition-colors flex items-center gap-1.5 flex-shrink-0"
-              >
-                <span className="material-symbols-outlined text-sm">
-                  {embedCopied ? "check" : "content_copy"}
-                </span>
+              <Label>Embed Code</Label>
+              <Button size="sm" variant="secondary" onClick={handleCopyEmbed}>
+                {embedCopied ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
                 {embedCopied ? "Copied!" : "Copy Snippet"}
-              </button>
+              </Button>
             </div>
-            <pre className="bg-[#1e293b] text-slate-300 rounded-lg p-4 text-xs overflow-x-auto leading-relaxed">
+            <pre className="bg-slate-900 text-slate-300 rounded-md p-4 text-xs overflow-x-auto leading-relaxed">
               <code>{getEmbedCode(createdGame.id)}</code>
             </pre>
           </div>
-
-          <p className="text-xs text-[#64748b] mb-5">
+          <p className="text-xs text-muted-foreground mb-5">
             Paste this snippet into your website&apos;s HTML to display the
-            game. Make sure your API token is active on the{" "}
-            <span className="font-medium text-rust">
-              API Keys &amp; Embeds
-            </span>{" "}
-            page.
+            game.
           </p>
-
           <div className="flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-5 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark transition-colors font-medium"
-            >
-              Done
-            </button>
+            <Button onClick={onClose}>Done</Button>
           </div>
-        </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     )
   }
 
   return (
-    <Modal
+    <Dialog
       open
-      onClose={onClose}
-      title={`${mode === "create" ? "Create" : "Edit"} ${typeLabels[type]}`}
-      size="md"
+      onOpenChange={(open) => {
+        if (!open && !saving) onClose()
+      }}
     >
-      <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{`${mode === "create" ? "Create" : "Edit"} ${typeLabels[type]}`}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
           {/* Title */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+            <Label htmlFor="game-title" className="mb-1.5">
               Title
-            </label>
-            <input
+            </Label>
+            <Input
+              id="game-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
               placeholder="Game title"
               required
             />
@@ -475,104 +492,116 @@ export function GameModal({
 
           {/* Status */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+            <Label htmlFor="game-status" className="mb-1.5">
               Status
-            </label>
-            <select
+            </Label>
+            <Select
               value={status}
-              onChange={(e) => {
-                setStatus(e.target.value)
-                if (e.target.value !== "scheduled") {
+              onValueChange={(value) => {
+                setStatus(value)
+                if (value !== "scheduled") {
                   setScheduledDate("")
                 }
               }}
-              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
             >
-              <option value="draft">Draft</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="published">Published</option>
-            </select>
+              <SelectTrigger id="game-status" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Scheduled Date */}
           {status === "scheduled" && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+              <Label htmlFor="scheduled-date" className="mb-1.5">
                 Publish Date &amp; Time
-              </label>
-              <div className="relative">
-                <input
-                  type="datetime-local"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  min={new Date().toISOString().slice(0, 16)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
-                  required
-                  aria-label="Schedule publish date and time"
-                />
-              </div>
-              <p className="text-xs text-[#64748b] mt-1.5 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">info</span>
+              </Label>
+              <Input
+                id="scheduled-date"
+                type="datetime-local"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                required
+                aria-label="Schedule publish date and time"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
                 The game will automatically become public at this date and time.
               </p>
             </div>
           )}
 
           {/* Difficulty (crosswords / sudoku / wordsearches) */}
-          {(type === "crosswords" || type === "sudoku" || type === "wordsearches") && (
+          {(type === "crosswords" ||
+            type === "sudoku" ||
+            type === "wordsearches") && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+              <Label htmlFor="game-difficulty" className="mb-1.5">
                 Difficulty
-              </label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
-              >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
+              </Label>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger id="game-difficulty" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Easy">Easy</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Hard">Hard</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 
           {/* Branding Preset */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+            <Label htmlFor="game-branding" className="mb-1.5">
               Branding Preset{" "}
-              <span className="text-xs text-[#64748b] font-normal">
+              <span className="text-xs text-muted-foreground font-normal">
                 (optional)
               </span>
-            </label>
-            <select
-              value={selectedBranding}
-              onChange={(e) => setSelectedBranding(e.target.value)}
-              className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+            </Label>
+            <Select
+              value={selectedBranding || "none"}
+              onValueChange={(value) =>
+                setSelectedBranding(value === "none" ? "" : value)
+              }
             >
-              <option value="">Default (no branding)</option>
-              {brandingPresets.map((p) => (
-                <option key={String(p.id)} value={String(p.id)}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="game-branding" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Default (no branding)</SelectItem>
+                {brandingPresets.map((p) => (
+                  <SelectItem key={String(p.id)} value={String(p.id)}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
           {/* Crossword — Words + Clues */}
           {type === "crosswords" && (
             <>
               {/* Main Word */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                <Label htmlFor="main-word" className="mb-1.5">
                   Main Word{" "}
-                  <span className="text-xs text-[#64748b] font-normal">
+                  <span className="text-xs text-muted-foreground font-normal">
                     (hidden word players discover)
                   </span>
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="main-word"
                   type="text"
                   value={mainWord}
                   onChange={(e) => setMainWord(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                  className="font-mono uppercase"
                   placeholder="e.g. BRAIN"
                 />
               </div>
@@ -589,45 +618,41 @@ export function GameModal({
                     >
                       {aiLoading ? (
                         <>
-                          <span className="material-symbols-outlined text-base animate-spin">
-                            progress_activity
-                          </span>
+                          <Loader2 className="size-4 animate-spin" />
                           Generating…
                         </>
                       ) : (
                         <>
-                          <span className="text-base">✨</span>
+                          <Sparkles className="size-4" />
                           Generate with AI
-                          <span className="material-symbols-outlined text-sm">
-                            {aiSettingsOpen ? "expand_less" : "expand_more"}
-                          </span>
+                          {aiSettingsOpen ? (
+                            <ChevronUp className="size-4" />
+                          ) : (
+                            <ChevronDown className="size-4" />
+                          )}
                         </>
                       )}
                     </button>
 
                     {aiSettingsOpen && !aiLoading && (
-                      <div className="mt-2 p-4 bg-slate-50 rounded-lg border border-[#e2e8f0] space-y-3">
+                      <div className="mt-2 p-4 bg-slate-50 rounded-lg border border-border space-y-3">
                         {/* Word Count */}
                         <div>
                           <div className="flex items-center justify-between mb-1">
-                            <label className="text-xs font-medium text-[#0f172a]">
+                            <Label className="text-xs">
                               Number of words
-                            </label>
+                            </Label>
                             <span className="text-xs font-mono font-bold text-rust">
                               {aiWordCount}
                             </span>
                           </div>
-                          <input
-                            type="range"
+                          <Slider
                             min={3}
                             max={20}
-                            value={aiWordCount}
-                            onChange={(e) =>
-                              setAiWordCount(Number(e.target.value))
-                            }
-                            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rust"
+                            value={[aiWordCount]}
+                            onValueChange={(v) => setAiWordCount(v[0])}
                           />
-                          <div className="flex justify-between text-[10px] text-[#94a3b8] mt-0.5">
+                          <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
                             <span>3</span>
                             <span>20</span>
                           </div>
@@ -635,9 +660,9 @@ export function GameModal({
 
                         {/* Language */}
                         <div>
-                          <label className="text-xs font-medium text-[#0f172a] block mb-1">
+                          <Label className="text-xs block mb-1">
                             Language
-                          </label>
+                          </Label>
                           <div className="flex gap-2">
                             <button
                               type="button"
@@ -645,7 +670,7 @@ export function GameModal({
                               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                                 aiLanguage === "lt"
                                   ? "bg-rust text-white border-rust"
-                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust"
+                                  : "bg-white text-[#0f172a] border-border hover:border-rust"
                               }`}
                             >
                               🇱🇹 Lithuanian
@@ -656,7 +681,7 @@ export function GameModal({
                               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                                 aiLanguage === "en"
                                   ? "bg-rust text-white border-rust"
-                                  : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust"
+                                  : "bg-white text-[#0f172a] border-border hover:border-rust"
                               }`}
                             >
                               🇬🇧 English
@@ -665,18 +690,14 @@ export function GameModal({
                         </div>
 
                         {/* Generate Action */}
-                        <button
+                        <Button
                           type="button"
                           onClick={generateWithAI}
-                          className="w-full px-4 py-2 bg-[#0f172a] text-white rounded-lg text-sm font-medium hover:bg-[#1e293b] transition-colors"
+                          className="w-full bg-[#0f172a] hover:bg-[#1e293b]"
                         >
                           Generate {aiWordCount} words
-                        </button>
+                        </Button>
                       </div>
-                    )}
-
-                    {aiError && (
-                      <p className="text-xs text-red-600 mt-1.5">{aiError}</p>
                     )}
                   </>
                 )}
@@ -684,12 +705,10 @@ export function GameModal({
 
               {/* Words & Clues */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
-                  Words &amp; Clues
-                </label>
+                <Label className="mb-1.5">Words &amp; Clues</Label>
                 <div className="flex flex-col gap-2 mb-3">
                   <div className="flex gap-2">
-                    <input
+                    <Input
                       type="text"
                       value={wordsInput}
                       onChange={(e) => setWordsInput(e.target.value)}
@@ -699,10 +718,10 @@ export function GameModal({
                           addWord()
                         }
                       }}
-                      className="w-36 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                      className="w-36 font-mono uppercase"
                       placeholder="Word"
                     />
-                    <input
+                    <Input
                       type="text"
                       value={clueInput}
                       onChange={(e) => setClueInput(e.target.value)}
@@ -712,20 +731,20 @@ export function GameModal({
                           addWord()
                         }
                       }}
-                      className="flex-1 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                      className="flex-1"
                       placeholder="Clue (optional)"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={addWord}
-                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
                     >
                       Add
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 {wordsList.length > 0 && (
-                  <div className="border border-[#e2e8f0] rounded-lg divide-y divide-[#e2e8f0] mb-2">
+                  <div className="border border-border rounded-lg divide-y divide-border mb-2">
                     {wordsList.map((entry, idx) => (
                       <div key={idx} className="px-3 py-2">
                         <div className="flex items-center gap-3">
@@ -740,7 +759,7 @@ export function GameModal({
                               }
                               setWordsList(updated)
                             }}
-                            className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 px-1.5 py-1 border border-transparent hover:border-[#e2e8f0] focus:border-rust focus:outline-none rounded bg-transparent uppercase"
+                            className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 px-1.5 py-1 border border-transparent hover:border-border focus:border-ring focus:outline-none rounded bg-transparent uppercase"
                           />
                           <input
                             type="text"
@@ -753,18 +772,19 @@ export function GameModal({
                               }
                               setWordsList(updated)
                             }}
-                            className="text-xs text-[#64748b] flex-1 px-1.5 py-1 border border-transparent hover:border-[#e2e8f0] focus:border-rust focus:outline-none rounded bg-transparent"
+                            className="text-xs text-muted-foreground flex-1 px-1.5 py-1 border border-transparent hover:border-border focus:border-ring focus:outline-none rounded bg-transparent"
                             placeholder="Clue"
                           />
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => removeWord(entry.word)}
-                            className="text-[#94a3b8] hover:text-red-500 transition-colors shrink-0"
+                            className="text-muted-foreground hover:text-red-500 size-6"
+                            aria-label={`Remove ${entry.word}`}
                           >
-                            <span className="material-symbols-outlined text-sm">
-                              close
-                            </span>
-                          </button>
+                            <X className="size-3" />
+                          </Button>
                         </div>
                         {/* Letter picker for main word */}
                         {mainWord && (
@@ -789,7 +809,7 @@ export function GameModal({
                                   className={`w-6 h-6 flex items-center justify-center text-xs font-mono font-bold rounded border transition-all ${
                                     isSelected
                                       ? "bg-rust text-white border-rust ring-2 ring-rust/30"
-                                      : "bg-white text-[#0f172a] border-[#e2e8f0] hover:border-rust hover:bg-rust-light"
+                                      : "bg-white text-[#0f172a] border-border hover:border-rust hover:bg-rust-light"
                                   }`}
                                   title={`Select letter "${letter}" for main word`}
                                 >
@@ -797,7 +817,7 @@ export function GameModal({
                                 </button>
                               )
                             })}
-                            <span className="text-[10px] text-[#94a3b8] ml-1 self-center">
+                            <span className="text-[10px] text-muted-foreground ml-1 self-center">
                               {entry.main_word_index !== undefined
                                 ? "✓"
                                 : "click a letter"}
@@ -809,7 +829,7 @@ export function GameModal({
                   </div>
                 )}
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-[#64748b]">
+                  <p className="text-xs text-muted-foreground">
                     {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
                     added
                     {mode === "create" && wordsList.length < 2 && (
@@ -827,63 +847,49 @@ export function GameModal({
                   </p>
                   {wordsList.length >= 2 && (
                     <div className="flex gap-2">
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={generateLayoutWithAI}
                         disabled={layoutLoading}
-                        className="px-3 py-1.5 bg-[#0f172a] text-white rounded-lg text-xs font-medium hover:bg-[#1e293b] transition-colors disabled:opacity-50 flex items-center gap-1.5"
                       >
                         {layoutLoading ? (
-                          <>
-                            <span className="animate-spin">⟳</span>
-                            Generating…
-                          </>
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
-                          <>
-                            <span className="material-symbols-outlined text-sm">
-                              grid_on
-                            </span>
-                            Layout
-                          </>
+                          <Grid3x3 className="size-4" />
                         )}
-                      </button>
-                      <button
+                        Layout
+                      </Button>
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={generateLayoutWithGemini}
                         disabled={layoutLoading}
-                        className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-xs font-medium hover:from-blue-700 hover:to-purple-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                       >
                         {layoutLoading ? (
-                          <>
-                            <span className="animate-spin">⟳</span>
-                            AI…
-                          </>
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
-                          <>
-                            <span className="material-symbols-outlined text-sm">
-                              auto_awesome
-                            </span>
-                            AI Layout
-                          </>
+                          <Wand2 className="size-4" />
                         )}
-                      </button>
+                        AI Layout
+                      </Button>
                     </div>
                   )}
                 </div>
-                {layoutError && (
-                  <p className="text-xs text-amber-600 mt-1">{layoutError}</p>
-                )}
                 {/* Mini Map Preview */}
                 {wordsList.some(
                   (w) => w.x !== undefined && w.y !== undefined,
                 ) && (
                   <div className="mt-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-[#64748b]">
+                      <span className="text-xs font-medium text-muted-foreground">
                         Layout Preview
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="xs"
                         onClick={() => {
                           setWordsList(
                             wordsList.map((w) => ({
@@ -893,20 +899,19 @@ export function GameModal({
                               direction: undefined,
                             })),
                           )
-                          setLayoutError("")
                         }}
-                        className="text-[10px] text-red-500 hover:text-red-700 transition-colors flex items-center gap-0.5"
+                        className="text-red-500 hover:text-red-700"
                       >
-                        <span className="material-symbols-outlined text-xs">
-                          close
-                        </span>
+                        <X className="size-3" />
                         Discard Layout
-                      </button>
+                      </Button>
                     </div>
                     {(() => {
                       const positioned = wordsList.filter(
                         (w) =>
-                          w.x !== undefined && w.y !== undefined && w.direction,
+                          w.x !== undefined &&
+                          w.y !== undefined &&
+                          w.direction,
                       )
                       if (!positioned.length) return null
 
@@ -949,8 +954,7 @@ export function GameModal({
 
                       return (
                         <div
-                          className="border border-[#e2e8f0] rounded-lg p-2 bg-[#f8fafc] overflow-auto"
-                          style={{ maxHeight: "220px" }}
+                          className="border border-border rounded-lg p-2 bg-slate-50 overflow-auto max-h-[220px]"
                         >
                           <div
                             className="mx-auto"
@@ -982,7 +986,7 @@ export function GameModal({
                                       <>
                                         {cell.number && (
                                           <span
-                                            className="absolute text-[#94a3b8] font-bold leading-none"
+                                            className="absolute text-muted-foreground font-bold leading-none"
                                             style={{
                                               fontSize: `${Math.max(5, cellSize * 0.3)}px`,
                                               top: 0,
@@ -1016,66 +1020,23 @@ export function GameModal({
             </>
           )}
 
-          {/* Word Game fields */}
           {/* Word Search fields */}
           {type === "wordsearches" && (
-            <>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
-                  Words to Find
-                </label>
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={wordsInput}
-                    onChange={(e) => setWordsInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        const w = wordsInput.trim().toUpperCase()
-                        if (w && !wordsList.some((entry) => entry.word === w)) {
-                          setWordsList([
-                            ...wordsList,
-                            { word: w, clue: clueInput.trim() || "" },
-                          ])
-                          setWordsInput("")
-                          setClueInput("")
-                        }
-                      }
-                    }}
-                    className="w-36 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
-                    placeholder="Word"
-                    aria-label="Word to add"
-                    tabIndex={0}
-                  />
-                  <input
-                    type="text"
-                    value={clueInput}
-                    onChange={(e) => setClueInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault()
-                        const w = wordsInput.trim().toUpperCase()
-                        if (w && !wordsList.some((entry) => entry.word === w)) {
-                          setWordsList([
-                            ...wordsList,
-                            { word: w, clue: clueInput.trim() || "" },
-                          ])
-                          setWordsInput("")
-                          setClueInput("")
-                        }
-                      }
-                    }}
-                    className="flex-1 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
-                    placeholder="Hint (optional)"
-                    aria-label="Hint for the word"
-                    tabIndex={0}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
+            <div className="mb-4">
+              <Label className="mb-1.5">Words to Find</Label>
+              <div className="flex gap-2 mb-3">
+                <Input
+                  type="text"
+                  value={wordsInput}
+                  onChange={(e) => setWordsInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
                       const w = wordsInput.trim().toUpperCase()
-                      if (w && !wordsList.some((entry) => entry.word === w)) {
+                      if (
+                        w &&
+                        !wordsList.some((entry) => entry.word === w)
+                      ) {
                         setWordsList([
                           ...wordsList,
                           { word: w, clue: clueInput.trim() || "" },
@@ -1083,118 +1044,166 @@ export function GameModal({
                         setWordsInput("")
                         setClueInput("")
                       }
-                    }}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors"
-                    aria-label="Add word"
-                    tabIndex={0}
-                  >
-                    Add
-                  </button>
-                </div>
-                {wordsList.length > 0 && (
-                  <div className="border border-[#e2e8f0] rounded-lg divide-y divide-[#e2e8f0] mb-2">
-                    {wordsList.map((entry, idx) => (
-                      <div key={idx} className="px-3 py-2 flex items-center gap-3">
-                        <span className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 uppercase">
-                          {entry.word}
-                        </span>
-                        <span className="text-xs text-[#64748b] flex-1 truncate">
-                          {entry.clue || "—"}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setWordsList(wordsList.filter((_, i) => i !== idx))}
-                          className="text-[#94a3b8] hover:text-red-500 transition-colors shrink-0"
-                          aria-label={`Remove word ${entry.word}`}
-                          tabIndex={0}
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            close
-                          </span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <p className="text-xs text-[#64748b]">
-                  {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
-                  added
-                  {mode === "create" && wordsList.length < 3 && (
-                    <span className="text-amber-600 ml-1">
-                      (min 3 required)
-                    </span>
-                  )}
-                </p>
+                    }
+                  }}
+                  className="w-36 font-mono uppercase"
+                  placeholder="Word"
+                  aria-label="Word to add"
+                />
+                <Input
+                  type="text"
+                  value={clueInput}
+                  onChange={(e) => setClueInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      const w = wordsInput.trim().toUpperCase()
+                      if (
+                        w &&
+                        !wordsList.some((entry) => entry.word === w)
+                      ) {
+                        setWordsList([
+                          ...wordsList,
+                          { word: w, clue: clueInput.trim() || "" },
+                        ])
+                        setWordsInput("")
+                        setClueInput("")
+                      }
+                    }
+                  }}
+                  className="flex-1"
+                  placeholder="Hint (optional)"
+                  aria-label="Hint for the word"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    const w = wordsInput.trim().toUpperCase()
+                    if (
+                      w &&
+                      !wordsList.some((entry) => entry.word === w)
+                    ) {
+                      setWordsList([
+                        ...wordsList,
+                        { word: w, clue: clueInput.trim() || "" },
+                      ])
+                      setWordsInput("")
+                      setClueInput("")
+                    }
+                  }}
+                  aria-label="Add word"
+                >
+                  Add
+                </Button>
               </div>
-            </>
+              {wordsList.length > 0 && (
+                <div className="border border-border rounded-lg divide-y divide-border mb-2">
+                  {wordsList.map((entry, idx) => (
+                    <div
+                      key={idx}
+                      className="px-3 py-2 flex items-center gap-3"
+                    >
+                      <span className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 uppercase">
+                        {entry.word}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex-1 truncate">
+                        {entry.clue || "—"}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          setWordsList(wordsList.filter((_, i) => i !== idx))
+                        }
+                        className="text-muted-foreground hover:text-red-500 size-6"
+                        aria-label={`Remove word ${entry.word}`}
+                      >
+                        <X className="size-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {wordsList.length} word{wordsList.length !== 1 ? "s" : ""}{" "}
+                added
+                {mode === "create" && wordsList.length < 3 && (
+                  <span className="text-amber-600 ml-1">
+                    (min 3 required)
+                  </span>
+                )}
+              </p>
+            </div>
           )}
 
           {/* Word Game fields */}
           {type === "wordgames" && (
             <>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                <Label htmlFor="word-game-word" className="mb-1.5">
                   Word
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="word-game-word"
                   type="text"
                   value={word}
                   onChange={(e) => setWord(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                  className="font-mono uppercase"
                   placeholder="e.g. HELLO"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                <Label htmlFor="word-game-definition" className="mb-1.5">
                   Definition / Hint
-                </label>
-                <textarea
+                </Label>
+                <Textarea
+                  id="word-game-definition"
                   value={definition}
                   onChange={(e) => setDefinition(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust resize-none"
                   rows={2}
                   placeholder="Optional hint for the player"
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">
+                <Label htmlFor="word-game-attempts" className="mb-1.5">
                   Max Attempts
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="word-game-attempts"
                   type="number"
                   value={maxAttempts}
                   onChange={(e) => setMaxAttempts(Number(e.target.value))}
                   min={1}
                   max={10}
-                  className="w-24 px-3 py-2 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rust/20 focus:border-rust"
+                  className="w-24"
                 />
               </div>
             </>
           )}
 
           {/* Actions */}
-          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-4 border-t border-[#e2e8f0]">
-            <button
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-4 border-t">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2 text-sm border border-[#e2e8f0] rounded-lg hover:bg-slate-50 transition-colors"
+              disabled={saving}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 text-sm bg-rust text-white rounded-lg hover:bg-rust-dark disabled:opacity-50 transition-colors font-medium"
-            >
+            </Button>
+            <Button type="submit" disabled={saving}>
               {saving
                 ? "Saving…"
                 : mode === "create"
                   ? "Create"
                   : "Save Changes"}
-            </button>
+            </Button>
           </div>
-      </form>
-    </Modal>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
