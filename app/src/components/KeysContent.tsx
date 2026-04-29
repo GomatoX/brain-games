@@ -1,68 +1,83 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
+import { PageHeader } from "@/components/ui/PageHeader"
 import {
-  Panel,
-  PanelHeader,
-  Button,
-  PageHeader,
-  CodeBlock,
-} from "@/components/ui";
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { CodeBlock } from "@/components/ui/CodeBlock"
+import { Copy, Check } from "lucide-react"
+import { toast } from "sonner"
 
-const API_URL = typeof window !== "undefined" ? window.location.origin : "";
+const API_URL = typeof window !== "undefined" ? window.location.origin : ""
 const PLAY_BASE =
-  typeof window !== "undefined" ? `${window.location.origin}/play` : "/play";
+  typeof window !== "undefined" ? `${window.location.origin}/play` : "/play"
 
-export default function KeysContent({
+const KeysContent = ({
   initialToken,
   orgId,
   initialLang,
 }: {
-  initialToken: string | null;
-  orgId: string;
-  initialLang: string;
-}) {
-  const [token, setToken] = useState<string | null>(initialToken);
-  const [generating, setGenerating] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
-  const [lang] = useState(initialLang);
+  initialToken: string | null
+  orgId: string
+  initialLang: string
+}) => {
+  const [token, setToken] = useState<string | null>(initialToken)
+  const [generating, setGenerating] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
+  const [lang] = useState(initialLang)
 
-  async function handleGenerate() {
-    setGenerating(true);
+  const handleGenerate = async () => {
+    setGenerating(true)
     try {
       const res = await fetch("/api/auth-actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "generate-token" }),
-      });
-      const data = await res.json();
+      })
+      const data = await res.json()
       if (res.ok) {
-        setToken(data.token);
+        setToken(data.token)
+        toast.success("API token generated")
+      } else {
+        toast.error(data.error || "Failed to generate token")
       }
     } catch {
-      // ignore
+      toast.error("Failed to generate token")
     } finally {
-      setGenerating(false);
+      setGenerating(false)
     }
   }
 
-  async function handleRevoke() {
+  const handleRevoke = async () => {
     try {
-      await fetch("/api/auth-actions", {
+      const res = await fetch("/api/auth-actions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "revoke-token" }),
-      });
-      setToken(null);
+      })
+      if (res.ok) {
+        setToken(null)
+        toast.success("API token revoked")
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || "Failed to revoke token")
+      }
     } catch {
-      // ignore
+      toast.error("Failed to revoke token")
     }
   }
 
-  function copyToClipboard(text: string, label: string) {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(null), 2000);
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success("Copied to clipboard")
+    setCopied(label)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   const crosswordEmbed = `<script src="${PLAY_BASE}/dist/crossword-engine.iife.js"><\/script>
@@ -72,7 +87,7 @@ export default function KeysContent({
   api-url="${API_URL}"
   userid="${orgId}"
   lang="${lang}"
-  theme="light"></crossword-game>`;
+  theme="light"></crossword-game>`
 
   const wordGameEmbed = `<script src="${PLAY_BASE}/dist/word-game-engine.iife.js"><\/script>
 
@@ -81,7 +96,7 @@ export default function KeysContent({
   api-url="${API_URL}"
   userid="${orgId}"
   lang="${lang}"
-  theme="light"></word-game>`;
+  theme="light"></word-game>`
 
   const wordSearchEmbed = `<link rel="stylesheet" href="${PLAY_BASE}/dist/word-search-engine.css" />
 <script src="${PLAY_BASE}/dist/word-search-engine.iife.js"><\/script>
@@ -91,7 +106,7 @@ export default function KeysContent({
   api-url="${API_URL}"
   user-id="${orgId}"
   lang="${lang}"
-  theme="light"></word-search-game>`;
+  theme="light"></word-search-game>`
 
   return (
     <div>
@@ -101,36 +116,42 @@ export default function KeysContent({
       />
 
       {/* API Token */}
-      <Panel className="mb-8">
-        <PanelHeader title="API Token" />
-        <div className="p-4 sm:p-5">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-[15px]">API Token</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-5">
           {token ? (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                 <code className="flex-1 bg-slate-50 border border-[#e2e8f0] rounded-lg px-3 sm:px-4 py-2.5 text-sm text-[#0f172a] font-mono break-all">
                   {token}
                 </code>
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => copyToClipboard(token, "token")}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm text-[#0f172a] transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
                 >
-                  <span className="material-symbols-outlined text-base">
-                    {copied === "token" ? "check" : "content_copy"}
-                  </span>
+                  {copied === "token" ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
                   {copied === "token" ? "Copied!" : "Copy"}
-                </button>
+                </Button>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                 <p className="text-xs text-[#64748b] flex-1">
                   Shared across your organization. Use this token to
                   authenticate API requests.
                 </p>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={handleRevoke}
-                  className="text-xs text-red-600 hover:text-red-700 font-medium self-start sm:self-auto"
+                  className="text-red-600 hover:text-red-700 self-start sm:self-auto"
                 >
                   Revoke Token
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -138,84 +159,81 @@ export default function KeysContent({
               <p className="text-sm text-[#64748b]">
                 No API token generated yet.
               </p>
-              <button
+              <Button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="px-4 py-2 bg-navy-900 hover:bg-navy-800 disabled:opacity-50 text-white text-sm font-medium rounded-[4px] transition-colors self-start sm:self-auto"
+                className="self-start sm:self-auto"
               >
                 {generating ? "Generating…" : "Generate Token"}
-              </button>
+              </Button>
             </div>
           )}
-        </div>
-      </Panel>
+        </CardContent>
+      </Card>
 
       {/* Embed Codes */}
       <div className="flex flex-col gap-6">
         <EmbedCard
           title="Crossword"
-          icon="grid_on"
-          iconColor="bg-blue-50 text-blue-600"
           code={crosswordEmbed}
           copied={copied}
           onCopy={copyToClipboard}
         />
         <EmbedCard
           title="Word Game"
-          icon="spellcheck"
-          iconColor="bg-green-50 text-green-600"
           code={wordGameEmbed}
           copied={copied}
           onCopy={copyToClipboard}
         />
         <EmbedCard
           title="Word Search"
-          icon="search"
-          iconColor="bg-pink-50 text-pink-600"
           code={wordSearchEmbed}
           copied={copied}
           onCopy={copyToClipboard}
         />
       </div>
     </div>
-  );
+  )
 }
 
-function EmbedCard({
+const EmbedCard = ({
   title,
-  icon,
-  iconColor,
   code,
   copied,
   onCopy,
 }: {
-  title: string;
-  icon: string;
-  iconColor: string;
-  code: string;
-  copied: string | null;
-  onCopy: (text: string, label: string) => void;
-}) {
-  const label = `embed-${title.toLowerCase().replace(/\s/g, "-")}`;
+  title: string
+  code: string
+  copied: string | null
+  onCopy: (text: string, label: string) => void
+}) => {
+  const label = `embed-${title.toLowerCase().replace(/\s/g, "-")}`
+  const isCopied = copied === label
 
   return (
-    <Panel>
-      <PanelHeader
-        title={`${title} Embed Code`}
-        action={
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-[15px]">{title} Embed Code</CardTitle>
+        <CardAction>
           <Button
             size="sm"
             variant="secondary"
-            icon={copied === label ? "check" : "content_copy"}
             onClick={() => onCopy(code, label)}
           >
-            {copied === label ? "Copied!" : "Copy Snippet"}
+            {isCopied ? (
+              <Check className="size-4" />
+            ) : (
+              <Copy className="size-4" />
+            )}
+            {isCopied ? "Copied!" : "Copy Snippet"}
           </Button>
-        }
-      />
-      <div className="p-4 sm:p-5">
+        </CardAction>
+      </CardHeader>
+      <CardContent className="p-4 sm:p-5">
         <CodeBlock code={code} />
-      </div>
-    </Panel>
-  );
+      </CardContent>
+    </Card>
+  )
 }
+
+export default KeysContent
