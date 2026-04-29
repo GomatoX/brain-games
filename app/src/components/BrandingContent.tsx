@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus, Trash2, Pencil, Palette } from "lucide-react"
+import { Plus, Trash2, Pencil, Palette, Blocks } from "lucide-react"
 import { toast } from "sonner"
 import { PRESETS } from "@/lib/branding/presets"
 import { formatRelativeTime } from "@/lib/branding/relative-time"
@@ -144,9 +144,7 @@ export default function BrandingContent({
       {presets.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-[#cbd5e1] mb-3 block">
-              palette
-            </span>
+            <Palette className="size-8 text-[#cbd5e1] mb-3" />
             <p className="text-sm text-[#64748b] mb-4">
               No brands yet. Create one to start customizing your games.
             </p>
@@ -208,9 +206,7 @@ export default function BrandingContent({
                   </div>
 
                   <div className="text-[11px] text-[#64748b] inline-flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px] leading-none">
-                      extension
-                    </span>
+                    <Blocks className="size-4" />
                     {formatUsageLabel(p.usageCount)}
                   </div>
 
