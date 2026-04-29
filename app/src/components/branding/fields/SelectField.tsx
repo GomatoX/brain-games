@@ -1,4 +1,12 @@
 "use client"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export type SelectOption = { value: string; label: string }
 
@@ -7,26 +15,35 @@ type Props = {
   value: string
   options: SelectOption[]
   onChange: (value: string) => void
-  /** Optional disabled placeholder option, shown when `value === ""` */
+  /** Optional placeholder shown when value === "". */
   placeholder?: string
 }
 
-export default function SelectField({ label, value, options, onChange, placeholder }: Props) {
+export default function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+}: Props) {
+  // shadcn Select disallows empty-string values for items; map "" → undefined
+  // for the controlled value so the placeholder shows.
+  const selectValue = value === "" ? undefined : value
   return (
-    <label className="block text-sm">
-      <span className="block mb-1">{label}</span>
-      <select
-        className="border rounded px-2 py-1 w-full"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {placeholder !== undefined && (
-          <option value="" disabled>{placeholder}</option>
-        )}
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-    </label>
+    <div className="block text-sm">
+      <Label className="block mb-1">{label}</Label>
+      <Select value={selectValue} onValueChange={onChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   )
 }
