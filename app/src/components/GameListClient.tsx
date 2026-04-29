@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import type { ComponentType } from "react"
 import {
   Dialog,
   DialogContent,
@@ -11,12 +10,22 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Code, Copy, Check } from "lucide-react"
+import { Code, Copy, Check, Grid3x3, SpellCheck2, Search } from "lucide-react"
 import { toast } from "sonner"
 import { GameSection } from "@/components/GameSection"
 import { GameModal } from "@/components/GameModal"
 import { GamePagination } from "@/components/GamePagination"
 import type { Game, GameType } from "@/lib/game-types"
+
+const GAME_HEADERS: Record<
+  GameType,
+  { Icon: typeof Grid3x3; iconClass: string }
+> = {
+  crosswords: { Icon: Grid3x3, iconClass: "bg-blue-50 text-blue-600" },
+  wordgames: { Icon: SpellCheck2, iconClass: "bg-green-50 text-green-600" },
+  wordsearches: { Icon: Search, iconClass: "bg-purple-50 text-purple-600" },
+  sudoku: { Icon: Grid3x3, iconClass: "bg-orange-50 text-orange-600" },
+}
 
 const PLAY_BASE =
   typeof window !== "undefined" ? `${window.location.origin}/play` : "/play"
@@ -31,8 +40,6 @@ interface Props {
   orgId: string
   initialLang: string
   title: string
-  icon: ComponentType<{ className?: string }>
-  iconColor: string
   basePath: string
 }
 
@@ -45,10 +52,9 @@ export const GameListClient = ({
   orgId,
   initialLang,
   title,
-  icon: Icon,
-  iconColor,
   basePath,
 }: Props) => {
+  const { Icon, iconClass } = GAME_HEADERS[type]
   const router = useRouter()
   const [modal, setModal] = useState<{
     open: boolean
@@ -167,18 +173,11 @@ export const GameListClient = ({
     }
   }
 
-  const colorMap: Record<string, string> = {
-    blue: "bg-blue-50 text-blue-600",
-    green: "bg-green-50 text-green-600",
-    purple: "bg-purple-50 text-purple-600",
-    orange: "bg-orange-50 text-orange-600",
-  }
-
   return (
     <div>
       <div className="px-4 sm:px-6 py-4 border-b border-border flex items-center gap-3">
         <div
-          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${colorMap[iconColor] ?? "bg-slate-100 text-slate-600"}`}
+          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${iconClass}`}
         >
           <Icon className="size-[18px]" />
         </div>
