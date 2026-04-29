@@ -2,6 +2,8 @@
 import type { DraftState } from "../BrandingEditor"
 import SelectField from "../fields/SelectField"
 import HelpHint from "../fields/HelpHint"
+import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 
 const DENSITY_OPTIONS = [
   { value: "compact", label: "Compact" },
@@ -37,19 +39,23 @@ export default function SpacingSection({ draft, update }: Props) {
             <HelpHint text={DENSITY_HELP} />
           </div>
         </div>
-        <label className="block text-sm">
-          <span className="block mb-1">Corner radius: {draft.spacing.radius} px</span>
-          <input
-            type="range"
+        <div className="block text-sm">
+          <Label className="block mb-1" htmlFor="branding-radius">
+            Corner radius: {draft.spacing.radius} px
+          </Label>
+          <Slider
+            id="branding-radius"
+            aria-label="Corner radius"
             min={0}
             max={24}
-            value={draft.spacing.radius}
-            onChange={(e) =>
-              update("spacing", { ...draft.spacing, radius: Number(e.target.value) })
+            step={1}
+            value={[draft.spacing.radius]}
+            onValueChange={(values) =>
+              update("spacing", { ...draft.spacing, radius: values[0] })
             }
             className="w-full"
           />
-        </label>
+        </div>
       </div>
     </details>
   )

@@ -1,8 +1,11 @@
 import { db } from "@/db";
 import { users, organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { Link2Off, Clock } from "lucide-react";
 import InviteForm from "./InviteForm";
 import { getClientConfig } from "@/lib/platform";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -29,62 +32,27 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-4 font-[family-name:var(--font-inter)]">
-        <div className="w-full max-w-md text-center">
-          <div className="bg-white rounded-xl shadow-lg border border-[#e2e8f0] p-8">
-            <span className="material-symbols-outlined text-red-500 text-5xl mb-4 block">
-              link_off
-            </span>
-            <h1 className="text-2xl font-serif font-medium text-[#0f172a] mb-2">
-              Invalid Invite Link
-            </h1>
-            <p className="text-[#64748b] text-sm mb-6">
-              This invite link is invalid or has already been used.
-            </p>
-            <a
-              href="/login"
-              className="inline-block bg-rust hover:bg-rust-dark text-white font-semibold py-2.5 px-6 rounded-lg transition-colors"
-            >
-              Go to Login
-            </a>
-          </div>
-        </div>
-      </div>
+      <ErrorShell
+        icon={<Link2Off className="size-12 text-destructive mx-auto" />}
+        title="Invalid Invite Link"
+        message="This invite link is invalid or has already been used."
+      />
     );
   }
 
-  // Check expiry
   const isExpired =
     !!user.inviteExpiresAt && new Date(user.inviteExpiresAt) < new Date();
 
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-4 font-[family-name:var(--font-inter)]">
-        <div className="w-full max-w-md text-center">
-          <div className="bg-white rounded-xl shadow-lg border border-[#e2e8f0] p-8">
-            <span className="material-symbols-outlined text-amber-500 text-5xl mb-4 block">
-              schedule
-            </span>
-            <h1 className="text-2xl font-serif font-medium text-[#0f172a] mb-2">
-              Invite Expired
-            </h1>
-            <p className="text-[#64748b] text-sm mb-6">
-              This invite link has expired. Please ask your administrator to
-              send a new invitation.
-            </p>
-            <a
-              href="/login"
-              className="inline-block bg-rust hover:bg-rust-dark text-white font-semibold py-2.5 px-6 rounded-lg transition-colors"
-            >
-              Go to Login
-            </a>
-          </div>
-        </div>
-      </div>
+      <ErrorShell
+        icon={<Clock className="size-12 text-amber-500 mx-auto" />}
+        title="Invite Expired"
+        message="This invite link has expired. Please ask your administrator to send a new invitation."
+      />
     );
   }
 
-  // Get org name and logo
   const [org] = await db
     .select({ name: organizations.name, logoUrl: organizations.logoUrl })
     .from(organizations)
@@ -103,3 +71,30 @@ export default async function InvitePage({ params }: InvitePageProps) {
     />
   );
 }
+
+const ErrorShell = ({
+  icon,
+  title,
+  message,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  message: string;
+}) => (
+  <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-4 font-[family-name:var(--font-inter)]">
+    <div className="w-full max-w-md text-center">
+      <Card>
+        <CardContent className="p-8">
+          <div className="mb-4">{icon}</div>
+          <h1 className="text-2xl font-serif font-medium text-[#0f172a] mb-2">
+            {title}
+          </h1>
+          <p className="text-[#64748b] text-sm mb-6">{message}</p>
+          <Button asChild>
+            <a href="/login">Go to Login</a>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+);

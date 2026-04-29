@@ -1,21 +1,56 @@
-"use client";
+"use client"
 
-import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import PlatformLogo from "@/components/PlatformLogo";
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import PlatformLogo from "@/components/PlatformLogo"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { UserPlus } from "lucide-react"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { toast } from "sonner"
+
+const schema = z
+  .object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    password: z.string().min(8, "Min. 8 characters"),
+    confirmPassword: z.string().min(8, "Min. 8 characters"),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+type Values = z.infer<typeof schema>
 
 interface InviteFormProps {
-  token: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  orgName: string;
-  platformName: string;
-  orgLogoUrl?: string | null;
+  token: string
+  email: string
+  firstName: string
+  lastName: string
+  orgName: string
+  platformName: string
+  orgLogoUrl?: string | null
 }
 
-export default function InviteForm({
+const InviteForm = ({
   token,
   email,
   firstName: initialFirstName,
@@ -23,193 +58,166 @@ export default function InviteForm({
   orgName,
   platformName,
   orgLogoUrl,
-}: InviteFormProps) {
-  const router = useRouter();
-  const [firstName, setFirstName] = useState(initialFirstName);
-  const [lastName, setLastName] = useState(initialLastName);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+}: InviteFormProps) => {
+  const router = useRouter()
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      firstName: initialFirstName,
+      lastName: initialLastName,
+      password: "",
+      confirmPassword: "",
+    },
+  })
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
-
+  const onSubmit = async (values: Values) => {
     try {
       const res = await fetch("/api/invite/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password, firstName, lastName }),
-      });
+        body: JSON.stringify({
+          token,
+          password: values.password,
+          firstName: values.firstName,
+          lastName: values.lastName,
+        }),
+      })
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
 
-      router.push("/dashboard");
+      router.push("/dashboard")
     } catch (err) {
-      setError(
+      toast.error(
         err instanceof Error ? err.message : "Failed to set up your account",
-      );
-    } finally {
-      setLoading(false);
+      )
     }
   }
 
   return (
     <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center p-4 font-[family-name:var(--font-inter)]">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <PlatformLogo platformName={platformName} orgLogoUrl={orgLogoUrl} />
         </Link>
-
-        {/* Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-[#e2e8f0] p-8">
-          <div className="flex items-center justify-center w-12 h-12 bg-rust/10 rounded-xl mx-auto mb-4">
-            <span className="material-symbols-outlined text-rust text-2xl">
-              person_add
-            </span>
-          </div>
-          <h1 className="text-2xl font-serif font-medium text-[#0f172a] text-center mb-2">
-            Join {orgName}
-          </h1>
-          <p className="text-[#64748b] text-sm text-center mb-8">
-            You&apos;ve been invited to join {orgName}. Set up your account to
-            get started.
-          </p>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-6">
-              {error}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-center w-12 h-12 bg-rust/10 rounded-xl mx-auto mb-2">
+              <UserPlus className="text-rust size-6" />
             </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {/* Email (read-only) */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-[#0f172a] mb-1.5"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                readOnly
-                className="w-full bg-slate-50 border border-[#e2e8f0] text-[#64748b] text-sm rounded-lg px-4 py-2.5 cursor-not-allowed"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="firstName"
-                  className="block text-sm font-medium text-[#0f172a] mb-1.5"
-                >
-                  First Name
-                </label>
-                <input
-                  id="firstName"
-                  type="text"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
-                  placeholder="Jane"
+            <CardTitle className="text-2xl font-serif text-center">
+              Join {orgName}
+            </CardTitle>
+            <CardDescription className="text-center">
+              You&apos;ve been invited to join {orgName}. Set up your account to
+              get started.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-5">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  readOnly
+                  className="bg-muted"
                 />
               </div>
-              <div>
-                <label
-                  htmlFor="lastName"
-                  className="block text-sm font-medium text-[#0f172a] mb-1.5"
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="flex flex-col gap-5"
                 >
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  type="text"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
-                  placeholder="Smith"
-                />
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Jane" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Smith" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Min. 8 characters"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Re-enter your password"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={form.formState.isSubmitting}
+                    className="w-full"
+                  >
+                    {form.formState.isSubmitting
+                      ? "Setting up account…"
+                      : "Set Up Account"}
+                  </Button>
+                </form>
+              </Form>
             </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-[#0f172a] mb-1.5"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
-                placeholder="Min. 8 characters"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-[#0f172a] mb-1.5"
-              >
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                required
-                minLength={8}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-white border border-[#e2e8f0] text-[#0f172a] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-rust focus:ring-1 focus:ring-rust placeholder-slate-400"
-                placeholder="Re-enter your password"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-rust hover:bg-rust-dark disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg transition-colors shadow-sm"
-            >
-              {loading ? "Setting up account…" : "Set Up Account"}
-            </button>
-          </form>
-        </div>
-
-        <p className="text-center text-sm text-[#64748b] mt-6">
+          </CardContent>
+        </Card>
+        <p className="text-center text-sm text-muted-foreground mt-6">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="text-rust hover:text-rust-dark font-medium"
+            className="text-primary hover:underline font-medium"
           >
             Sign in
           </Link>
         </p>
       </div>
     </div>
-  );
+  )
 }
+
+export default InviteForm

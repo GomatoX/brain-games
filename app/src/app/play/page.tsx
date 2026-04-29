@@ -1,5 +1,19 @@
-import { Suspense } from "react"
+import React, { Suspense } from "react"
 import Link from "next/link"
+import {
+  Loader2,
+  Building2,
+  Settings2,
+  Sparkles,
+  PlayCircle,
+  LayoutGrid,
+  Gamepad2,
+  Grid2X2,
+  SpellCheck,
+  Grid3X3,
+  Search,
+  type LucideProps,
+} from "lucide-react"
 import { db } from "@/db"
 import {
   crosswords,
@@ -15,11 +29,11 @@ import PlayEmbed from "@/components/PlayEmbed"
 
 export const dynamic = "force-dynamic"
 
-const typeIcons: Record<string, string> = {
-  crossword: "grid_on",
-  word: "spellcheck",
-  sudoku: "grid_4x4",
-  wordsearch: "search",
+const typeIcons: Record<string, React.ComponentType<LucideProps>> = {
+  crossword: Grid2X2,
+  word: SpellCheck,
+  sudoku: Grid3X3,
+  wordsearch: Search,
 }
 
 const typeLabels: Record<string, Record<string, string>> = {
@@ -67,9 +81,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
         fallback={
           <div className="min-h-screen flex items-center justify-center bg-[#f9fafb]">
             <div className="flex items-center gap-3 text-[#64748b]">
-              <span className="material-symbols-outlined animate-spin">
-                progress_activity
-              </span>
+              <Loader2 className="size-5 animate-spin" />
               Loading…
             </div>
           </div>
@@ -129,9 +141,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f9fafb]">
         <div className="text-center">
-          <span className="material-symbols-outlined text-5xl text-[#cbd5e1] mb-4 block">
-            business
-          </span>
+          <Building2 className="size-12 text-[#cbd5e1] mb-4 mx-auto" />
           <p className="text-[#94a3b8]">Organization not found</p>
         </div>
       </div>
@@ -252,9 +262,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
               />
             ) : (
               <>
-                <span className="material-symbols-outlined text-rust text-xl">
-                  settings_suggest
-                </span>
+                <Settings2 className="size-5 text-rust" />
                 <span className="text-base font-bold font-serif text-[#0f172a]">
                   {name}
                 </span>
@@ -279,9 +287,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
             {orgId && availableTypes.length > 0 && (
               <section className="mb-14" aria-labelledby="latest-heading">
                 <div className="flex items-center gap-2 mb-6">
-                  <span className="material-symbols-outlined text-rust text-xl">
-                    new_releases
-                  </span>
+                  <Sparkles className="size-5 text-rust" />
                   <h2
                     id="latest-heading"
                     className="text-lg font-serif font-semibold text-[#0f172a]"
@@ -311,9 +317,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                                 : "bg-purple-50 text-purple-500"
                         }`}
                       >
-                        <span className="material-symbols-outlined text-xl">
-                          {typeIcons[type] || "sports_esports"}
-                        </span>
+                        {(() => { const Icon = typeIcons[type] || Gamepad2; return <Icon className="size-5" /> })()}
                       </div>
                       <p className="text-[10px] text-[#94a3b8] uppercase tracking-widest font-semibold mb-1">
                         {labels[type] || "Game"}
@@ -322,9 +326,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                         {t.play.latestType(labels[type] || "Game")}
                       </h3>
                       <div className="flex items-center gap-2 text-sm font-semibold text-rust pt-4 border-t border-[#e2e8f0] group-hover:text-rust-dark transition-colors">
-                        <span className="material-symbols-outlined text-base">
-                          play_circle
-                        </span>
+                        <PlayCircle className="size-4" />
                         {t.play.playNow}
                       </div>
                     </Link>
@@ -336,9 +338,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
             {/* ── All Games ────────────────────────────────── */}
             <section aria-labelledby="all-heading">
               <div className="flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-[#64748b] text-xl">
-                  grid_view
-                </span>
+                <LayoutGrid className="size-5 text-[#64748b]" />
                 <h2
                   id="all-heading"
                   className="text-lg font-serif font-semibold text-[#0f172a]"
@@ -369,18 +369,14 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
                                 : "bg-purple-50 text-purple-500"
                         }`}
                       >
-                        <span className="material-symbols-outlined text-lg">
-                          {typeIcons[game.type] || "sports_esports"}
-                        </span>
+                        {(() => { const Icon = typeIcons[game.type] || Gamepad2; return <Icon className="size-5" /> })()}
                       </div>
                     </div>
                     <p className="text-xs text-[#94a3b8] uppercase tracking-wide font-medium mb-4">
                       {labels[game.type] || "Game"}
                     </p>
                     <div className="flex items-center gap-2 text-sm font-semibold text-rust pt-4 border-t border-[#e2e8f0] group-hover:text-rust-dark transition-colors">
-                      <span className="material-symbols-outlined text-base">
-                        play_circle
-                      </span>
+                      <PlayCircle className="size-4" />
                       {t.play.play}
                     </div>
                   </Link>
@@ -390,9 +386,7 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
           </>
         ) : (
           <div className="text-center py-16">
-            <span className="material-symbols-outlined text-5xl text-[#cbd5e1] mb-4 block">
-              sports_esports
-            </span>
+            <Gamepad2 className="size-12 text-[#cbd5e1] mb-4 mx-auto" />
             <p className="text-[#94a3b8]">{t.play.noPublishedGames}</p>
           </div>
         )}

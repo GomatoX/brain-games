@@ -1,26 +1,54 @@
-import { useRef } from "react";
-import { Button } from "./Button";
+import { useDropzone } from "react-dropzone"
+import { UploadCloud, X } from "lucide-react"
+import { Button } from "./button"
 
 interface FileUploadProps {
-  label?: string;
-  accept?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  preview?: string | null;
-  onRemove?: () => void;
-  changeLabel?: string;
-  hint?: string;
+  label?: string
+  accept?: string
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  preview?: string | null
+  onRemove?: () => void
+  changeLabel?: string
+  hint?: string
 }
+
+const DEFAULT_ACCEPT = "image/png,image/jpeg,image/svg+xml,image/webp"
 
 export const FileUpload = ({
   label,
-  accept = "image/png,image/jpeg,image/svg+xml,image/webp",
+  accept = DEFAULT_ACCEPT,
   onChange,
   preview,
   onRemove,
   changeLabel = "Change Logo",
   hint = "SVG, PNG, or JPG up to 2MB",
 }: FileUploadProps) => {
-  const inputRef = useRef<HTMLInputElement>(null);
+  // Convert the comma-separated MIME string into the object form react-dropzone wants.
+  const acceptMap: Record<string, string[]> = {}
+  for (const mime of accept.split(",").map((s) => s.trim()).filter(Boolean)) {
+    acceptMap[mime] = []
+  }
+
+  const { getRootProps, getInputProps, open } = useDropzone({
+    accept: acceptMap,
+    multiple: false,
+    noClick: !!preview, // when there's a preview, the user clicks "Change Logo" instead
+    onDrop: (accepted) => {
+      const f = accepted[0]
+      if (!f || !onChange) return
+      // Adapt to the existing onChange contract (an input ChangeEvent).
+      const dataTransfer = new DataTransfer()
+      dataTransfer.items.add(f)
+      const fakeInput = document.createElement("input")
+      fakeInput.type = "file"
+      fakeInput.files = dataTransfer.files
+      const event = {
+        target: fakeInput,
+        currentTarget: fakeInput,
+      } as unknown as React.ChangeEvent<HTMLInputElement>
+      onChange(event)
+    },
+  })
 
   return (
     <div className="flex flex-col gap-2">
@@ -32,52 +60,47 @@ export const FileUpload = ({
       {preview ? (
         <div className="flex items-center gap-4">
           <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
               alt="Preview"
               className="h-[120px] max-w-[200px] rounded-[4px] object-contain border border-[#e2e8f0] bg-[#f8fafc] p-2"
             />
             {onRemove && (
-              <button
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
                 onClick={onRemove}
-                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                aria-label="Remove"
                 title="Remove"
+                className="absolute -top-2 -right-2 size-5 rounded-full p-0"
               >
-                ×
-              </button>
+                <X className="size-3" />
+              </Button>
             )}
           </div>
-          <Button variant="outline" onClick={() => inputRef.current?.click()}>
+          <Button type="button" variant="outline" onClick={() => open()}>
             {changeLabel}
           </Button>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            onChange={onChange}
-            className="hidden"
-          />
+          {/* hidden native input retained so callers depending on event semantics still work */}
+          <input {...getInputProps()} />
         </div>
       ) : (
-        <div className="group relative flex flex-col items-center justify-center w-full h-[120px] rounded-[4px] border border-dashed border-[#cbd5e1] bg-[#f8fafc] hover:bg-[#f1f5f9] hover:border-[#94a3b8] transition-all cursor-pointer">
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            onChange={onChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          />
+        <div
+          {...getRootProps()}
+          className="group relative flex flex-col items-center justify-center w-full h-[120px] rounded-[4px] border border-dashed border-[#cbd5e1] bg-[#f8fafc] hover:bg-[#f1f5f9] hover:border-[#94a3b8] transition-all cursor-pointer"
+        >
+          <input {...getInputProps()} />
           <div className="flex flex-col items-center gap-2 text-center pointer-events-none">
-            <span className="material-symbols-outlined text-[#94a3b8] text-[24px]">
-              cloud_upload
-            </span>
+            <UploadCloud className="text-[#94a3b8] size-6" />
             <p className="text-[13px] font-medium text-navy-900">
-              Drag & drop or click to upload
+              Drag &amp; drop or click to upload
             </p>
             <p className="text-[11px] text-[#94a3b8]">{hint}</p>
           </div>
         </div>
       )}
     </div>
-  );
-};
+  )
+}

@@ -1,37 +1,64 @@
-"use client";
+"use client"
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
-  PageHeader,
-  Panel,
-  Input,
   Select,
-  FileUpload,
-  Button,
-} from "@/components/ui";
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { FileUpload } from "@/components/ui/FileUpload"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Lock } from "lucide-react"
+import { toast } from "sonner"
 
-interface BrandingOption {
-  id: string;
-  name: string;
-}
+const MAX_LOGO_SIZE_KB = 500
+const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_KB * 1024
 
-const MAX_LOGO_SIZE_KB = 500;
-const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_KB * 1024;
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters"),
+    confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters"),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
+type PasswordValues = z.infer<typeof passwordSchema>
 
 interface SettingsProps {
-  isOwner: boolean;
+  isOwner: boolean
   initialSettings: {
-    language: string;
-    default_branding: string;
-    org_name: string;
+    language: string
+    default_branding: string
+    org_name: string
     logo_url: string | null
     share_image_url: string
     share_title: string
     share_description: string
     use_platform_chrome: boolean
   }
-  initialBrandingOptions: { id: string; name: string }[];
+  initialBrandingOptions: { id: string; name: string }[]
 }
 
 export default function SettingsContent({
@@ -39,23 +66,19 @@ export default function SettingsContent({
   initialSettings,
   initialBrandingOptions,
 }: SettingsProps) {
-  const [orgName, setOrgName] = useState(initialSettings.org_name);
-  const [language, setLanguage] = useState(initialSettings.language);
+  const [orgName, setOrgName] = useState(initialSettings.org_name)
+  const [language, setLanguage] = useState(initialSettings.language)
   const [defaultBranding, setDefaultBranding] = useState(
     initialSettings.default_branding,
-  );
+  )
   const [logoUrl, setLogoUrl] = useState<string | null>(
     initialSettings.logo_url,
-  );
+  )
   const [logoPreview, setLogoPreview] = useState<string | null>(
     initialSettings.logo_url,
-  );
-  const [brandingOptions, setBrandingOptions] = useState(
-    initialBrandingOptions,
-  );
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [logoError, setLogoError] = useState("")
+  )
+  const brandingOptions = initialBrandingOptions
+  const [saving, setSaving] = useState(false)
   const [shareImageUrl, setShareImageUrl] = useState(
     initialSettings.share_image_url,
   )
@@ -66,14 +89,12 @@ export default function SettingsContent({
   const [usePlatformChrome, setUsePlatformChrome] = useState(
     initialSettings.use_platform_chrome,
   )
-  const [chromeError, setChromeError] = useState("")
   const [chromePending, setChromePending] = useState(false)
   const router = useRouter()
 
-  async function handleChromeToggle(next: boolean) {
+  const handleChromeToggle = async (next: boolean) => {
     const previous = usePlatformChrome
     setUsePlatformChrome(next)
-    setChromeError("")
     setChromePending(true)
     try {
       const res = await fetch("/api/user/preferences", {
@@ -83,51 +104,48 @@ export default function SettingsContent({
       })
       if (!res.ok) {
         setUsePlatformChrome(previous)
-        setChromeError("Failed to update appearance preference. Please try again.")
+        toast.error("Failed to update appearance preference. Please try again.")
         return
       }
       router.refresh()
     } catch {
       setUsePlatformChrome(previous)
-      setChromeError("Failed to update appearance preference. Please try again.")
+      toast.error("Failed to update appearance preference. Please try again.")
     } finally {
       setChromePending(false)
     }
   }
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setLogoError("");
+    const file = e.target.files?.[0]
+    if (!file) return
 
     if (file.size > MAX_LOGO_SIZE_BYTES) {
-      setLogoError(`File too large. Maximum size is ${MAX_LOGO_SIZE_KB}KB.`);
-      return;
+      toast.error(`File too large. Maximum size is ${MAX_LOGO_SIZE_KB}KB.`)
+      return
     }
 
     if (!file.type.match(/^image\/(png|jpeg|svg\+xml|webp)$/)) {
-      setLogoError("Only PNG, JPG, SVG, and WebP files are supported.");
-      return;
+      toast.error("Only PNG, JPG, SVG, and WebP files are supported.")
+      return
     }
 
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setLogoPreview(dataUrl);
-      setLogoUrl(dataUrl);
-    };
-    reader.readAsDataURL(file);
-  };
+      const dataUrl = reader.result as string
+      setLogoPreview(dataUrl)
+      setLogoUrl(dataUrl)
+    }
+    reader.readAsDataURL(file)
+  }
 
   const handleRemoveLogo = () => {
-    setLogoUrl(null);
-    setLogoPreview(null);
-  };
+    setLogoUrl(null)
+    setLogoPreview(null)
+  }
 
-  async function handleSave() {
-    setSaving(true);
-    setSaved(false);
+  const handleSave = async () => {
+    setSaving(true)
 
     try {
       const res = await fetch("/api/settings", {
@@ -142,25 +160,19 @@ export default function SettingsContent({
           share_title: shareTitle || null,
           share_description: shareDescription || null,
         }),
-      });
+      })
 
       if (res.ok) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        toast.success("Settings saved")
       } else if (res.status === 403) {
-        setLogoError("Only the organization owner can change settings.");
+        toast.error("Only the organization owner can change settings.")
       }
     } catch {
       // ignore
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
-
-  const brandingSelectOptions = [
-    { value: "", label: "None (no default)" },
-    ...brandingOptions.map((b) => ({ value: b.id, label: b.name })),
-  ];
 
   return (
     <div>
@@ -171,30 +183,27 @@ export default function SettingsContent({
 
       <div className="space-y-8">
         {/* Organization Settings Card */}
-        <Panel>
-          <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-            <Input
-              label="Organization Name"
-              id="org-name"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              placeholder="e.g. My Company"
-              disabled={!isOwner}
-            />
+        <Card>
+          <CardContent className="p-4 sm:p-6 lg:p-8 space-y-8">
+            <div className="space-y-2">
+              <Label htmlFor="org-name">Organization Name</Label>
+              <Input
+                id="org-name"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                placeholder="e.g. My Company"
+                disabled={!isOwner}
+              />
+            </div>
 
             {/* Workspace Logo */}
             {isOwner ? (
-              <div className="flex flex-col gap-2">
-                <FileUpload
-                  label="Workspace Logo"
-                  onChange={handleLogoChange}
-                  preview={logoPreview}
-                  onRemove={handleRemoveLogo}
-                />
-                {logoError && (
-                  <p className="text-xs text-red-600">{logoError}</p>
-                )}
-              </div>
+              <FileUpload
+                label="Workspace Logo"
+                onChange={handleLogoChange}
+                preview={logoPreview}
+                onRemove={handleRemoveLogo}
+              />
             ) : (
               <div className="flex flex-col gap-2">
                 <span className="text-[11px] font-semibold text-[#64748b] uppercase tracking-[0.04em]">
@@ -219,39 +228,50 @@ export default function SettingsContent({
 
             {/* Language + Default Branding — Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Select
-                label="Language"
-                id="language"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                disabled={!isOwner}
-                options={[
-                  { value: "lt", label: "🇱🇹 Lithuanian" },
-                  { value: "en", label: "🇬🇧 English" },
-                ]}
-              />
-              <Select
-                label="Default Branding"
-                id="branding"
-                value={defaultBranding}
-                onChange={(e) => setDefaultBranding(e.target.value)}
-                disabled={!isOwner}
-                options={brandingSelectOptions}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="language">Language</Label>
+                <Select
+                  value={language}
+                  onValueChange={setLanguage}
+                  disabled={!isOwner}
+                >
+                  <SelectTrigger id="language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lt">🇱🇹 Lithuanian</SelectItem>
+                    <SelectItem value="en">🇬🇧 English</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="branding">Default Branding</Label>
+                <Select
+                  value={defaultBranding || "__none__"}
+                  onValueChange={(v) =>
+                    setDefaultBranding(v === "__none__" ? "" : v)
+                  }
+                  disabled={!isOwner}
+                >
+                  <SelectTrigger id="branding">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None (no default)</SelectItem>
+                    {brandingOptions.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
+          </CardContent>
 
           {/* Save Footer */}
           {isOwner && (
             <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
-              {saved && (
-                <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
-                  <span className="material-symbols-outlined text-base">
-                    check_circle
-                  </span>
-                  Saved!
-                </span>
-              )}
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
@@ -260,49 +280,47 @@ export default function SettingsContent({
 
           {!isOwner && (
             <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9]">
-              <p className="text-sm text-[#94a3b8] flex items-center gap-2">
-                <span className="material-symbols-outlined text-base">
-                  lock
-                </span>
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Lock className="size-4" />
                 Settings can only be changed by the organization owner
               </p>
             </div>
           )}
-        </Panel>
+        </Card>
 
         {/* Appearance (per-user) */}
-        <Panel>
-          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        <Card>
+          <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="border-b border-[#f1f5f9] pb-4">
               <h2 className="text-lg font-semibold text-navy-900">Appearance</h2>
               <p className="text-sm text-[#94a3b8] mt-1">
                 Controls how the dashboard chrome looks for you.
               </p>
             </div>
-            <label className="flex items-start gap-3 text-sm cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-start gap-3">
+              <Switch
+                id="use-platform-chrome"
                 checked={usePlatformChrome}
                 disabled={chromePending}
-                onChange={(e) => void handleChromeToggle(e.target.checked)}
+                onCheckedChange={(checked) => void handleChromeToggle(checked)}
                 className="mt-0.5"
               />
-              <span>
+              <Label
+                htmlFor="use-platform-chrome"
+                className="text-sm font-normal cursor-pointer"
+              >
                 Use the platform default appearance (don&apos;t apply my organization&apos;s brand to the dashboard).
-              </span>
-            </label>
-            {chromeError && (
-              <p className="text-xs text-red-600">{chromeError}</p>
-            )}
-          </div>
-        </Panel>
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Security & Access */}
         <PasswordSection />
 
         {/* Social Sharing */}
-        <Panel>
-          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        <Card>
+          <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="border-b border-[#f1f5f9] pb-4">
               <h2 className="text-lg font-semibold text-navy-900">
                 Social Sharing
@@ -312,31 +330,37 @@ export default function SettingsContent({
               </p>
             </div>
 
-            <Input
-              label="Share Image URL"
-              id="share-image-url"
-              value={shareImageUrl}
-              onChange={(e) => setShareImageUrl(e.target.value)}
-              placeholder="https://example.com/share-image.jpg"
-              disabled={!isOwner}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="share-image-url">Share Image URL</Label>
+              <Input
+                id="share-image-url"
+                value={shareImageUrl}
+                onChange={(e) => setShareImageUrl(e.target.value)}
+                placeholder="https://example.com/share-image.jpg"
+                disabled={!isOwner}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Share Title"
-                id="share-title"
-                value={shareTitle}
-                onChange={(e) => setShareTitle(e.target.value)}
-                placeholder="e.g. Kryžiažodis — {{time}}"
-                disabled={!isOwner}
-              />
-              <Input
-                label="Share Description"
-                id="share-description"
-                value={shareDescription}
-                onChange={(e) => setShareDescription(e.target.value)}
-                placeholder="e.g. Išspręsta per {{time}}!"
-                disabled={!isOwner}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="share-title">Share Title</Label>
+                <Input
+                  id="share-title"
+                  value={shareTitle}
+                  onChange={(e) => setShareTitle(e.target.value)}
+                  placeholder="e.g. Kryžiažodis — {{time}}"
+                  disabled={!isOwner}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="share-description">Share Description</Label>
+                <Input
+                  id="share-description"
+                  value={shareDescription}
+                  onChange={(e) => setShareDescription(e.target.value)}
+                  placeholder="e.g. Išspręsta per {{time}}!"
+                  disabled={!isOwner}
+                />
+              </div>
             </div>
             <p className="text-xs text-[#94a3b8]">
               Available variables:{" "}
@@ -349,148 +373,118 @@ export default function SettingsContent({
               </code>{" "}
               — game title
             </p>
-          </div>
+          </CardContent>
 
           {isOwner && (
             <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
-              {saved && (
-                <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
-                  <span className="material-symbols-outlined text-base">
-                    check_circle
-                  </span>
-                  Saved!
-                </span>
-              )}
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           )}
-        </Panel>
+        </Card>
       </div>
     </div>
-  );
+  )
 }
 
 function PasswordSection() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
+  const form = useForm<PasswordValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  })
 
-  async function handleChangePassword(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
-
-    if (newPassword.length < 8) {
-      setError("New password must be at least 8 characters");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    setSaving(true);
-
+  const onSubmit = async (values: PasswordValues) => {
     try {
       const res = await fetch("/api/settings/password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      setSuccess(true);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setTimeout(() => setSuccess(false), 3000);
+        body: JSON.stringify({
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success("Password changed!")
+      form.reset()
     } catch (err) {
-      setError(
+      toast.error(
         err instanceof Error ? err.message : "Failed to change password",
-      );
-    } finally {
-      setSaving(false);
+      )
     }
   }
 
   return (
-    <Panel>
-      <div className="p-4 sm:p-6 lg:p-8 pt-6 space-y-6">
+    <Card>
+      <CardContent className="p-4 sm:p-6 lg:p-8 pt-6 space-y-6">
         <div className="border-b border-[#f1f5f9] pb-4">
           <h2 className="text-lg font-semibold text-navy-900">
-            Security & Access
+            Security &amp; Access
           </h2>
         </div>
-
-        <form
-          ref={formRef}
-          onSubmit={handleChangePassword}
-          className="space-y-5 max-w-sm"
-        >
-          <Input
-            label="Current Password"
-            id="current-password"
-            type="password"
-            required
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="••••••••"
-          />
-          <Input
-            label="New Password"
-            id="new-password"
-            type="password"
-            required
-            minLength={8}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="••••••••"
-          />
-          <Input
-            label="Confirm Password"
-            id="confirm-password"
-            type="password"
-            required
-            minLength={8}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
-          />
-
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 rounded-[4px] px-3 py-2">
-              {error}
-            </div>
-          )}
-        </form>
-      </div>
-
-      <div className="px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
-        {success && (
-          <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
-            <span className="material-symbols-outlined text-base">
-              check_circle
-            </span>
-            Password changed!
-          </span>
-        )}
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            id="password-form"
+            className="space-y-5 max-w-sm"
+          >
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
+      </CardContent>
+      <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
         <Button
           variant="outline"
-          onClick={() => formRef.current?.requestSubmit()}
-          disabled={saving}
+          form="password-form"
+          type="submit"
+          disabled={form.formState.isSubmitting}
         >
-          {saving ? "Updating..." : "Update Password"}
+          {form.formState.isSubmitting ? "Updating..." : "Update Password"}
         </Button>
       </div>
-    </Panel>
-  );
+    </Card>
+  )
 }

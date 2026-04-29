@@ -2,6 +2,7 @@ import { getAuthenticatedUser } from "@/lib/auth-server"
 import { db } from "@/db"
 import { crosswords, users, organizations } from "@/db/schema"
 import { eq, desc, count } from "drizzle-orm"
+import { Grid3x3 } from "lucide-react"
 import DashboardContainer from "@/components/DashboardContainer"
 import { GameListClient } from "@/components/GameListClient"
 import { mapGame } from "@/lib/game-types"
@@ -72,7 +73,7 @@ export default async function CrosswordsPage({
         orgId={user.orgId}
         initialLang={orgRow?.language || "lt"}
         title="Crosswords"
-        icon="grid_on"
+        icon={Grid3x3}
         iconColor="blue"
         basePath="/dashboard/crosswords"
       />
