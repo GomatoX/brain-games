@@ -198,16 +198,17 @@ export async function GET(request: NextRequest) {
               }
             : undefined,
         };
-        gameData.main_word = (game as any).mainWord;
+        gameData.main_word = (game as { mainWord?: string | null }).mainWord;
       } else if (game.words && game.words.length > 0) {
         // Compute layout on-the-fly for old crosswords without pre-computed layout
         const computed = computeCrosswordLayout(
-          game.words as any,
-          (game as any).mainWord || null,
+          game.words as { word: string; clue: string; main_word_index?: number }[],
+          (game as { mainWord?: string | null }).mainWord || null,
         );
 
         // Auto-save for future requests (fire-and-forget)
         db.update(crosswords)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .set({ layout: computed } as any)
           .where(eq(crosswords.id, game.id))
           .then(() =>
@@ -229,7 +230,7 @@ export async function GET(request: NextRequest) {
               }
             : undefined,
         };
-        gameData.main_word = (game as any).mainWord;
+        gameData.main_word = (game as { mainWord?: string | null }).mainWord;
       }
     }
     if ("word" in game) {

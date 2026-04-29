@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vite-built game IIFE bundles + Svelte SPA assets copied in by dev.sh /
+    // Dockerfile. These are minified third-party output, not source code.
+    "public/**",
   ]),
 ]);
 
