@@ -123,7 +123,7 @@ const InviteForm = ({
                   type="email"
                   value={email}
                   readOnly
-                  disabled
+                  className="bg-muted"
                 />
               </div>
               <Form {...form}>

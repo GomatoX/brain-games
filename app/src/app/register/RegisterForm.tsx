@@ -64,6 +64,7 @@ const RegisterForm = ({ platformName, orgLogoUrl }: RegisterFormProps) => {
       })
 
       if (result?.error) {
+        toast.info("Account created — please sign in")
         router.push("/login")
         return
       }
