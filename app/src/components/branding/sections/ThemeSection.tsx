@@ -10,6 +10,8 @@ import {
   THEME_DETAIL_TOKENS,
   hasThemeDetailOverrides,
 } from "@/lib/branding/section-groups"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 type Props = {
   draft: DraftState
@@ -56,29 +58,34 @@ export default function ThemeSection({ draft, update, onTokenHover }: Props) {
           onChange={(id) => applyPreset(id)}
         />
         {(["primary", "surface", "text"] as const).map((k) => (
-          <label
+          <div
             key={k}
-            className="block text-sm rounded px-1 -mx-1 hover:bg-slate-50 focus-within:bg-slate-50"
+            className="block text-sm rounded px-1 -mx-1 hover:bg-accent focus-within:bg-accent"
             onMouseEnter={() => onTokenHover?.(k)}
             onMouseLeave={() => onTokenHover?.(null)}
             onFocus={() => onTokenHover?.(k)}
             onBlur={() => onTokenHover?.(null)}
           >
-            <span className="block mb-1 capitalize">{k}</span>
+            <Label className="block mb-1 capitalize" htmlFor={`brand-seed-${k}`}>
+              {k}
+            </Label>
             <div className="flex gap-2 items-center">
               <input
                 type="color"
+                aria-label={`${k} color`}
                 value={draft.tokens[k]}
                 onChange={(e) => setSeed(k, e.target.value)}
+                className="h-9 w-10 rounded border border-input cursor-pointer bg-background"
               />
-              <input
+              <Input
+                id={`brand-seed-${k}`}
                 type="text"
-                className="border rounded px-2 py-1 flex-1"
                 value={draft.tokens[k]}
                 onChange={(e) => setSeed(k, e.target.value)}
+                className="flex-1"
               />
             </div>
-          </label>
+          </div>
         ))}
 
         <details open={detailsOpen} className="mt-2 border-t pt-2">
