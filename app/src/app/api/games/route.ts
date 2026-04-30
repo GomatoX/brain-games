@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { crosswords, wordgames, sudoku, wordsearches, branding, users } from "@/db/schema"
+import { crosswords, wordgames, sudoku, wordsearches, users } from "@/db/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { requireAuth } from "@/lib/api-auth"
 import { computeCrosswordLayout } from "@/lib/crossword-layout-server"
@@ -14,7 +14,7 @@ const collections = { crosswords, wordgames, sudoku, wordsearches } as const;
 export async function GET() {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId, orgId } = result;
+  const { orgId } = result;
 
   try {
     // Auto-promote any scheduled games whose time has passed
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId, orgId } = result;
+  const { orgId } = result;
 
   try {
     const body = await request.json();
@@ -228,7 +228,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const result = await requireAuth();
   if (result instanceof NextResponse) return result;
-  const { userId, orgId } = result;
+  const { orgId } = result;
 
   try {
     const { searchParams } = new URL(request.url);

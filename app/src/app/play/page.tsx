@@ -255,6 +255,9 @@ export default async function PlayPage({ searchParams }: PlayPageProps) {
             className="flex items-center gap-2"
           >
             {logoUrl ? (
+              // User-uploaded logo from arbitrary external/storage URL.
+              // next/image would require remotePatterns config per-tenant.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logoUrl}
                 alt={name}

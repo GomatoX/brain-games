@@ -9,9 +9,9 @@ import bcrypt from "bcryptjs";
  * When behind a reverse proxy (ALB, nginx, k8s ingress) that
  * terminates TLS, the pod only sees HTTP.  NextAuth auto-detects
  * HTTPS from AUTH_URL and uses __Secure- cookie prefixes, which
- * fail on internal HTTP. We explicitly disable the prefix.
+ * fail on internal HTTP. The cookies block below explicitly opts
+ * out of the prefix by setting `secure: false` on each cookie.
  */
-const useSecureCookies = false; // Behind ALB: no __Secure- prefix needed
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [

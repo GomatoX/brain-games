@@ -3,7 +3,6 @@ import {
   computeCrosswordLayout,
   validateAnswers,
 } from "@/lib/crossword-layout-server";
-import type { PreComputedLayout } from "@/lib/crossword-layout-server";
 import {
   SIMPLE_WORDS,
   MEDIUM_WORDS,
@@ -439,17 +438,15 @@ describe("anti-cheat layout structure", () => {
     // Serialize and check no answer content leaked
     const jsonStr = JSON.stringify(publicData);
 
-    // Should not contain any of the actual word answers
-    for (const word of MEDIUM_WORDS) {
-      // Full uppercase words shouldn't appear in the public data
-      // (they could appear as substrings of clues, so check specifically)
-      const publicObj = JSON.parse(jsonStr);
-      for (const clue of publicObj.clues) {
-        expect(clue).not.toHaveProperty("word");
-      }
-      for (const cell of publicObj.cells) {
-        expect(cell).not.toHaveProperty("letter");
-      }
+    // Should not contain any of the actual word answers.
+    // Full uppercase words shouldn't appear in the public data
+    // (they could appear as substrings of clues, so check specifically).
+    const publicObj = JSON.parse(jsonStr);
+    for (const clue of publicObj.clues) {
+      expect(clue).not.toHaveProperty("word");
+    }
+    for (const cell of publicObj.cells) {
+      expect(cell).not.toHaveProperty("letter");
     }
   });
 });

@@ -211,6 +211,10 @@ export default function SettingsContent({
                 </span>
                 <div className="flex items-center gap-3">
                   {logoPreview ? (
+                    // User-uploaded logo (data URL during preview, arbitrary
+                    // remote URL after upload). next/image would require
+                    // remotePatterns config; not worth it for a settings preview.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={logoPreview}
                       alt="Organization logo"

@@ -165,14 +165,12 @@ export async function POST(request: NextRequest) {
 
     // Calculate stats
     const gridCells: Set<string> = new Set();
-    let letterCount = 0;
     for (const p of placements) {
       const dx = p.direction === "across" ? 1 : 0;
       const dy = p.direction === "down" ? 1 : 0;
       for (let i = 0; i < p.word.length; i++) {
         gridCells.add(`${p.x + dx * i},${p.y + dy * i}`);
       }
-      letterCount += p.word.length;
     }
     const maxX = Math.max(
       ...placements.map((p) =>

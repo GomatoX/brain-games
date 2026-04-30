@@ -58,12 +58,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block"
-        />
-      </head>
       <body
         className={`${playfair.variable} ${inter.variable} ${ibmPlex.variable} antialiased`}
       >

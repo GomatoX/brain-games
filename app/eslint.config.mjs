@@ -16,6 +16,22 @@ const eslintConfig = defineConfig([
     // Dockerfile. These are minified third-party output, not source code.
     "public/**",
   ]),
+  // Honor leading-underscore convention for intentionally-unused names
+  // (function parameters that satisfy an interface, destructured fields
+  // kept for documentation, etc.).
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

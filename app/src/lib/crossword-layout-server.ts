@@ -24,12 +24,6 @@ interface PlacedWord {
   _number?: number;
 }
 
-interface GridCell {
-  letter: string;
-  isBlocked: boolean;
-  number: number | null;
-}
-
 interface LayoutResult {
   placedWords: PlacedWord[];
   grid: (string | null)[][];

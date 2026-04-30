@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { platformConfig } from "@/lib/platform";
 import { Settings2, LayoutGrid, Eye, SpellCheck, Hash, Lock, Code, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

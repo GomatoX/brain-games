@@ -20,7 +20,8 @@ export default function CrosswordDemo({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const node = containerRef.current;
+    if (!node) return;
 
     // Create the custom element after the script has loaded
     const element = document.createElement(
@@ -41,13 +42,11 @@ export default function CrosswordDemo({
     element.style.display = "block";
 
     // Clear container and append
-    containerRef.current.innerHTML = "";
-    containerRef.current.appendChild(element);
+    node.innerHTML = "";
+    node.appendChild(element);
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
+      node.innerHTML = "";
     };
   }, [puzzleId, apiUrl]);
 

@@ -60,6 +60,9 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
     const engine = engineMap[gameType];
     if (!engine) return;
 
+    const node = containerRef.current;
+    if (!node) return;
+
     // Load CSS if engine has one
     if (engine.css && !document.querySelector(`link[href="${engine.css}"]`)) {
       const link = document.createElement("link");
@@ -74,8 +77,7 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
     );
 
     function renderElement() {
-      if (!containerRef.current) return;
-      containerRef.current.innerHTML = "";
+      node.innerHTML = "";
 
       const el = document.createElement(engine.tag);
 
@@ -89,7 +91,7 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
       if (resultId) el.setAttribute("result-id", resultId);
       if (token) el.setAttribute("token", token);
 
-      containerRef.current.appendChild(el);
+      node.appendChild(el);
     }
 
     if (existingScript) {
@@ -102,9 +104,7 @@ export default function PlayEmbed({ previewToken }: PlayEmbedProps) {
     }
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
+      node.innerHTML = "";
     };
   }, [gameId, gameType, theme, lang, userId, resultId, token]);
 
