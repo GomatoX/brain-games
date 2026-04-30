@@ -112,6 +112,13 @@ cmd_docker() {
   docker compose -f "$ROOT_DIR/docker-compose.yml" up --build
 }
 
+cmd_install_hooks() {
+  if [ -d "$ROOT_DIR/.githooks" ]; then
+    (cd "$ROOT_DIR" && git config core.hooksPath .githooks)
+    echo -e "${GREEN}✔ Git hooks activated (core.hooksPath = .githooks).${NC}"
+  fi
+}
+
 cmd_setup() {
   echo -e "${GREEN}▸ Running first-time setup...${NC}"
 
@@ -123,6 +130,7 @@ cmd_setup() {
   fi
 
   cmd_install
+  cmd_install_hooks
   cmd_db_push
   echo -e "${GREEN}✔ Setup complete. Run './dev.sh dev' to start developing.${NC}"
 }
@@ -135,8 +143,9 @@ usage() {
   echo "Usage: ./dev.sh <command>"
   echo ""
   echo "Commands:"
-  echo "  setup       First-time setup (copy .env, install deps, push DB)"
+  echo "  setup       First-time setup (copy .env, install deps, hooks, push DB)"
   echo "  install     Install all dependencies"
+  echo "  install-hooks  Activate git hooks in .githooks/"
   echo "  dev         Start app + games dev servers in parallel"
   echo "  build       Build game engines & app for production"
   echo "  db:push     Push DB schema (drizzle-kit push)"
@@ -149,8 +158,9 @@ usage() {
 # ── Main ─────────────────────────────────────────────────
 
 case "${1:-}" in
-  setup)      cmd_setup ;;
-  install)    cmd_install ;;
+  setup)         cmd_setup ;;
+  install)       cmd_install ;;
+  install-hooks) cmd_install_hooks ;;
   dev)        cmd_dev ;;
   build)      cmd_build ;;
   db:push)    cmd_db_push ;;

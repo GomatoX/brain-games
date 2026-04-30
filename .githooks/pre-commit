@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# pre-commit — shadcn migration regression guards.
+#
+# Blocks staging if a commit introduces:
+#   1. A new `material-symbols-outlined` reference under app/src
+#      (Round 2 removed all of these — use lucide-react icons instead).
+#   2. A new raw <button>/<input>/<select>/<textarea> in app/src/**/*.tsx
+#      outside the documented allowlist (use shadcn primitives instead).
+#
+# To bypass for an exceptional case: `git commit --no-verify`.
+# To extend the allowlist: edit ALLOWLIST below and document the rationale.
+
+set -e
+
+ALLOWLIST=(
+  # shadcn primitive internals
+  "app/src/components/ui/input.tsx"
+  "app/src/components/ui/textarea.tsx"
+  # react-dropzone (API requires native <input>)
+  "app/src/components/ui/FileUpload.tsx"
+  "app/src/components/branding/fields/FileUploadField.tsx"
+  # native color pickers (no shadcn equivalent)
+  "app/src/components/branding/sections/ThemeSection.tsx"
+  "app/src/components/branding/sections/TokenRow.tsx"
+  # disclosure button — Phase 11 audit allowlisted
+  "app/src/components/DashboardSidebar.tsx"
+  # bespoke per-feature widgets explicitly deferred from Round 2
+  "app/src/components/GameModal.tsx"
+)
+
+is_allowlisted() {
+  local f="$1"
+  for entry in "${ALLOWLIST[@]}"; do
+    [[ "$f" == "$entry" ]] && return 0
+  done
+  return 1
+}
+
+errors=0
+
+# Collect staged files (Added or Modified)
+mapfile -t STAGED_TSX < <(git diff --cached --name-only --diff-filter=AM | grep -E '^app/src/.*\.tsx$' || true)
+mapfile -t STAGED_APP_SRC < <(git diff --cached --name-only --diff-filter=AM | grep -E '^app/src/' || true)
+
+# Check 1: material-symbols-outlined regressions
+for f in "${STAGED_APP_SRC[@]}"; do
+  added=$(git diff --cached -U0 -- "$f" | grep -E '^\+' | grep -v '^+++' | grep -i 'material-symbols-outlined' || true)
+  if [[ -n "$added" ]]; then
+    echo "❌ pre-commit: '$f' introduces a new material-symbols-outlined reference."
+    echo "   Round 2 shadcn migration removed all of these. Use lucide-react icons instead."
+    echo "   Offending lines:"
+    echo "$added" | sed 's/^/     /'
+    errors=$((errors + 1))
+  fi
+done
+
+# Check 2: raw form/button primitives in non-allowlisted .tsx files
+for f in "${STAGED_TSX[@]}"; do
+  is_allowlisted "$f" && continue
+  added=$(git diff --cached -U0 -- "$f" | grep -E '^\+' | grep -v '^+++' | grep -E '<(button|input|select|textarea)\b' || true)
+  if [[ -n "$added" ]]; then
+    echo "❌ pre-commit: '$f' introduces raw HTML form/button primitives."
+    echo "   Use shadcn/ui primitives instead: <Button>, <Input>, <Select>, <Textarea>."
+    echo "   Offending lines:"
+    echo "$added" | sed 's/^/     /'
+    errors=$((errors + 1))
+  fi
+done
+
+if (( errors > 0 )); then
+  echo
+  echo "Pre-commit check failed with $errors violation(s)."
+  echo "If a violation is intentional, add the file to the ALLOWLIST in"
+  echo "  .githooks/pre-commit"
+  echo "and document the rationale, or bypass for one commit with --no-verify."
+  exit 1
+fi
+
+exit 0
