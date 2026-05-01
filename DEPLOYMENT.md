@@ -39,7 +39,7 @@ graph LR
 | Persistent storage | **EBS CSI**         | For SQLite `PersistentVolume`                     |
 | DNS                | **Route 53**        | A-record → ALB                                    |
 | TLS                | **ACM**             | Certificate for your domain                       |
-| Secrets            | **Secrets Manager** | `AUTH_SECRET`, `GOOGLE_AI_API_KEY`                |
+| Secrets            | **Secrets Manager** | `AUTH_SECRET`, `GOOGLE_AI_API_KEY`, `DEFAULT_USER_PASSWORD` (if using auto-seed), `DATABASE_URL` (if using Postgres) |
 
 ### Create ECR Repositories
 
@@ -394,9 +394,17 @@ kubectl apply -f k8s/games-deployment.yml
 kubectl apply -f k8s/services.yml
 kubectl apply -f k8s/ingress.yml
 
-# 5. Seed the database (first deploy only)
+# 5. Seed the admin user (first deploy only)
+#
+# Two options:
+#
+#   (a) Set DEFAULT_USER_EMAIL + DEFAULT_USER_PASSWORD as env vars on the app
+#       deployment (see §5). The app auto-creates the user on startup and keeps
+#       the password in sync on every restart. Recommended for Kubernetes.
+#
+#   (b) Run the one-shot seed script inside the pod:
 kubectl exec -it deployment/app -n brain-games -- \
-  node -e "require('./src/db/index.js')"
+  yarn db:seed admin@example.com 'choose-a-strong-password'
 
 # 6. Verify
 kubectl get pods -n brain-games
@@ -407,15 +415,57 @@ kubectl get ingress -n brain-games
 
 ## 5. Environment Variables Reference
 
-| Variable                   | Required | Default              | Description                                               |
-| -------------------------- | -------- | -------------------- | --------------------------------------------------------- |
-| `AUTH_SECRET`              | ✅       | —                    | Session encryption key                                    |
-| `AUTH_URL`                 | ✅       | —                    | Public URL of the app (e.g. `https://api.yourdomain.com`) |
-| `DATABASE_PATH`            | ✅       | `/app/data/brain.db` | SQLite file path inside container                         |
-| `GOOGLE_AI_API_KEY`        | ❌       | —                    | Gemini API key for AI word generation                     |
-| `NEXT_PUBLIC_FRONTEND_URL` | ✅       | —                    | Public URL of the games frontend (build-time)             |
-| `NEXT_PUBLIC_MODE`         | ❌       | `saas`               | `saas` or `whitelabel` (build-time)                       |
-| `VITE_API_URL`             | ✅       | —                    | API URL for the games frontend (build-time)               |
+> **Build-time vs runtime**: `NEXT_PUBLIC_*` vars are baked into the client bundle by Next at build — changing them requires a new image. All other vars listed below are read at container start and can be changed by editing the Deployment without rebuilding.
+
+### Core — required to boot
+
+| Variable                   | Required | Default              | Description                                                                 |
+| -------------------------- | -------- | -------------------- | --------------------------------------------------------------------------- |
+| `AUTH_SECRET`              | ✅       | —                    | Session encryption key (generate with `openssl rand -base64 32`)            |
+| `AUTH_URL`                 | ✅       | —                    | Public URL of the app (e.g. `https://api.yourdomain.com`)                   |
+| `DATABASE_PATH`            | ✅¹      | `data/brain.db`      | SQLite file path inside container — used when `DATABASE_URL` is unset       |
+| `DATABASE_URL`             | ✅¹      | —                    | Postgres connection string. **Setting this switches the app to Postgres** and disables the SQLite single-replica restriction (see §6 scaling) |
+| `NEXT_PUBLIC_FRONTEND_URL` | ✅       | —                    | Public URL of the games frontend — **build-time** (rebuild image to change) |
+| `VITE_API_URL`             | ✅       | —                    | API URL for the games frontend — **build-time** (rebuild image to change)   |
+| `BRANDING_UPLOAD_ROOT`     | ❌       | `data/uploads`       | Filesystem root for user-uploaded logos/assets. Size the PVC accordingly.   |
+
+¹ Exactly one of `DATABASE_PATH` / `DATABASE_URL` is required.
+
+### Default admin user (auto-seed on startup)
+
+If both are set, the app creates the user on first boot and keeps the password in sync on every restart (`app/src/db/index.ts`). Replaces the manual seed step in §4.
+
+| Variable                | Required | Description                                            |
+| ----------------------- | -------- | ------------------------------------------------------ |
+| `DEFAULT_USER_EMAIL`    | ❌       | Email for the auto-created admin                       |
+| `DEFAULT_USER_PASSWORD` | ❌       | Password — **store in Secrets Manager, not in YAML**   |
+
+### White-label / branding (runtime — no rebuild needed)
+
+All optional. Override the default Rustycogs branding without rebuilding the image. Server components read these via `app/src/lib/platform.ts`.
+
+| Variable          | Default               | Description                                                    |
+| ----------------- | --------------------- | -------------------------------------------------------------- |
+| `PLATFORM_MODE`   | `saas`                | `saas` or `whitelabel`                                         |
+| `PLATFORM_NAME`   | `Rustycogs.io`        | Brand name shown in chrome and seeded org name                 |
+| `PLATFORM_URL`    | `https://rustycogs.io`| Marketing URL used in landing/footer                           |
+| `PLATFORM_LOGO`   | —                     | URL to the logo image                                          |
+| `PLATFORM_ACCENT` | `#c25e40`             | Hex accent color (also used as default org primary)            |
+| `HIDE_LANDING`    | `false`               | `true` redirects `/` straight to login                         |
+| `HIDE_REGISTER`   | `false`               | `true` removes self-serve registration                         |
+| `ALLOWED_IPS`     | —                     | Comma-separated CIDR allowlist for non-API routes              |
+
+**Build-time twins** (only needed if a value must be visible to client-side code at build): `NEXT_PUBLIC_PLATFORM_NAME`, `NEXT_PUBLIC_PLATFORM_ACCENT`, `NEXT_PUBLIC_PLATFORM_LOGO`, `NEXT_PUBLIC_HIDE_LANDING`, `NEXT_PUBLIC_HIDE_REGISTER`, `NEXT_PUBLIC_MODE`. Most deployments only need the runtime ones.
+
+### AI provider (optional)
+
+| Variable                  | Default       | Description                                                                                |
+| ------------------------- | ------------- | ------------------------------------------------------------------------------------------ |
+| `AI_PROVIDER`             | `google-ai`   | `google-ai` (Gemini API) or `vertex-ai` (Google Cloud Vertex)                              |
+| `GOOGLE_AI_API_KEY`       | —             | Required when `AI_PROVIDER=google-ai`                                                      |
+| `GOOGLE_CLOUD_PROJECT`    | —             | Required when `AI_PROVIDER=vertex-ai`                                                      |
+| `GOOGLE_CLOUD_LOCATION`   | `europe-west1`| Vertex AI region                                                                           |
+| `GOOGLE_CREDENTIALS_JSON` | —             | Vertex AI service-account JSON (string, not file path) — store in Secrets Manager         |
 
 ---
 
@@ -430,10 +480,10 @@ kubectl cp brain-games/$(kubectl get pod -n brain-games -l app=brain-games-app -
 
 ### Scaling
 
-| Service   | Can Scale?        | Notes                                                                      |
-| --------- | ----------------- | -------------------------------------------------------------------------- |
-| **app**   | ❌ Single replica | SQLite = single writer. Migrate to PostgreSQL (RDS) for horizontal scaling |
-| **games** | ✅ Freely         | Stateless static files                                                     |
+| Service   | Can Scale?        | Notes                                                                                      |
+| --------- | ----------------- | ------------------------------------------------------------------------------------------ |
+| **app**   | Conditional       | Single replica on SQLite (single writer). To scale horizontally, set `DATABASE_URL` to a Postgres connection string (RDS) — the app auto-switches dialects. |
+| **games** | ✅ Freely         | Stateless static files                                                                     |
 
 ### Logs
 
