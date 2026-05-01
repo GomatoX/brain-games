@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -790,35 +791,31 @@ export const GameModal = ({
                         {/* Letter picker for main word */}
                         {mainWord && (
                           <div className="flex gap-1 mt-1.5">
-                            {/* TODO(games): the main-word letter picker uses bespoke per-letter selection styling — defer migration */}
-                            {entry.word.split("").map((letter, letterIdx) => {
-                              const isSelected =
-                                entry.main_word_index === letterIdx
-                              return (
-                                <button
+                            <ToggleGroup
+                              type="single"
+                              value={entry.main_word_index?.toString() ?? ""}
+                              onValueChange={(v) => {
+                                const updated = [...wordsList]
+                                updated[idx] = {
+                                  ...updated[idx],
+                                  main_word_index:
+                                    v === "" ? undefined : parseInt(v, 10),
+                                }
+                                setWordsList(updated)
+                              }}
+                              className="gap-1"
+                            >
+                              {entry.word.split("").map((letter, letterIdx) => (
+                                <ToggleGroupItem
                                   key={letterIdx}
-                                  type="button"
-                                  onClick={() => {
-                                    const updated = [...wordsList]
-                                    updated[idx] = {
-                                      ...updated[idx],
-                                      main_word_index: isSelected
-                                        ? undefined
-                                        : letterIdx,
-                                    }
-                                    setWordsList(updated)
-                                  }}
-                                  className={`w-6 h-6 flex items-center justify-center text-xs font-mono font-bold rounded border transition-all ${
-                                    isSelected
-                                      ? "bg-rust text-white border-rust ring-2 ring-rust/30"
-                                      : "bg-white text-[#0f172a] border-border hover:border-rust hover:bg-rust-light"
-                                  }`}
+                                  value={letterIdx.toString()}
                                   title={`Select letter "${letter}" for main word`}
+                                  className="size-6 p-0 text-xs font-mono font-bold rounded border bg-white text-[#0f172a] border-border hover:border-rust hover:bg-rust-light data-[state=on]:bg-rust data-[state=on]:text-white data-[state=on]:border-rust data-[state=on]:ring-2 data-[state=on]:ring-rust/30 transition-all"
                                 >
                                   {letter}
-                                </button>
-                              )
-                            })}
+                                </ToggleGroupItem>
+                              ))}
+                            </ToggleGroup>
                             <span className="text-[10px] text-muted-foreground ml-1 self-center">
                               {entry.main_word_index !== undefined
                                 ? "✓"
