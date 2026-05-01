@@ -24,8 +24,6 @@ ALLOWLIST=(
   "app/src/components/branding/sections/TokenRow.tsx"
   # disclosure button — Phase 11 audit allowlisted
   "app/src/components/DashboardSidebar.tsx"
-  # bespoke per-feature widgets explicitly deferred from Round 2
-  "app/src/components/GameModal.tsx"
 )
 
 is_allowlisted() {
