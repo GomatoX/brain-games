@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Component Library · Rustycogs</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css?v=14" />
+
+<style>
+  /* Library-specific layout */
+  body { background: var(--tool-bg); }
+  .lib {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+  .lib-hero {
+    border-bottom: 1px solid var(--tool-border);
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+  }
+  .lib-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--tool-accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .lib-hero h1 {
+    font-size: 40px; line-height: 1.05; letter-spacing: -0.02em;
+    margin: 0 0 12px; font-weight: 600; color: var(--tool-text);
+  }
+  .lib-hero p {
+    font-size: 16px; color: var(--tool-text-soft);
+    max-width: 640px; margin: 0; line-height: 1.55;
+  }
+  .lib-toc {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 24px;
+  }
+  .lib-toc a {
+    padding: 5px 11px;
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 999px;
+    font-size: 12px; color: var(--tool-text-soft);
+    text-decoration: none; font-weight: 500;
+    transition: all 0.12s;
+  }
+  .lib-toc a:hover {
+    border-color: var(--tool-accent); color: var(--tool-accent);
+    background: var(--tool-accent-soft);
+  }
+
+  .lib-section { margin-bottom: 56px; scroll-margin-top: 24px; }
+  .lib-section-head {
+    display: flex; align-items: baseline; gap: 14px;
+    padding-bottom: 12px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--tool-border);
+  }
+  .lib-section-head h2 {
+    font-size: 22px; margin: 0; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .lib-section-head .lib-section-num {
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--tool-text-faint); font-weight: 500;
+  }
+  .lib-section-desc {
+    color: var(--tool-text-soft); font-size: 13.5px;
+    margin: 0 0 24px; max-width: 600px; line-height: 1.55;
+  }
+
+  .lib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .lib-card {
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 10px; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .lib-card-stage {
+    padding: 24px 20px;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(0,0,0,0.04) 1px, transparent 0) 0 0 / 14px 14px,
+      var(--tool-bg);
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 120px;
+  }
+  .lib-card-meta {
+    padding: 10px 14px;
+    border-top: 1px solid var(--tool-border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--tool-surface);
+  }
+  .lib-card-name { font-size: 12.5px; font-weight: 500; color: var(--tool-text); }
+  .lib-card-tag {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--tool-text-faint); background: var(--tool-surface-2);
+    padding: 2px 6px; border-radius: 4px;
+  }
+
+  .lib-wide { grid-column: 1 / -1; }
+  .lib-card-stage.tall { min-height: 200px; }
+  .lib-card-stage.xl   { min-height: 280px; align-items: flex-start; padding-top: 28px; }
+
+  .demo-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; }
+  .demo-stack { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 240px; }
+
+  /* Icon grid */
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 1px;
+    background: var(--tool-border);
+    border: 1px solid var(--tool-border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .icon-cell {
+    background: var(--tool-surface);
+    padding: 18px 8px 10px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+    transition: background 0.1s;
+  }
+  .icon-cell:hover { background: var(--tool-bg); }
+  .icon-cell .ico-frame {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    color: var(--tool-text);
+  }
+  .icon-cell .ico-name {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--tool-text-faint);
+  }
+
+  /* Shadcn tabs */
+  .shadcn-tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--tool-border);
+    margin-bottom: 18px;
+  }
+  .shadcn-tab {
+    padding: 9px 14px;
+    background: none; border: none;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    font-size: 13px; font-weight: 500;
+    color: var(--tool-text-soft);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .shadcn-tab.active {
+    color: var(--tool-text);
+    border-bottom-color: var(--tool-accent);
+  }
+  .shadcn-tab:hover { color: var(--tool-text); }
+
+  .shadcn-step {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .shadcn-step-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--tool-text);
+    color: var(--tool-surface);
+    font-family: var(--font-mono);
+    font-size: 11.5px; font-weight: 600;
+    display: grid; place-items: center;
+    margin-top: 1px;
+  }
+  .shadcn-step-body h4 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tool-text);
+  }
+  .shadcn-step-body p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--tool-text-soft);
+    line-height: 1.55;
+  }
+  .shadcn-step-body .code { margin-top: 0; }
+
+  .shadcn-mapping-table {
+    width: 100%;
+    border: 1px solid var(--tool-border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 12.5px;
+    background: var(--tool-surface);
+  }
+  .shadcn-mapping-table th,
+  .shadcn-mapping-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--tool-border);
+  }
+  .shadcn-mapping-table th {
+    background: var(--tool-surface-2);
+    font-weight: 500;
+    color: var(--tool-text-soft);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .shadcn-mapping-table tr:last-child td { border-bottom: none; }
+  .shadcn-mapping-table .mono {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--tool-text);
+  }
+  .shadcn-mapping-table .arrow {
+    color: var(--tool-text-faint);
+    font-family: var(--font-mono);
+  }
+
+  /* Demo containers used a few times */
+  .demo-frame {
+    width: 100%; max-width: 280px;
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 8px; padding: 8px;
+  }
+</style>
+</head>
+<body data-screen-label="01 Component Library">
+
+<div class="lib">
+  <div class="lib-hero">
+    <div class="lib-eyebrow">Rustycogs · Internal</div>
+    <h1>Component Library</h1>
+    <p>Every primitive used across the Rustycogs admin: branding tool, games list, create-game modals, AI cluemaster. Built on a warm-neutral palette with a single rust accent. All controls share a 34px height token so rows always align.</p>
+    <div class="lib-toc">
+      <a href="#tokens">Tokens</a>
+      <a href="#icons">Icons</a>
+      <a href="#buttons">Buttons</a>
+      <a href="#inputs">Inputs</a>
+      <a href="#selects">Selects</a>
+      <a href="#nav">Navigation</a>
+      <a href="#layout">Layout</a>
+      <a href="#data">Status &amp; data</a>
+      <a href="#chrome">Chrome</a>
+      <a href="#overlay">Overlay</a>
+      <a href="#tables">Tables</a>
+      <a href="#code">Code</a>
+      <a href="#words">Words list</a>
+      <a href="#ai">AI generate</a>
+      <a href="#shadcn">shadcn integration</a>
+    </div>
+  </div>
+
+  <div id="root"></div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="games-shared.jsx"></script>
+<script type="text/babel" src="components-page.jsx"></script>
+
+</body>
+</html>

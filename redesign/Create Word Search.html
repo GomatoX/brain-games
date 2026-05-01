@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Word Search · Games</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css?v=13" />
+
+<style>
+  body {
+    background:
+      radial-gradient(circle at 1px 1px, rgba(0,0,0,0.04) 1px, transparent 0) 0 0 / 18px 18px,
+      var(--tool-bg);
+    min-height: 100vh;
+  }
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 28px 60px;
+  }
+  .page-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .page-title h1 {
+    margin: 0 0 4px;
+    font-size: 24px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .page-title p { margin: 0; color: var(--tool-text-soft); font-size: 13.5px; }
+  .page-actions { display: flex; gap: 8px; }
+
+  /* Local sub-nav across game types */
+  .games-nav {
+    display: flex; gap: 2px;
+    border-bottom: 1px solid var(--tool-border);
+    margin-bottom: 22px;
+  }
+  .games-nav a {
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--tool-text-soft);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .games-nav a:hover { color: var(--tool-text); }
+  .games-nav a.active { color: var(--tool-text); border-bottom-color: var(--tool-accent); }
+
+  /* Word search grid preview tile */
+  .ws-preview {
+    background: var(--tool-bg);
+    border: 1px dashed var(--tool-border-strong);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex; gap: 14px; align-items: center;
+  }
+  .ws-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 18px);
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .ws-grid .c {
+    width: 18px; height: 18px;
+    border-radius: 2px;
+    display: grid; place-items: center;
+    font-family: var(--font-mono);
+    font-size: 9.5px; font-weight: 600;
+    background: var(--tool-surface);
+    color: var(--tool-text-soft);
+    border: 1px solid var(--tool-border);
+  }
+  .ws-grid .c.hl {
+    background: var(--tool-accent);
+    color: white;
+    border-color: transparent;
+  }
+  .ws-meta { font-size: 12px; color: var(--tool-text-soft); line-height: 1.55; }
+  .ws-meta strong { color: var(--tool-text); font-weight: 500; }
+
+  /* Inline mini grid in table row */
+  .ws-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 6px);
+    gap: 1.5px;
+  }
+  .ws-mini-grid .c {
+    width: 6px; height: 6px;
+    border-radius: 1px;
+    background: var(--tool-border);
+  }
+  .ws-mini-grid .c.hl { background: var(--tool-accent); }
+</style>
+</head>
+<body data-screen-label="01 Word Search · List & Create Modal">
+
+<div class="page">
+  <div class="page-head">
+    <div class="page-title">
+      <h1>Word Search</h1>
+      <p>62 games · 41 published, 21 drafts</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn">Import</button>
+      <button id="open-modal" class="btn btn-primary">+ New word search</button>
+    </div>
+  </div>
+
+  <nav class="games-nav">
+    <a href="Create Word Game.html">Word Game</a>
+    <a href="Create Word Search.html" class="active">Word Search</a>
+    <a href="Create Crossword.html">Crossword</a>
+  </nav>
+
+  <div id="root"></div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="games-shared.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+// ===== Mock fill grid for preview =====
+const buildPreviewGrid = (words) => {
+  // Make a deterministic-looking grid that "embeds" the first 2-3 words
+  const rows = 6;
+  const cols = 8;
+  const cells = [];
+  const rng = (i) => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[(i * 7 + 3) % 26];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      cells.push({ r, c, ch: rng(r * cols + c), hl: false });
+    }
+  }
+  // Place words horizontally on different rows
+  const placements = [
+    { row: 1, col: 1 },
+    { row: 3, col: 0 },
+    { row: 5, col: 2 },
+  ];
+  words.slice(0, 3).forEach((w, idx) => {
+    const p = placements[idx];
+    if (!p) return;
+    [...w.toUpperCase()].forEach((ch, i) => {
+      if (p.col + i >= cols) return;
+      const idx2 = p.row * cols + p.col + i;
+      if (cells[idx2]) { cells[idx2].ch = ch; cells[idx2].hl = true; }
+    });
+  });
+  return cells;
+};
+
+// ===== Create Word Search modal =====
+const CreateWordSearchModal = ({ onClose, onCreate }) => {
+  const [tab, setTab] = useState('content');
+  const [form, setForm] = useState({
+    title: '',
+    status: 'draft',
+    difficulty: 'easy',
+    preset: 'rust',
+    gridSize: 12,
+    words: [],
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const previewCells = useMemo(() => buildPreviewGrid(form.words.map(w => w.word)), [form.words]);
+  const canCreate = form.title.trim() && form.words.length >= 3;
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+        <div className="modal-head" style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',paddingBottom:14}}>
+          <div>
+            <h3 className="modal-title">Create Word Search</h3>
+            <p className="modal-sub">Players hunt hidden words inside a letter grid.</p>
+          </div>
+          <button className="modal-close" onClick={onClose} aria-label="Close">
+            <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        <div className="modal-tabs">
+          <button className={`modal-tab ${tab==='content'?'active':''}`} onClick={() => setTab('content')}>
+            <span className="step-num">1</span>Words
+          </button>
+          <button className={`modal-tab ${tab==='ai'?'active':''}`} onClick={() => setTab('ai')}>
+            <span className="step-num">
+              <svg width="9" height="9" viewBox="0 0 14 14"><path d="M7 1.5l1.4 3.1 3.1 1.4-3.1 1.4L7 10.5 5.6 7.4 2.5 6l3.1-1.4L7 1.5z" fill="currentColor"/></svg>
+            </span>AI generate
+          </button>
+          <button className={`modal-tab ${tab==='settings'?'active':''}`} onClick={() => setTab('settings')}>
+            <span className="step-num">2</span>Settings
+          </button>
+        </div>
+
+        {tab === 'content' && (
+          <div className="modal-body-grid">
+            <div className="ws-preview">
+              <div className="ws-grid">
+                {previewCells.map((c, i) => <div key={i} className={`c ${c.hl?'hl':''}`}>{c.ch}</div>)}
+              </div>
+              <div className="ws-meta">
+                <div style={{fontSize:10.5,fontFamily:'var(--font-mono)',letterSpacing:'0.08em',textTransform:'uppercase',color:'var(--tool-text-faint)',marginBottom:6}}>Live preview</div>
+                <strong>{form.words.length}</strong> words placed<br/>
+                Grid <strong>{form.gridSize}×{form.gridSize}</strong>{form.words.length > 0 && <><br/>Longest: <strong>{Math.max(...form.words.map(w => w.word.length))} letters</strong></>}
+              </div>
+            </div>
+
+            <div>
+              <label className="field-label-block">Title</label>
+              <input className="input" placeholder="e.g. Spring vocabulary" value={form.title} onChange={e => set('title', e.target.value)}/>
+            </div>
+
+            <div>
+              <label className="field-label-block">
+                Words to find
+                <span className="opt" style={{marginLeft:'auto', color: form.words.length >= 3 ? 'var(--tool-good)' : 'var(--tool-accent)'}}>
+                  {form.words.length} added · {form.words.length >= 3 ? '✓ ready' : `${3 - form.words.length} more required`}
+                </span>
+              </label>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                <WordHintInput
+                  hintPlaceholder="Hint for player (optional)"
+                  onAdd={(it) => set('words', [...form.words, it])}
+                />
+                <WordChipList
+                  items={form.words}
+                  onUpdate={(i, patch) => set('words', form.words.map((w, k) => k === i ? { ...w, ...patch } : w))}
+                  onRemove={(i) => set('words', form.words.filter((_, k) => k !== i))}
+                  hintLabel="hint"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === 'ai' && (
+          <div className="modal-body-grid">
+            <AIGenerateTab
+              context={form.title}
+              existingWords={form.words}
+              onAccept={(items) => set('words', [...form.words, ...items])}
+              defaultLang="lt"
+              kind="words"
+            />
+          </div>
+        )}
+
+        {tab === 'settings' && (
+          <div className="modal-body-grid">
+            <div className="grid-2">
+              <div>
+                <label className="field-label-block">Status</label>
+                <IconSelect value={form.status} onChange={v => set('status', v)} options={STATUS_OPTIONS} />
+              </div>
+              <div>
+                <label className="field-label-block">Difficulty</label>
+                <IconSelect value={form.difficulty} onChange={v => set('difficulty', v)} options={DIFFICULTY_OPTIONS} />
+              </div>
+            </div>
+
+            <div>
+              <label className="field-label-block">
+                Branding preset <span className="opt">optional</span>
+              </label>
+              <IconSelect value={form.preset} onChange={v => set('preset', v)} options={PRESET_OPTIONS} />
+              <div className="field-help">Inherits colors and type from the chosen preset.</div>
+            </div>
+
+            <div>
+              <label className="field-label-block">Grid size</label>
+              <div style={{display:'flex',gap:6}}>
+                {[10, 12, 15, 18].map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => set('gridSize', n)}
+                    className={`filter-chip ${form.gridSize === n ? 'active' : ''}`}
+                  >{n}×{n}</button>
+                ))}
+              </div>
+              <div className="field-help">Larger grids fit more words but take longer to solve.</div>
+            </div>
+          </div>
+        )}
+
+        <div className="modal-foot">
+          {tab === 'content' && (
+            <>
+              <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+              <button className="btn" onClick={() => setTab('settings')}>Next: Settings</button>
+            </>
+          )}
+          {tab === 'ai' && (
+            <>
+              <button className="btn btn-ghost" onClick={() => setTab('content')}>Back to words</button>
+              <button className="btn" onClick={() => setTab('settings')}>Next: Settings</button>
+            </>
+          )}
+          {tab === 'settings' && (
+            <>
+              <button className="btn btn-ghost" onClick={() => setTab('content')}>Back</button>
+              <button className="btn" onClick={onClose}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => { if (canCreate) { onCreate(form); onClose(); } }}
+                disabled={!canCreate}
+                style={!canCreate?{opacity:0.45,cursor:'not-allowed'}:{}}
+              >Create game</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ===== Sample data =====
+const TOPICS = ['Animals','Spring','Sports','Capitals','Foods','Music','Space','Nature','Tools','Holidays','Tech','Plants'];
+const DIFFICULTIES = ['easy','easy','medium','medium','hard'];
+const PRESETS = ['rust','forest','cobalt','plum','none'];
+const STATUSES = ['published','published','published','draft','scheduled'];
+
+const SAMPLE_WS = Array.from({length: 62}, (_, i) => {
+  const status = STATUSES[i % STATUSES.length];
+  const difficulty = DIFFICULTIES[i % DIFFICULTIES.length];
+  const wordCount = difficulty === 'easy' ? 6 + (i%3) : difficulty === 'medium' ? 10 + (i%4) : 14 + (i%5);
+  const gridSize = difficulty === 'easy' ? 10 : difficulty === 'medium' ? 12 : 15;
+  return {
+    id: i + 1,
+    title: `${TOPICS[i % TOPICS.length]} ${i < 12 ? 'Hunt' : i < 24 ? 'Pack' : i < 36 ? 'Vol. ' + ((i%5)+1) : 'Edition'}`,
+    searchKey: TOPICS[i % TOPICS.length],
+    status,
+    difficulty,
+    preset: PRESETS[i % PRESETS.length],
+    wordCount,
+    gridSize,
+    plays: status === 'published' ? Math.floor(300 + Math.random() * 7000) : 0,
+    updated: `${Math.floor(Math.random()*30)+1}d ago`,
+  };
+});
+
+// Mini grid icon for the row
+const MiniGrid = ({ size = 5 }) => {
+  const cells = Array.from({length: size*size}, (_, i) => {
+    // highlight a small "L" path
+    return { hl: i === 6 || i === 11 || i === 16 || i === 17 || i === 18 };
+  });
+  return (
+    <div className="ws-mini-grid">
+      {cells.map((c, i) => <div key={i} className={`c ${c.hl?'hl':''}`}/>)}
+    </div>
+  );
+};
+
+const COLUMNS = [
+  { header: 'Pack', width: '32%', render: (g) => <TitleCell title={g.title} sub={`${g.preset} · ${g.gridSize}×${g.gridSize} grid`} iconName="wordsearch" /> },
+  { header: 'Words', width: '13%', render: (g) => (
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <MiniGrid />
+        <span className="mono">{g.wordCount}</span>
+      </div>
+    ) },
+  { header: 'Difficulty', width: '14%', render: (g) => <DifficultyDots d={g.difficulty}/> },
+  { header: 'Status', width: '13%', render: (g) => <StatusPill s={g.status}/> },
+  { header: 'Plays', width: '10%', render: (g) => <span className="mono">{g.status === 'published' ? g.plays.toLocaleString() : '—'}</span> },
+  { header: 'Updated', width: '10%', render: (g) => <span className="mono" style={{color:'var(--tool-text-faint)'}}>{g.updated}</span> },
+  { header: 'Actions', width: '8%', align: 'right', render: () => <RowActions /> },
+];
+
+const App = () => {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    document.getElementById('open-modal').addEventListener('click', handler);
+    return () => document.getElementById('open-modal').removeEventListener('click', handler);
+  }, []);
+
+  return (
+    <>
+      <GamesList games={SAMPLE_WS} iconName="wordsearch" columns={COLUMNS} onNew={() => setOpen(true)} />
+      {open && <CreateWordSearchModal onClose={() => setOpen(false)} onCreate={(f) => console.log('created word search', f)} />}
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

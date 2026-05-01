@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Branding · Rustycogs</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:wght@400;500;600;700&family=Lora:wght@400;500;600&family=Crimson+Pro:wght@400;500;600&family=Geist:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="games.jsx"></script>
+<script type="text/babel" src="inspector.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+const DEFAULT_TOKENS = {
+  preset: 'graphite',
+  primary: '#4d4d4d',
+  surface: '#ffffff',
+  text: '#0f172a',
+  fontSans: 'Inter',
+  fontSerif: 'Fraunces',
+  scale: 'Default',
+  radius: 24,
+  density: 'Comfortable',
+  buttonVariant: 'b-solid',
+  tile: 'Flat',
+  highlight: 'Fill',
+  motion: 'Off',
+  tapSound: 'Soft',
+};
+
+// Map a hovered inspector token to a CSS selector that should pulse in the preview.
+const TOKEN_TARGETS = {
+  'primary':       '[data-token-target~="primary"]',
+  'surface':       '[data-token-target~="surface"]',
+  'text':          '[data-token-target~="text"]',
+  'font-sans':     '.game-frame',
+  'font-serif':    '[data-token-target~="font-serif"]',
+  'radius':        '[data-token-target~="radius"]',
+  'button-variant':'[data-token-target~="button-variant"]',
+};
+
+const GAMES = [
+  { id: 'wordsearch', label: 'Word Search', icon: 'wordsearch' },
+  { id: 'crossword',  label: 'Crossword',   icon: 'crossword' },
+  { id: 'wordgame',   label: 'Word Game',   icon: 'wordgame' },
+  { id: 'sudoku',     label: 'Sudoku',      icon: 'sudoku' },
+];
+
+const App = () => {
+  const [tokens, setTokens] = useState(DEFAULT_TOKENS);
+  const [hoveredToken, setHoveredToken] = useState(null);
+  const [activeTab, setActiveTab] = useState('design');
+  const [activeGame, setActiveGame] = useState('wordsearch');
+  const [device, setDevice] = useState('desktop');
+  const stageRef = useRef(null);
+  const [highlights, setHighlights] = useState([]);
+
+  // CSS variables fed into preview iframe-equivalent
+  const previewVars = useMemo(() => ({
+    '--b-primary':   tokens.primary,
+    '--b-surface':   tokens.surface,
+    '--b-text':      tokens.text,
+    '--b-radius':    tokens.radius + 'px',
+    '--b-font-sans': tokens.fontSans + ', sans-serif',
+    '--b-font-serif':tokens.fontSerif + ', serif',
+    '--b-density':   tokens.density === 'Compact' ? 0.78 : tokens.density === 'Spacious' ? 1.18 : 1,
+  }), [tokens]);
+
+  // Compute highlight overlays when a token is hovered
+  useEffect(() => {
+    if (!hoveredToken || !stageRef.current) { setHighlights([]); return; }
+    const sel = TOKEN_TARGETS[hoveredToken];
+    if (!sel) { setHighlights([]); return; }
+    const stage = stageRef.current;
+    const stageBox = stage.getBoundingClientRect();
+    const els = Array.from(stage.querySelectorAll(sel));
+    const boxes = els.slice(0, 8).map(el => {
+      const r = el.getBoundingClientRect();
+      return {
+        top:  r.top  - stageBox.top - 4,
+        left: r.left - stageBox.left - 4,
+        width:  r.width  + 8,
+        height: r.height + 8,
+      };
+    });
+    setHighlights(boxes);
+  }, [hoveredToken, activeGame, tokens]);
+
+  const renderGame = () => {
+    if (activeGame === 'wordsearch') return <WordSearchGame />;
+    if (activeGame === 'crossword')  return <CrosswordGame />;
+    if (activeGame === 'wordgame')   return <WordGame />;
+    if (activeGame === 'sudoku')     return <SudokuGame />;
+  };
+
+  const stageStyle = device === 'phone'
+    ? { maxWidth: 360, maxHeight: '100%' }
+    : device === 'tablet'
+      ? { maxWidth: 600 }
+      : { maxWidth: 760 };
+
+  return (
+    <div className="app" data-screen-label="01 Branding">
+
+      {/* ===== LEFT NAV ===== */}
+      <nav className="nav">
+        <div className="nav-brand">
+          <div className="nav-brand-mark">RC</div>
+          <span>Rustycogs<span style={{color:'var(--tool-text-faint)'}}>.io</span></span>
+        </div>
+
+        <button className="nav-item"><Icon name="overview" /><span>Overview</span></button>
+
+        <div className="nav-section-label">Games</div>
+        <button className="nav-item"><Icon name="crossword" /><span>Crosswords</span></button>
+        <button className="nav-item"><Icon name="wordgame" /><span>Word Game</span></button>
+        <button className="nav-item"><Icon name="wordsearch" /><span>Word Search</span></button>
+        <button className="nav-item" style={{opacity: 0.55}}><Icon name="sudoku" /><span>Sudoku</span><span style={{marginLeft:'auto', fontSize:9, fontFamily:'var(--font-mono)', background:'var(--tool-surface-2)', padding:'2px 5px', borderRadius:3, letterSpacing:'0.04em'}}>SOON</span></button>
+
+        <div className="nav-section-label">Workspace</div>
+        <button className="nav-item active"><Icon name="branding" /><span>Branding</span></button>
+        <button className="nav-item"><Icon name="team" /><span>Team</span></button>
+        <button className="nav-item"><Icon name="keys" /><span>API Keys & Embeds</span></button>
+        <button className="nav-item"><Icon name="settings" /><span>Settings</span></button>
+
+        <div className="nav-spacer"></div>
+
+        <div className="nav-user">
+          <div className="nav-avatar">M</div>
+          <div className="nav-user-meta">
+            <div className="nav-user-name">Mak</div>
+            <div className="nav-user-mail">gomatok@gmail.com</div>
+          </div>
+          <button className="btn-ghost" style={{padding:6, borderRadius:6, border:'none', background:'none', color:'var(--tool-text-faint)'}}>
+            <Icon name="logout" size={16}/>
+          </button>
+        </div>
+      </nav>
+
+      {/* ===== MAIN ===== */}
+      <main className="main">
+        <header className="topbar">
+          <button className="topbar-back"><Icon name="back" size={14}/> Back</button>
+          <div className="topbar-crumbs">
+            <span style={{color:'var(--tool-text-soft)'}}>LRT</span>
+            <span className="sep">/</span>
+            <strong>Branding</strong>
+            <span className="draft"><span className="dot"></span>Unpublished draft · 3 changes</span>
+          </div>
+          <div className="topbar-spacer"></div>
+          <div className="topbar-actions">
+            <button className="btn btn-ghost">Discard</button>
+            <button className="btn">Save</button>
+            <button className="btn btn-primary">Publish</button>
+          </div>
+        </header>
+
+        <div className="workspace">
+          <Inspector
+            tokens={tokens}
+            setTokens={setTokens}
+            hoveredToken={hoveredToken}
+            setHoveredToken={setHoveredToken}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
+
+          <section className="preview">
+            <div className="preview-header">
+              <div className="game-tabs" role="tablist">
+                {GAMES.map(g => (
+                  <button
+                    key={g.id}
+                    className={`game-tab ${activeGame === g.id ? 'active' : ''}`}
+                    onClick={() => setActiveGame(g.id)}
+                    role="tab"
+                  >
+                    <Icon name={g.icon} size={14}/>
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+              <div className="preview-tools">
+                <button
+                  className={`tool-icon-btn ${device === 'phone' ? 'active' : ''}`}
+                  onClick={() => setDevice('phone')}
+                  title="Phone"
+                ><Icon name="phone" size={16}/></button>
+                <button
+                  className={`tool-icon-btn ${device === 'tablet' ? 'active' : ''}`}
+                  onClick={() => setDevice('tablet')}
+                  title="Tablet"
+                ><Icon name="tablet" size={16}/></button>
+                <button
+                  className={`tool-icon-btn ${device === 'desktop' ? 'active' : ''}`}
+                  onClick={() => setDevice('desktop')}
+                  title="Desktop"
+                ><Icon name="desktop" size={16}/></button>
+                <div style={{width: 1, height: 16, background: 'var(--tool-border)', margin: '0 4px'}}></div>
+                <button className="tool-icon-btn" title="Refresh"><Icon name="refresh" size={16}/></button>
+                <button className="tool-icon-btn" title="Open in new"><Icon name="expand" size={16}/></button>
+              </div>
+            </div>
+
+            <div className="preview-stage" ref={stageRef}>
+              <div className="preview-stage-inner" style={previewVars}>
+                <div style={stageStyle}>
+                  {renderGame()}
+                </div>
+
+                {highlights.map((b, i) => (
+                  <div
+                    key={i}
+                    className="highlight-flash"
+                    style={{
+                      top: b.top, left: b.left,
+                      width: b.width, height: b.height,
+                    }}
+                  />
+                ))}
+
+                {hoveredToken && (
+                  <div className="help-pill">
+                    showing usage of <strong style={{color:'#ffb380'}}>{hoveredToken}</strong> · {highlights.length} matches
+                  </div>
+                )}
+              </div>
+
+              <div className="preview-statusbar">
+                <span className="live"><span className="dot"></span>LIVE</span>
+                <span className="sep"></span>
+                <span>{tokens.fontSans} · {tokens.fontSerif}</span>
+                <span className="sep"></span>
+                <span>radius {tokens.radius}px</span>
+                <span className="sep"></span>
+                <span style={{color:'var(--tool-text-soft)'}}>{tokens.primary} / {tokens.surface} / {tokens.text}</span>
+                <span style={{flex:1}}></span>
+                <span>{device === 'phone' ? '375×667' : device === 'tablet' ? '768×1024' : 'fluid'}</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
