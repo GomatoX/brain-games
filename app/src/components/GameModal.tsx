@@ -795,11 +795,14 @@ export const GameModal = ({
                               type="single"
                               value={entry.main_word_index?.toString() ?? ""}
                               onValueChange={(v) => {
+                                const parsed = v === "" ? undefined : parseInt(v, 10)
                                 const updated = [...wordsList]
                                 updated[idx] = {
                                   ...updated[idx],
                                   main_word_index:
-                                    v === "" ? undefined : parseInt(v, 10),
+                                    parsed !== undefined && Number.isNaN(parsed)
+                                      ? undefined
+                                      : parsed,
                                 }
                                 setWordsList(updated)
                               }}
