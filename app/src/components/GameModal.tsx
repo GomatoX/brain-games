@@ -616,7 +616,7 @@ export const GameModal = ({
                       variant="gradient"
                       onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
                       disabled={aiLoading}
-                      className="w-full px-4 py-2.5 rounded-lg"
+                      className="w-full h-auto py-2.5 rounded-lg"
                     >
                       {aiLoading ? (
                         <>
