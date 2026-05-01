@@ -749,7 +749,7 @@ export const GameModal = ({
                     {wordsList.map((entry, idx) => (
                       <div key={idx} className="px-3 py-2">
                         <div className="flex items-center gap-3">
-                          <input
+                          <Input
                             type="text"
                             value={entry.word}
                             onChange={(e) => {
@@ -760,9 +760,9 @@ export const GameModal = ({
                               }
                               setWordsList(updated)
                             }}
-                            className="text-xs font-mono font-bold text-[#0f172a] w-24 shrink-0 px-1.5 py-1 border border-transparent hover:border-border focus:border-ring focus:outline-none rounded bg-transparent uppercase"
+                            className="h-auto w-24 shrink-0 px-1.5 py-1 text-xs font-mono font-bold uppercase text-[#0f172a] bg-transparent border-transparent shadow-none rounded hover:border-border focus-visible:border-ring focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
-                          <input
+                          <Input
                             type="text"
                             value={entry.clue}
                             onChange={(e) => {
@@ -773,7 +773,7 @@ export const GameModal = ({
                               }
                               setWordsList(updated)
                             }}
-                            className="text-xs text-muted-foreground flex-1 px-1.5 py-1 border border-transparent hover:border-border focus:border-ring focus:outline-none rounded bg-transparent"
+                            className="h-auto flex-1 px-1.5 py-1 text-xs text-muted-foreground bg-transparent border-transparent shadow-none rounded hover:border-border focus-visible:border-ring focus-visible:ring-0 focus-visible:ring-offset-0"
                             placeholder="Clue"
                           />
                           <Button
