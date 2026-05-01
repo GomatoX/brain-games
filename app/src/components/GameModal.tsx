@@ -611,12 +611,12 @@ export const GameModal = ({
               <div className="mb-4">
                 {mainWord.trim() && (
                   <>
-                    {/* TODO(games): unify "Generate with AI" CTA styling once branding tokens land */}
-                    <button
+                    <Button
                       type="button"
+                      variant="gradient"
                       onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
                       disabled={aiLoading}
-                      className="w-full px-4 py-2.5 bg-gradient-to-r from-rust to-rust-dark text-white rounded-lg text-sm font-medium transition-all hover:shadow-md hover:shadow-rust/20 disabled:opacity-60 flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 rounded-lg"
                     >
                       {aiLoading ? (
                         <>
@@ -634,7 +634,7 @@ export const GameModal = ({
                           )}
                         </>
                       )}
-                    </button>
+                    </Button>
 
                     {aiSettingsOpen && !aiLoading && (
                       <div className="mt-2 p-4 bg-slate-50 rounded-lg border border-border space-y-3">
