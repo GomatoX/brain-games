@@ -11,15 +11,15 @@ const tables = { crosswords, wordgames, sudoku, wordsearches } as const
 const COOKIE_NAME = "bg_session"
 const COOKIE_MAX_AGE = 86400 // 24 hours
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+const getCorsHeaders = (request: NextRequest) => ({
+  "Access-Control-Allow-Origin": request.headers.get("origin") || "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Credentials": "true",
-}
+})
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders })
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: getCorsHeaders(request) })
 }
 
 export async function POST(request: NextRequest) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (!type || !id || !(type in tables)) {
       return NextResponse.json(
         { error: "type and id are required" },
-        { status: 400, headers: corsHeaders },
+        { status: 400, headers: getCorsHeaders(request) },
       )
     }
 
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json(
       { success: true, new: isNewPlay },
-      { headers: corsHeaders },
+      { headers: getCorsHeaders(request) },
     )
 
     // Set the session cookie if it's new
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: "Failed to record play" },
-      { status: 500, headers: corsHeaders },
+      { status: 500, headers: getCorsHeaders(request) },
     )
   }
 }
