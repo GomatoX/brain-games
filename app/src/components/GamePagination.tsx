@@ -27,7 +27,7 @@ export const GamePagination = ({
   page,
   totalPages,
   total,
-  pageSize = 12,
+  pageSize = 10,
   basePath,
 }: {
   page: number

@@ -7,7 +7,7 @@ import { GameListClient } from "@/components/GameListClient"
 import { mapGame } from "@/lib/game-types"
 import { promoteScheduledGames } from "@/lib/schedule-publisher"
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 export default async function CrosswordsPage({
   searchParams,
