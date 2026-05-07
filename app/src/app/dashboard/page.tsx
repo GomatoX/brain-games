@@ -6,6 +6,7 @@ import {
   wordsearches,
   sudoku,
   users,
+  organizations,
   playEvents,
 } from "@/db/schema"
 import { and, eq, count, sum, desc, sql, gte } from "drizzle-orm"
@@ -43,11 +44,28 @@ export type HeatmapCell = {
   count: number
 }
 
+/** Return the UTC offset in milliseconds for a given IANA timezone at a point in time. */
+const getTimezoneOffsetMs = (date: Date, tz: string): number => {
+  // Format the date in the target timezone and parse back to get the offset
+  const utcMs = date.getTime()
+  const localStr = date.toLocaleString("en-US", { timeZone: tz })
+  const localMs = new Date(localStr).getTime()
+  return localMs - utcMs
+}
+
 export default async function DashboardPage() {
   const user = await getAuthenticatedUser()
   await promoteScheduledGames()
 
   const oid = user.orgId
+
+  // Fetch org timezone for heatmap/chart offset
+  const orgRow = await db
+    .select({ timezone: organizations.timezone })
+    .from(organizations)
+    .where(eq(organizations.id, oid))
+    .limit(1)
+    .then((r) => r[0])
 
   // ── Counts, published, drafts, plays ──
   const [
@@ -167,18 +185,22 @@ export default async function DashboardPage() {
     wordsearches: wsIds.map((r) => r.id),
   }
 
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10)
+  // Convert UTC timestamps to local time for display.
+  // playedAt is stored as UTC; apply the org's timezone offset so
+  // the heatmap hours and daily chart dates match the user's wall clock.
+  const orgTz = orgRow?.timezone || "Europe/Vilnius"
+  const utcNow = new Date()
+  const offsetMs = getTimezoneOffsetMs(utcNow, orgTz)
+  const offsetSign = offsetMs >= 0 ? "+" : "-"
+  const offsetHours = Math.abs(offsetMs) / 3600000
+  const offsetModifier = `${offsetSign}${offsetHours} hours`
+  const localPlayedAt = sql`datetime(${playEvents.playedAt}, '${sql.raw(offsetModifier)}')`
 
-  // Query daily play counts per game type
-  const dailyPlaysRaw = await db
-    .select({
-      date: sql<string>`date(${playEvents.playedAt})`.as("play_date"),
-      gameType: playEvents.gameType,
-      cnt: count(),
-    })
-    .from(playEvents)
-    .where(gte(sql`date(${playEvents.playedAt})`, fourteenDaysAgo))
-    .groupBy(sql`date(${playEvents.playedAt})`, playEvents.gameType)
+  const toLocalDate = (ms: number) => {
+    const d = new Date(ms)
+    return d.toLocaleDateString("sv-SE", { timeZone: orgTz })
+  }
+  const fourteenDaysAgo = toLocalDate(Date.now() - 14 * 86400000)
 
   // Filter to only org games
   const orgGameIdSet = new Set([
@@ -187,32 +209,30 @@ export default async function DashboardPage() {
     ...allGameIds.wordsearches,
   ])
 
-  // We need to also filter by gameId for org scoping — but since we group,
-  // let's query with a game ID filter instead
   const allOrgIds = [...orgGameIdSet]
-  let dailyPlaysFiltered: typeof dailyPlaysRaw = []
+  let dailyPlaysFiltered: { date: string; gameType: string; cnt: number }[] = []
 
   if (allOrgIds.length > 0) {
     dailyPlaysFiltered = await db
       .select({
-        date: sql<string>`date(${playEvents.playedAt})`.as("play_date"),
+        date: sql<string>`date(${localPlayedAt})`.as("play_date"),
         gameType: playEvents.gameType,
         cnt: count(),
       })
       .from(playEvents)
       .where(
         and(
-          gte(sql`date(${playEvents.playedAt})`, fourteenDaysAgo),
+          gte(sql`date(${localPlayedAt})`, fourteenDaysAgo),
           sql`${playEvents.gameId} IN (${sql.join(allOrgIds.map((id) => sql`${id}`), sql`, `)})`
         )
       )
-      .groupBy(sql`date(${playEvents.playedAt})`, playEvents.gameType)
+      .groupBy(sql`date(${localPlayedAt})`, playEvents.gameType)
   }
 
-  // Build 14-day series
+  // Build 14-day series (in org's local timezone)
   const dailyPlaysMap: Record<string, DailyPlays> = {}
   for (let i = 13; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)
+    const d = toLocalDate(Date.now() - i * 86400000)
     dailyPlaysMap[d] = { date: d, crosswords: 0, wordgames: 0, wordsearches: 0 }
   }
   for (const row of dailyPlaysFiltered) {
@@ -226,26 +246,26 @@ export default async function DashboardPage() {
   const dailyPlays = Object.values(dailyPlaysMap)
 
   // ── Heatmap (plays by day-of-week and hour, last 30 days) ──
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
+  const thirtyDaysAgo = toLocalDate(Date.now() - 30 * 86400000)
 
   let heatmapData: HeatmapCell[] = []
   if (allOrgIds.length > 0) {
     const heatRaw = await db
       .select({
-        dayOfWeek: sql<number>`cast(strftime('%w', ${playEvents.playedAt}) as integer)`.as("dow"),
-        hour: sql<number>`cast(strftime('%H', ${playEvents.playedAt}) as integer)`.as("hr"),
+        dayOfWeek: sql<number>`cast(strftime('%w', ${localPlayedAt}) as integer)`.as("dow"),
+        hour: sql<number>`cast(strftime('%H', ${localPlayedAt}) as integer)`.as("hr"),
         cnt: count(),
       })
       .from(playEvents)
       .where(
         and(
-          gte(sql`date(${playEvents.playedAt})`, thirtyDaysAgo),
+          gte(sql`date(${localPlayedAt})`, thirtyDaysAgo),
           sql`${playEvents.gameId} IN (${sql.join(allOrgIds.map((id) => sql`${id}`), sql`, `)})`
         )
       )
       .groupBy(
-        sql`cast(strftime('%w', ${playEvents.playedAt}) as integer)`,
-        sql`cast(strftime('%H', ${playEvents.playedAt}) as integer)`
+        sql`cast(strftime('%w', ${localPlayedAt}) as integer)`,
+        sql`cast(strftime('%H', ${localPlayedAt}) as integer)`
       )
 
     heatmapData = heatRaw.map((r) => ({

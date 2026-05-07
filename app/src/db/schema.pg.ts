@@ -15,6 +15,7 @@ export const organizations = pgTable("organizations", {
   name: text("name").notNull(),
   apiToken: text("api_token").unique(),
   defaultLanguage: text("default_language").default("lt"),
+  timezone: text("timezone").default("Europe/Vilnius"),
   defaultBranding: text("default_branding"),
   logoUrl: text("logo_url"),
   shareImageUrl: text("share_image_url"),

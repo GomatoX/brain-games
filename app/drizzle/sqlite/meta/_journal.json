@@ -22,6 +22,13 @@
       "when": 1778160524896,
       "tag": "0002_lonely_scalphunter",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1778187921034,
+      "tag": "0003_bright_tyger_tiger",
+      "breakpoints": true
     }
   ]
 }

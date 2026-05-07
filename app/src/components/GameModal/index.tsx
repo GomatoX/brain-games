@@ -54,9 +54,15 @@ export const GameModal = ({
   // ── Form state ──
   const [title, setTitle] = useState(game?.title || "")
   const [status, setStatus] = useState(game?.status || "draft")
-  const [scheduledDate, setScheduledDate] = useState(
-    game?.scheduled_date || "",
-  )
+  const [scheduledDate, setScheduledDate] = useState(() => {
+    const raw = game?.scheduled_date || ""
+    if (!raw) return ""
+    // datetime-local expects "YYYY-MM-DDTHH:mm" in local time
+    const d = new Date(raw)
+    if (isNaN(d.getTime())) return ""
+    const pad = (n: number) => String(n).padStart(2, "0")
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  })
   const [difficulty, setDifficulty] = useState(game?.difficulty || "Medium")
   const [topic, setTopic] = useState("")
 

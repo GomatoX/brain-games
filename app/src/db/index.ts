@@ -367,6 +367,22 @@ if (isPostgres) {
     }
   }
 
+  // ─── Legacy auto-migrate: add timezone to organizations ──────
+  try {
+    const orgCols = sqlite
+      .pragma("table_info(organizations)")
+      .map((c: { name: string }) => c.name)
+    if (!orgCols.includes("timezone")) {
+      console.log("[migrate] Adding timezone column to organizations...")
+      sqlite.exec(
+        "ALTER TABLE organizations ADD COLUMN timezone TEXT DEFAULT 'Europe/Vilnius';",
+      )
+      console.log("[migrate] ✅ timezone column added")
+    }
+  } catch (err) {
+    console.error("[migrate] timezone column may already exist:", err)
+  }
+
   // ─── Branding backfill: flat columns → JSON tokens ───────────
   // Idempotent: skips rows where `tokens` is already populated.
   try {
