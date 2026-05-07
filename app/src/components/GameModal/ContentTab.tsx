@@ -462,6 +462,23 @@ const CrosswordContent = ({
         </Field>
       </div>
 
+      <Field>
+        <FieldLabel htmlFor="main-word">
+          Main word{" "}
+          <span className="font-normal normal-case tracking-normal text-muted-foreground">
+            hidden phrase revealed by solving — pick one letter per word below
+          </span>
+        </FieldLabel>
+        <Input
+          id="main-word"
+          type="text"
+          value={mainWord}
+          onChange={(e) => onMainWordChange(e.target.value.toUpperCase())}
+          placeholder="e.g. DISCOVERY"
+          className="font-mono uppercase"
+        />
+      </Field>
+
       <div className="cw-edit-grid">
         <div className="cw-edit-words">
           <FieldLabel>

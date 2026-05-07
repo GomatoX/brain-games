@@ -1,0 +1,1415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Overview · Rustycogs</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css?v=11" />
+<style>
+  /* ============ OVERVIEW PAGE ============ */
+  .ov-main {
+    flex: 1;
+    overflow: auto;
+    padding: 28px 36px 60px;
+    background: var(--tool-bg);
+    min-width: 0;
+  }
+  .ov-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ----- Hero ----- */
+  .ov-hero {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    padding: 22px 24px;
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 12px;
+    align-items: center;
+  }
+  .ov-hero-greeting {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .ov-hero-eyebrow {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--tool-text-faint);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ov-hero-eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--tool-good);
+    box-shadow: 0 0 0 3px rgba(21,128,61,0.12);
+  }
+  .ov-hero-greeting h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--tool-text);
+  }
+  .ov-hero-greeting p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--tool-text-soft);
+  }
+  .ov-hero-greeting strong { color: var(--tool-text); font-weight: 500; }
+  .ov-hero-actions { display: flex; gap: 8px; }
+
+  /* ----- Stat strip ----- */
+  .ov-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--tool-border);
+    border: 1px solid var(--tool-border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .ov-stat {
+    background: var(--tool-surface);
+    padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative;
+  }
+  .ov-stat-label {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--tool-text-faint);
+  }
+  .ov-stat-row {
+    display: flex; align-items: baseline; gap: 8px; justify-content: space-between;
+  }
+  .ov-stat-num {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--tool-text);
+    line-height: 1;
+  }
+  .ov-stat-delta {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--tool-good);
+    background: rgba(21,128,61,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .ov-stat-delta.flat { color: var(--tool-text-faint); background: var(--tool-surface-2); }
+  .ov-stat-delta.down { color: #b91c1c; background: rgba(185,28,28,0.06); }
+  .ov-stat-spark {
+    height: 24px;
+    display: flex; align-items: flex-end; gap: 2px;
+  }
+  .ov-stat-spark .bar {
+    flex: 1;
+    background: var(--tool-accent);
+    opacity: 0.55;
+    border-radius: 1.5px;
+    min-height: 2px;
+    transition: opacity 0.12s;
+  }
+  .ov-stat-spark .bar.last { opacity: 1; }
+
+  /* ----- Section heading ----- */
+  .ov-sec-head {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .ov-sec-head h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tool-text);
+    letter-spacing: -0.005em;
+  }
+  .ov-sec-head .ov-sec-sub {
+    font-size: 12.5px;
+    color: var(--tool-text-faint);
+  }
+  .ov-sec-head .ov-sec-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: var(--tool-accent);
+    text-decoration: none;
+  }
+  .ov-sec-head .ov-sec-link:hover { text-decoration: underline; }
+
+  /* ----- Game cards grid ----- */
+  .ov-games {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 1100px) {
+    .ov-games { grid-template-columns: 1fr; }
+    .ov-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .ov-game {
+    --gc: var(--tool-accent);
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 12px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 18px;
+    transition: border-color 0.12s, transform 0.12s, box-shadow 0.12s;
+    position: relative;
+    overflow: hidden;
+  }
+  .ov-game::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--gc);
+  }
+  .ov-game:hover {
+    border-color: var(--gc);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  }
+  .ov-game.coming {
+    background: var(--tool-bg);
+    opacity: 0.78;
+  }
+  .ov-game.coming::before { background: var(--tool-border-strong); }
+  .ov-game.coming:hover { transform: none; box-shadow: none; border-color: var(--tool-border); }
+
+  .ov-game-body { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .ov-game-head { display: flex; align-items: flex-start; gap: 12px; }
+  .ov-game-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--gc);
+    color: white;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04), inset 0 -1px 0 rgba(0,0,0,0.06);
+  }
+  .ov-game.coming .ov-game-icon {
+    background: var(--tool-surface-2);
+    color: var(--tool-text-faint);
+    box-shadow: none;
+  }
+  .ov-game-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .ov-game-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tool-text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ov-game-soon-tag {
+    font-size: 9.5px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--tool-surface-2);
+    color: var(--tool-text-faint);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .ov-game-desc {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--tool-text-soft);
+    line-height: 1.45;
+  }
+  .ov-game-stats {
+    display: flex; gap: 18px;
+    padding: 10px 0 0;
+    border-top: 1px dashed var(--tool-border);
+  }
+  .ov-game-stat { display: flex; flex-direction: column; gap: 2px; }
+  .ov-game-stat-num {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--tool-text);
+    line-height: 1;
+  }
+  .ov-game-stat-num.muted { color: var(--tool-text-faint); }
+  .ov-game-stat-label {
+    font-size: 10.5px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--tool-text-faint);
+  }
+  .ov-game-actions {
+    display: flex; gap: 8px; margin-top: auto;
+  }
+  .ov-game-actions .btn-primary {
+    background: var(--gc);
+    border-color: transparent;
+  }
+  .ov-game-actions .btn-primary:hover { filter: brightness(0.92); }
+
+  /* Mini preview tile in each game card */
+  .ov-mini {
+    background: linear-gradient(180deg, var(--tool-bg), var(--tool-surface-2));
+    border: 1px solid var(--tool-border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    align-self: stretch;
+    position: relative;
+  }
+  .ov-game.coming .ov-mini {
+    background: repeating-linear-gradient(45deg, var(--tool-bg) 0 6px, var(--tool-surface-2) 6px 12px);
+  }
+
+  /* Crossword mini */
+  .mini-cw { display: grid; grid-template-columns: repeat(5, 14px); grid-auto-rows: 14px; gap: 1px; }
+  .mini-cw span {
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 1.5px;
+    font-size: 8px;
+    display: grid; place-items: center;
+    color: var(--tool-text);
+    font-weight: 600;
+  }
+  .mini-cw span.b { background: var(--tool-text); border-color: var(--tool-text); }
+  .mini-cw span.a { background: var(--tool-accent); color: white; border-color: var(--tool-accent); }
+
+  /* Word search mini */
+  .mini-ws { display: grid; grid-template-columns: repeat(6, 13px); grid-auto-rows: 13px; gap: 1px; font-family: var(--font-mono); font-size: 8px; }
+  .mini-ws span {
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    color: var(--tool-text-faint);
+    display: grid; place-items: center;
+    border-radius: 1.5px;
+  }
+  .mini-ws span.h { background: rgba(21,128,61,0.18); color: var(--tool-good); border-color: rgba(21,128,61,0.3); font-weight: 600; }
+
+  /* Word game mini */
+  .mini-wg { display: flex; flex-direction: column; gap: 2px; }
+  .mini-wg .row { display: flex; gap: 2px; }
+  .mini-wg .t {
+    width: 16px; height: 18px;
+    border: 1px solid var(--tool-border);
+    border-radius: 2px;
+    display: grid; place-items: center;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--tool-text);
+    background: var(--tool-surface);
+    font-family: var(--font-mono);
+  }
+  .mini-wg .t.c { background: var(--tool-good); color: white; border-color: var(--tool-good); }
+  .mini-wg .t.p { background: #b45309; color: white; border-color: #b45309; }
+  .mini-wg .t.x { background: #6b6357; color: white; border-color: #6b6357; }
+
+  /* Sudoku mini */
+  .mini-su {
+    display: grid;
+    grid-template-columns: repeat(6, 12px);
+    grid-auto-rows: 12px;
+    gap: 1px;
+    border: 1px solid var(--tool-text);
+    padding: 1px;
+    background: var(--tool-text);
+  }
+  .mini-su span {
+    background: var(--tool-surface);
+    color: var(--tool-text);
+    font-size: 8px;
+    display: grid; place-items: center;
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+  .mini-su span.g { color: var(--tool-text-faint); font-weight: 400; }
+
+  /* ----- Recent activity table ----- */
+  .ov-recent {
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .ov-recent-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--tool-border);
+    background: var(--tool-surface);
+  }
+  .ov-recent-head h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .ov-recent-head .sub { font-size: 12.5px; color: var(--tool-text-faint); }
+  .ov-recent-head .spacer { flex: 1; }
+  .ov-recent table { width: 100%; border-collapse: collapse; }
+  .ov-recent thead th {
+    text-align: left;
+    padding: 8px 18px;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--tool-text-faint);
+    font-weight: 500;
+    background: var(--tool-bg);
+    border-bottom: 1px solid var(--tool-border);
+    font-family: var(--font-mono);
+  }
+  .ov-recent tbody td {
+    padding: 10px 18px;
+    border-top: 1px solid var(--tool-border);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .ov-recent tbody tr:first-child td { border-top: none; }
+  .ov-recent tbody tr { transition: background 0.1s; cursor: pointer; }
+  .ov-recent tbody tr:hover { background: var(--tool-bg); }
+  .ov-recent .rec-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .ov-recent .rec-glyph {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    color: white;
+    flex-shrink: 0;
+  }
+  .ov-recent .rec-name { font-weight: 500; color: var(--tool-text); }
+  .ov-recent .rec-sub { font-size: 11.5px; color: var(--tool-text-faint); font-family: var(--font-mono); }
+  .ov-recent .rec-when { font-family: var(--font-mono); font-size: 12px; color: var(--tool-text-faint); }
+  .ov-recent .rec-by { display: flex; align-items: center; gap: 8px; }
+  .ov-recent .rec-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--tool-accent-soft);
+    color: var(--tool-accent);
+    display: grid; place-items: center;
+    font-size: 10.5px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* ----- Setup card ----- */
+  .ov-setup {
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 220px 1fr auto;
+    gap: 22px;
+    align-items: center;
+  }
+  @media (max-width: 900px) {
+    .ov-setup { grid-template-columns: 1fr; }
+  }
+  .ov-setup-head h2 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .ov-setup-head p { margin: 0; font-size: 12.5px; color: var(--tool-text-soft); }
+  .ov-setup-progress {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px;
+  }
+  .ov-setup-bar {
+    flex: 1; height: 4px;
+    background: var(--tool-surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .ov-setup-bar > span {
+    display: block; height: 100%;
+    background: var(--tool-accent);
+    border-radius: 2px;
+  }
+  .ov-setup-pct {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--tool-accent);
+  }
+  .ov-setup-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 1100px) { .ov-setup-steps { grid-template-columns: repeat(2, 1fr); } }
+  .ov-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--tool-border);
+    border-radius: 8px;
+    background: var(--tool-bg);
+  }
+  .ov-step.done { background: var(--tool-surface); border-color: var(--tool-border); }
+  .ov-step.done .ov-step-text { color: var(--tool-text-faint); text-decoration: line-through; }
+  .ov-step-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--tool-border-strong);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .ov-step.done .ov-step-check {
+    background: var(--tool-accent);
+    border-color: var(--tool-accent);
+    color: white;
+  }
+  .ov-step-text { font-size: 12.5px; color: var(--tool-text); flex: 1; }
+  .ov-step-link {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--tool-accent);
+    text-decoration: none;
+  }
+  .ov-step-link:hover { text-decoration: underline; }
+
+  /* ============ ANALYTICS ============ */
+  .ov-analytics {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 1100px) { .ov-analytics { grid-template-columns: 1fr; } }
+
+  .ov-card {
+    background: var(--tool-surface);
+    border: 1px solid var(--tool-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .ov-card-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--tool-border);
+  }
+  .ov-card-head h3 {
+    margin: 0; font-size: 13.5px; font-weight: 600; color: var(--tool-text);
+  }
+  .ov-card-head .sub { font-size: 12px; color: var(--tool-text-faint); }
+  .ov-card-head .spacer { flex: 1; }
+  .ov-card-body { padding: 18px; }
+
+  .ov-range {
+    display: flex; gap: 1px;
+    background: var(--tool-border);
+    border: 1px solid var(--tool-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .ov-range button {
+    background: var(--tool-surface);
+    border: none;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--tool-text-soft);
+    cursor: pointer;
+  }
+  .ov-range button.active { background: var(--tool-text); color: white; }
+  .ov-range button:hover:not(.active) { background: var(--tool-bg); }
+
+  /* Plays-over-time chart */
+  .ov-chart {
+    height: 180px;
+    position: relative;
+  }
+  .ov-chart svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .ov-chart-legend {
+    display: flex; gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--tool-border);
+  }
+  .ov-chart-legend .item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px;
+    color: var(--tool-text-soft);
+  }
+  .ov-chart-legend .swatch {
+    width: 10px; height: 10px; border-radius: 2px;
+  }
+  .ov-chart-legend strong { color: var(--tool-text); font-weight: 600; margin-left: 4px; }
+
+  /* Donut */
+  .ov-donut {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 16px;
+    align-items: center;
+  }
+  .ov-donut svg { width: 120px; height: 120px; }
+  .ov-donut-center {
+    text-anchor: middle;
+    fill: var(--tool-text);
+  }
+  .ov-donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .ov-donut-row {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    gap: 8px; align-items: center;
+    font-size: 12px;
+  }
+  .ov-donut-row .sw { width: 10px; height: 10px; border-radius: 2px; }
+  .ov-donut-row .lab { color: var(--tool-text-soft); }
+  .ov-donut-row .val { font-family: var(--font-mono); font-size: 11.5px; color: var(--tool-text); }
+
+  /* Top puzzles list */
+  .ov-top { display: flex; flex-direction: column; }
+  .ov-top-row {
+    display: grid;
+    grid-template-columns: 18px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 12px 18px;
+    border-top: 1px solid var(--tool-border);
+    cursor: pointer;
+  }
+  .ov-top-row:first-child { border-top: none; }
+  .ov-top-row:hover { background: var(--tool-bg); }
+  .ov-top-rank {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--tool-text-faint);
+    text-align: center;
+  }
+  .ov-top-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tool-text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ov-top-name .pill {
+    font-size: 9.5px; font-family: var(--font-mono);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 2px 5px; border-radius: 3px;
+    color: white;
+  }
+  .ov-top-bar {
+    margin-top: 4px;
+    height: 4px;
+    background: var(--tool-surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ov-top-bar > span { display: block; height: 100%; border-radius: 2px; }
+  .ov-top-meta {
+    display: flex; flex-direction: column; gap: 2px; align-items: flex-end;
+  }
+  .ov-top-plays { font-family: var(--font-mono); font-size: 12.5px; color: var(--tool-text); font-weight: 600; }
+  .ov-top-rate { font-size: 11px; color: var(--tool-text-faint); }
+
+  /* Sources / horizontal bars */
+  .ov-bars { display: flex; flex-direction: column; gap: 14px; }
+  .ov-bar-row {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 12px; align-items: center;
+    font-size: 12px;
+  }
+  .ov-bar-lab { color: var(--tool-text-soft); }
+  .ov-bar-track {
+    height: 6px;
+    background: var(--tool-surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .ov-bar-track > span { display: block; height: 100%; border-radius: 3px; }
+  .ov-bar-val { font-family: var(--font-mono); font-size: 11.5px; color: var(--tool-text); }
+
+  /* Heatmap */
+  .ov-heat {
+    display: grid;
+    grid-template-columns: 24px repeat(24, 1fr);
+    gap: 2px;
+  }
+  .ov-heat-row { display: contents; }
+  .ov-heat-row > .lab {
+    grid-column: 1;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--tool-text-faint);
+    display: grid; place-items: center;
+  }
+  .ov-heat-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: var(--tool-surface-2);
+  }
+  .ov-heat-axis {
+    display: grid;
+    grid-template-columns: 24px repeat(24, 1fr);
+    gap: 2px;
+    margin-top: 4px;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    color: var(--tool-text-faint);
+  }
+  .ov-heat-axis > span:first-child { grid-column: 1; }
+  .ov-heat-legend {
+    display: flex; align-items: center; gap: 6px;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--tool-text-faint);
+  }
+  .ov-heat-legend .scale {
+    display: flex; gap: 2px;
+  }
+  .ov-heat-legend .scale span {
+    width: 12px; height: 12px; border-radius: 2px;
+  }
+
+  /* Funnel */
+  .ov-funnel { display: flex; flex-direction: column; gap: 8px; }
+  .ov-funnel-row { position: relative; }
+  .ov-funnel-bar {
+    height: 36px;
+    background: var(--tool-accent);
+    border-radius: 4px;
+    display: flex; align-items: center; padding: 0 12px;
+    color: white;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+  .ov-funnel-meta {
+    margin-top: 4px;
+    display: flex; gap: 14px;
+    font-size: 11px;
+    color: var(--tool-text-faint);
+    font-family: var(--font-mono);
+  }
+  .ov-funnel-meta .delta { color: #b91c1c; }
+
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="icons.jsx"></script>
+
+<script type="text/babel">
+const { useState } = React;
+
+// ----- Side nav (shared shape across all admin pages) -----
+const SideNav = ({ active = 'overview' }) => (
+  <nav className="nav">
+    <div className="nav-brand">
+      <div className="nav-brand-mark" style={{background:'#1a1814'}}>LR</div>
+      <span>LRT<span style={{color:'var(--tool-text-faint)'}}>.lt</span></span>
+    </div>
+
+    <a className={`nav-item ${active==='overview'?'active':''}`} href="#"><Icon name="overview" /><span>Overview</span></a>
+
+    <div className="nav-section-label">Games</div>
+    <a className={`nav-item ${active==='crossword'?'active':''}`} href="Create Crossword.html"><Icon name="crossword" /><span>Crosswords</span></a>
+    <a className={`nav-item ${active==='wordgame'?'active':''}`} href="Create Word Game.html"><Icon name="wordgame" /><span>Word Game</span></a>
+    <a className={`nav-item ${active==='wordsearch'?'active':''}`} href="Create Word Search.html"><Icon name="wordsearch" /><span>Word Search</span></a>
+    <a className="nav-item" style={{opacity: 0.55}}><Icon name="sudoku" /><span>Sudoku</span><span style={{marginLeft:'auto', fontSize:9, fontFamily:'var(--font-mono)', background:'var(--tool-surface-2)', padding:'2px 5px', borderRadius:3, letterSpacing:'0.04em'}}>SOON</span></a>
+
+    <div className="nav-section-label">Workspace</div>
+    <a className={`nav-item ${active==='branding'?'active':''}`} href="Branding.html"><Icon name="branding" /><span>Branding</span></a>
+    <a className="nav-item"><Icon name="team" /><span>Team</span></a>
+    <a className="nav-item"><Icon name="keys" /><span>API Keys & Embeds</span></a>
+    <a className="nav-item"><Icon name="settings" /><span>Settings</span></a>
+
+    <div className="nav-spacer"></div>
+
+    <div className="nav-user">
+      <div className="nav-avatar">M</div>
+      <div className="nav-user-meta">
+        <div className="nav-user-name">Mak</div>
+        <div className="nav-user-mail">gomatok@gmail.com</div>
+      </div>
+      <button className="btn-ghost" style={{padding:6, borderRadius:6, border:'none', background:'none', color:'var(--tool-text-faint)'}}>
+        <Icon name="logout" size={16}/>
+      </button>
+    </div>
+  </nav>
+);
+
+// ----- Sparkline-as-bars (no SVG) -----
+const Spark = ({ data }) => {
+  const max = Math.max(...data, 1);
+  return (
+    <div className="ov-stat-spark">
+      {data.map((v, i) => (
+        <span
+          key={i}
+          className={`bar ${i === data.length - 1 ? 'last' : ''}`}
+          style={{ height: `${(v / max) * 100}%` }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// ----- Plays-over-time area chart -----
+const PlaysChart = ({ series, labels }) => {
+  // series = [{name, color, data: number[]}]
+  const W = 720, H = 180, PADL = 36, PADR = 8, PADT = 12, PADB = 24;
+  const all = series.flatMap(s => s.data);
+  const max = Math.max(...all) * 1.15;
+  const n = labels.length;
+  const x = (i) => PADL + (i / (n - 1)) * (W - PADL - PADR);
+  const y = (v) => PADT + (1 - v / max) * (H - PADT - PADB);
+
+  const linePath = (data) => data.map((v,i) => `${i===0?'M':'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const areaPath = (data) => `${linePath(data)} L${x(n-1).toFixed(1)},${(H-PADB).toFixed(1)} L${x(0).toFixed(1)},${(H-PADB).toFixed(1)} Z`;
+
+  // gridlines: 4 horizontal
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map(t => Math.round(max * t));
+
+  return (
+    <div className="ov-chart">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        <defs>
+          {series.map((s, i) => (
+            <linearGradient key={i} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={s.color} stopOpacity="0.22"/>
+              <stop offset="100%" stopColor={s.color} stopOpacity="0"/>
+            </linearGradient>
+          ))}
+        </defs>
+        {/* gridlines */}
+        {ticks.map((t, i) => (
+          <g key={i}>
+            <line x1={PADL} x2={W-PADR} y1={y(t)} y2={y(t)} stroke="var(--tool-border)" strokeDasharray={i===0?'0':'2 3'}/>
+            <text x={PADL-6} y={y(t)+3} fontSize="9" fontFamily="var(--font-mono)" fill="var(--tool-text-faint)" textAnchor="end">{t >= 1000 ? `${(t/1000).toFixed(0)}k` : t}</text>
+          </g>
+        ))}
+        {/* x labels */}
+        {labels.map((l, i) => (i % 2 === 0 || i === n-1) && (
+          <text key={i} x={x(i)} y={H-6} fontSize="9" fontFamily="var(--font-mono)" fill="var(--tool-text-faint)" textAnchor="middle">{l}</text>
+        ))}
+        {/* areas */}
+        {series.map((s, i) => (
+          <path key={`a-${i}`} d={areaPath(s.data)} fill={`url(#grad-${i})`}/>
+        ))}
+        {/* lines */}
+        {series.map((s, i) => (
+          <path key={`l-${i}`} d={linePath(s.data)} fill="none" stroke={s.color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+        ))}
+        {/* end-dots */}
+        {series.map((s, i) => (
+          <circle key={`d-${i}`} cx={x(n-1)} cy={y(s.data[n-1])} r="3.5" fill={s.color} stroke="var(--tool-surface)" strokeWidth="2"/>
+        ))}
+      </svg>
+    </div>
+  );
+};
+
+// ----- Donut chart -----
+const Donut = ({ slices, total, label }) => {
+  const R = 48, r = 32, C = 60;
+  let acc = 0;
+  const sum = slices.reduce((s,x) => s + x.value, 0);
+  return (
+    <svg viewBox="0 0 120 120">
+      <circle cx={C} cy={C} r={(R+r)/2} fill="none" stroke="var(--tool-surface-2)" strokeWidth={R-r}/>
+      {slices.map((s, i) => {
+        const frac = s.value / sum;
+        const start = acc; acc += frac;
+        const len = 2 * Math.PI * ((R+r)/2);
+        return (
+          <circle
+            key={i}
+            cx={C} cy={C} r={(R+r)/2}
+            fill="none"
+            stroke={s.color}
+            strokeWidth={R-r}
+            strokeDasharray={`${frac * len} ${len}`}
+            strokeDashoffset={-start * len}
+            transform={`rotate(-90 ${C} ${C})`}
+          />
+        );
+      })}
+      <text x={C} y={C-2} className="ov-donut-center" fontSize="20" fontWeight="600">{total}</text>
+      <text x={C} y={C+14} className="ov-donut-center" fontSize="9" fontFamily="var(--font-mono)" fill="var(--tool-text-faint)">{label}</text>
+    </svg>
+  );
+};
+
+// ----- Heatmap (7 days × 24 hours) -----
+const Heatmap = () => {
+  // generate plausible activity: peaks around 8-10am, 12-2pm, 8-10pm
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const peak = (h) => {
+    const peaks = [{h:9,w:3},{h:13,w:2},{h:21,w:3}];
+    return peaks.reduce((s,p) => s + Math.exp(-Math.pow(h-p.h,2)/(2*p.w*p.w)), 0);
+  };
+  const grid = days.map((d, di) => {
+    const dayMul = di >= 5 ? 1.3 : 1; // weekend boost
+    return Array.from({length: 24}, (_, h) => {
+      const v = peak(h) * dayMul * (0.7 + Math.sin(di*1.7 + h*0.4)*0.15 + Math.cos(h*0.9+di)*0.1);
+      return Math.max(0, v);
+    });
+  });
+  const max = Math.max(...grid.flat());
+  const color = (v) => {
+    const t = v / max;
+    if (t < 0.05) return 'var(--tool-surface-2)';
+    // interpolate towards accent
+    const alpha = 0.15 + t * 0.85;
+    return `rgba(194,65,12,${alpha.toFixed(2)})`;
+  };
+  return (
+    <>
+      <div className="ov-heat">
+        {days.map((d, di) => (
+          <div className="ov-heat-row" key={di}>
+            <span className="lab">{d}</span>
+            {grid[di].map((v, h) => (
+              <div key={h} className="ov-heat-cell" style={{background: color(v)}} title={`${d} ${h}:00 — ${Math.round(v*820)} plays`}/>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="ov-heat-axis">
+        <span></span>
+        {Array.from({length:24}, (_,h) => h).map(h => (
+          <span key={h} style={{textAlign:'center', visibility: h % 4 === 0 ? 'visible' : 'hidden'}}>{h}</span>
+        ))}
+      </div>
+    </>
+  );
+};
+
+// ----- Mini game previews -----
+const MiniCrossword = () => {
+  // 5×5: B=blocked, A=accent (active), letter or null
+  const cells = [
+    'C','A','T',null,'b',
+    'A',null,null,null,'A',
+    'b','D','O','G','T',
+    null,null,null,null,null,
+    null,null,null,null,null,
+  ];
+  return (
+    <div className="mini-cw">
+      {cells.slice(0, 15).map((c, i) => {
+        if (c === 'b') return <span key={i} className="b"/>;
+        if (c === null) return <span key={i} style={{visibility:'hidden'}}/>;
+        const isAccent = (i === 1); // 'A'
+        return <span key={i} className={isAccent ? 'a' : ''}>{c}</span>;
+      })}
+    </div>
+  );
+};
+
+const MiniWordSearch = () => {
+  const grid = [
+    'B','R','A','I','N','S',
+    'O','S','M','A','R','T',
+    'X','C','L','E','V','E',
+    'Q','U','I','Z','D','R',
+  ];
+  // highlight BRAIN (row 0 cols 0–4) and CLEVER (row 2 col 1–6)
+  const highlight = new Set([0,1,2,3,4, 13,14,15,16,17]);
+  return (
+    <div className="mini-ws">
+      {grid.map((c, i) => <span key={i} className={highlight.has(i) ? 'h' : ''}>{c}</span>)}
+    </div>
+  );
+};
+
+const MiniWordGame = () => {
+  // 3 guesses → BRAVE / SHARK / CLEAN (mock)
+  const rows = [
+    ['B','R','A','V','E'].map((l,i) => ({l, s: i===2 ? 'p' : (i===4 ? 'c' : 'x')})),
+    ['S','H','A','R','K'].map((l,i) => ({l, s: i===2 ? 'c' : (i===3 ? 'p' : 'x')})),
+    ['C','L','E','A','N'].map((l,i) => ({l, s: 'c'})),
+  ];
+  return (
+    <div className="mini-wg">
+      {rows.map((row, ri) => (
+        <div className="row" key={ri}>
+          {row.map((t, i) => <span key={i} className={`t ${t.s}`}>{t.l}</span>)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const MiniSudoku = () => {
+  // 6×6 abstracted, mix of given (g) and user values
+  const data = [
+    [5,'',3,'',7,''],
+    ['',6,'',1,'',8],
+    [4,'','',5,'',2],
+    ['',9,7,'',3,''],
+    [2,'',6,'',4,''],
+    ['',1,'',7,'',5],
+  ];
+  return (
+    <div className="mini-su">
+      {data.flat().map((v, i) => (
+        <span key={i} className={typeof v === 'number' ? 'g' : ''}>{v || ' '}</span>
+      ))}
+    </div>
+  );
+};
+
+// ----- Page -----
+const App = () => {
+  const games = [
+    {
+      id: 'crossword', label: 'Crosswords',
+      desc: 'Across-and-down clue grids. Editor with inline AI clue generation.',
+      color: '#7e22ce',
+      icon: 'crossword',
+      published: 8, drafts: 2, plays: 14200,
+      Mini: MiniCrossword,
+      href: 'Create Crossword.html',
+    },
+    {
+      id: 'wordgame', label: 'Word Game',
+      desc: 'Single-word challenges with hints. Players guess letter by letter.',
+      color: '#15803d',
+      icon: 'wordgame',
+      published: 24, drafts: 3, plays: 38900,
+      Mini: MiniWordGame,
+      href: 'Create Word Game.html',
+    },
+    {
+      id: 'wordsearch', label: 'Word Search',
+      desc: 'Hidden-word grids in any direction. Bulk-add or generate by topic.',
+      color: '#c2410c',
+      icon: 'wordsearch',
+      published: 12, drafts: 1, plays: 22100,
+      Mini: MiniWordSearch,
+      href: 'Create Word Search.html',
+    },
+    {
+      id: 'sudoku', label: 'Sudoku',
+      desc: 'Number-placement on 9×9 grids. Difficulty from easy to expert.',
+      color: '#9a9285',
+      icon: 'sudoku',
+      published: 0, drafts: 0, plays: 0,
+      Mini: MiniSudoku,
+      coming: true,
+    },
+  ];
+
+  const recent = [
+    { name: 'Friday crossword', sub: '22×22 · 78 clues', type: 'crossword', color: '#7e22ce', when: '12 min ago', who: 'M', href: 'Create Crossword.html' },
+    { name: 'Animal wordsearch', sub: '15×15 · 12 words', type: 'wordsearch', color: '#c2410c', when: '2 hours ago', who: 'L', href: 'Create Word Search.html' },
+    { name: 'BRAVE', sub: '5 letters · medium', type: 'wordgame', color: '#15803d', when: 'Yesterday', who: 'M', href: 'Create Word Game.html' },
+    { name: 'Capitals quiz', sub: '20×20 · 24 words', type: 'wordsearch', color: '#c2410c', when: '2 days ago', who: 'A', href: 'Create Word Search.html' },
+    { name: 'Sunday cryptic', sub: '15×15 · 32 clues', type: 'crossword', color: '#7e22ce', when: '4 days ago', who: 'M', href: 'Create Crossword.html' },
+  ];
+
+  const total = games.filter(g => !g.coming).reduce((s,g) => s + g.published + g.drafts, 0);
+  const published = games.reduce((s,g) => s + g.published, 0);
+  const plays = games.reduce((s,g) => s + g.plays, 0);
+
+  const fmt = (n) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : `${n}`;
+
+  return (
+    <div className="app" data-screen-label="01 Overview">
+      <SideNav active="overview"/>
+
+      <main className="main ov-main">
+        <div className="ov-inner">
+
+          {/* HERO */}
+          <div className="ov-hero">
+            <div className="ov-hero-greeting">
+              <div className="ov-hero-eyebrow">
+                <span className="dot"></span>
+                LRT.lt workspace · all systems live
+              </div>
+              <h1>Good afternoon, Mak</h1>
+              <p>You have <strong>3 unpublished drafts</strong> and a Sunday crossword scheduled for tomorrow morning.</p>
+            </div>
+            <div className="ov-hero-actions">
+              <button className="btn">View activity</button>
+              <button className="btn btn-primary">+ New game</button>
+            </div>
+          </div>
+
+          {/* STATS */}
+          <div className="ov-stats">
+            <div className="ov-stat">
+              <span className="ov-stat-label">Total games</span>
+              <div className="ov-stat-row">
+                <span className="ov-stat-num">{total}</span>
+                <span className="ov-stat-delta">+4 wk</span>
+              </div>
+              <Spark data={[3,4,3,5,6,4,7,8]}/>
+            </div>
+            <div className="ov-stat">
+              <span className="ov-stat-label">Published</span>
+              <div className="ov-stat-row">
+                <span className="ov-stat-num">{published}</span>
+                <span className="ov-stat-delta">+2 wk</span>
+              </div>
+              <Spark data={[2,3,3,4,5,5,6,7]}/>
+            </div>
+            <div className="ov-stat">
+              <span className="ov-stat-label">Plays this week</span>
+              <div className="ov-stat-row">
+                <span className="ov-stat-num">{fmt(plays)}</span>
+                <span className="ov-stat-delta">+18%</span>
+              </div>
+              <Spark data={[4,5,3,6,7,5,9,11]}/>
+            </div>
+            <div className="ov-stat">
+              <span className="ov-stat-label">Avg completion</span>
+              <div className="ov-stat-row">
+                <span className="ov-stat-num">68%</span>
+                <span className="ov-stat-delta flat">±0</span>
+              </div>
+              <Spark data={[6,7,7,6,8,7,7,7]}/>
+            </div>
+          </div>
+
+          {/* GAMES */}
+          <section>
+            <div className="ov-sec-head">
+              <h2>Game library</h2>
+              <span className="ov-sec-sub">Pick a type to browse, filter, and create puzzles.</span>
+            </div>
+            <div className="ov-games">
+              {games.map(g => {
+                const Mini = g.Mini;
+                return (
+                  <div
+                    key={g.id}
+                    className={`ov-game ${g.coming ? 'coming' : ''}`}
+                    style={{'--gc': g.color}}
+                  >
+                    <div className="ov-game-body">
+                      <div className="ov-game-head">
+                        <div className="ov-game-icon">
+                          <Icon name={g.icon} size={20}/>
+                        </div>
+                        <div className="ov-game-head-text">
+                          <h3 className="ov-game-title">
+                            {g.label}
+                            {g.coming && <span className="ov-game-soon-tag">Coming soon</span>}
+                          </h3>
+                          <p className="ov-game-desc">{g.desc}</p>
+                        </div>
+                      </div>
+
+                      <div className="ov-game-stats">
+                        <div className="ov-game-stat">
+                          <span className={`ov-game-stat-num ${g.coming ? 'muted' : ''}`}>{g.published}</span>
+                          <span className="ov-game-stat-label">Published</span>
+                        </div>
+                        <div className="ov-game-stat">
+                          <span className={`ov-game-stat-num ${g.coming ? 'muted' : ''}`}>{g.drafts}</span>
+                          <span className="ov-game-stat-label">Drafts</span>
+                        </div>
+                        <div className="ov-game-stat">
+                          <span className={`ov-game-stat-num ${g.coming ? 'muted' : ''}`}>{fmt(g.plays)}</span>
+                          <span className="ov-game-stat-label">Plays</span>
+                        </div>
+                      </div>
+
+                      <div className="ov-game-actions">
+                        {g.coming ? (
+                          <button className="btn" disabled style={{opacity:0.5, cursor:'not-allowed'}}>Notify me</button>
+                        ) : (
+                          <>
+                            <a className="btn btn-primary" href={g.href}>+ Create new</a>
+                            <a className="btn" href={g.href}>Browse all →</a>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="ov-mini">
+                      <Mini/>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* RECENT */}
+          <div className="ov-recent">
+            <div className="ov-recent-head">
+              <h2>Recently edited</h2>
+              <span className="sub">Pick up where you left off.</span>
+              <span className="spacer"></span>
+              <a className="ov-sec-link" style={{color:'var(--tool-accent)', fontSize:12.5, textDecoration:'none'}}>View all →</a>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style={{width: '45%'}}>Puzzle</th>
+                  <th>Type</th>
+                  <th>Edited by</th>
+                  <th style={{textAlign: 'right', paddingRight: 18}}>When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((r, i) => (
+                  <tr key={i} onClick={() => location.href = r.href}>
+                    <td>
+                      <div className="rec-title">
+                        <div className="rec-glyph" style={{background: r.color}}>
+                          <Icon name={r.type} size={14}/>
+                        </div>
+                        <div>
+                          <div className="rec-name">{r.name}</div>
+                          <div className="rec-sub">{r.sub}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{color: 'var(--tool-text-soft)', textTransform: 'capitalize', fontSize: 12.5}}>{r.type}</td>
+                    <td>
+                      <div className="rec-by">
+                        <div className="rec-avatar">{r.who}</div>
+                        <span style={{fontSize:12.5, color:'var(--tool-text-soft)'}}>
+                          {r.who === 'M' ? 'Mak' : r.who === 'L' ? 'Linas' : 'Aušra'}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{textAlign: 'right', paddingRight: 18}}>
+                      <span className="rec-when">{r.when}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* PLAYS CHART + DONUT */}
+          <div className="ov-analytics">
+            <div className="ov-card">
+              <div className="ov-card-head">
+                <h3>Plays over time</h3>
+                <span className="sub">All games · last 14 days</span>
+                <span className="spacer"></span>
+                <div className="ov-range">
+                  <button>24h</button>
+                  <button>7d</button>
+                  <button className="active">14d</button>
+                  <button>30d</button>
+                  <button>90d</button>
+                </div>
+              </div>
+              <div className="ov-card-body">
+                <PlaysChart
+                  labels={['Apr 24','25','26','27','28','29','30','May 1','2','3','4','5','6','7']}
+                  series={[
+                    { name: 'Crosswords',  color: '#7e22ce', data: [820, 910, 880, 1020, 970, 1180, 1310, 1240, 1190, 1280, 1420, 1390, 1510, 1640] },
+                    { name: 'Word Game',   color: '#15803d', data: [1340,1410,1280,1490,1560,1720,1880,1810,1740,1900,2020,2110,2240,2380] },
+                    { name: 'Word Search', color: '#c2410c', data: [620, 680, 710, 790, 820, 970, 1090, 1040, 1020, 1140, 1230, 1280, 1380, 1490] },
+                  ]}
+                />
+                <div className="ov-chart-legend">
+                  <span className="item"><span className="swatch" style={{background:'#7e22ce'}}></span>Crosswords <strong>16.4k</strong></span>
+                  <span className="item"><span className="swatch" style={{background:'#15803d'}}></span>Word Game <strong>23.8k</strong></span>
+                  <span className="item"><span className="swatch" style={{background:'#c2410c'}}></span>Word Search <strong>14.9k</strong></span>
+                  <span className="item" style={{marginLeft:'auto'}}>Peak <strong>2.4k / day</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="ov-card">
+              <div className="ov-card-head">
+                <h3>Plays by game</h3>
+                <span className="sub">Share of total</span>
+              </div>
+              <div className="ov-card-body">
+                <div className="ov-donut">
+                  <Donut
+                    total="55.2k"
+                    label="PLAYS"
+                    slices={[
+                      { color: '#15803d', value: 23800 },
+                      { color: '#7e22ce', value: 16400 },
+                      { color: '#c2410c', value: 14900 },
+                    ]}
+                  />
+                  <div className="ov-donut-legend">
+                    <div className="ov-donut-row">
+                      <span className="sw" style={{background:'#15803d'}}></span>
+                      <span className="lab">Word Game</span>
+                      <span className="val">43%</span>
+                    </div>
+                    <div className="ov-donut-row">
+                      <span className="sw" style={{background:'#7e22ce'}}></span>
+                      <span className="lab">Crosswords</span>
+                      <span className="val">30%</span>
+                    </div>
+                    <div className="ov-donut-row">
+                      <span className="sw" style={{background:'#c2410c'}}></span>
+                      <span className="lab">Word Search</span>
+                      <span className="val">27%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* TOP PUZZLES + SOURCES */}
+          <div className="ov-analytics">
+            <div className="ov-card">
+              <div className="ov-card-head">
+                <h3>Top performing puzzles</h3>
+                <span className="sub">Ranked by plays · last 14 days</span>
+                <span className="spacer"></span>
+                <a className="ov-sec-link" style={{color:'var(--tool-accent)', fontSize:12.5, textDecoration:'none'}}>Full report →</a>
+              </div>
+              <div className="ov-top">
+                {[
+                  { rank: 1, name: 'Friday crossword', type: 'crossword', color: '#7e22ce', plays: 8420, rate: '74% finish', bar: 100 },
+                  { rank: 2, name: 'BRAVE',            type: 'wordgame',  color: '#15803d', plays: 6710, rate: '81% finish', bar: 79 },
+                  { rank: 3, name: 'Capitals quiz',    type: 'wordsearch',color: '#c2410c', plays: 5290, rate: '63% finish', bar: 63 },
+                  { rank: 4, name: 'Sunday cryptic',   type: 'crossword', color: '#7e22ce', plays: 4180, rate: '52% finish', bar: 50 },
+                  { rank: 5, name: 'Animal wordsearch',type: 'wordsearch',color: '#c2410c', plays: 3640, rate: '69% finish', bar: 43 },
+                ].map((r, i) => (
+                  <div className="ov-top-row" key={i}>
+                    <span className="ov-top-rank">#{r.rank}</span>
+                    <div>
+                      <div className="ov-top-name">
+                        {r.name}
+                        <span className="pill" style={{background: r.color}}>{r.type}</span>
+                      </div>
+                      <div className="ov-top-bar"><span style={{width: `${r.bar}%`, background: r.color}}></span></div>
+                    </div>
+                    <div className="ov-top-meta">
+                      <span className="ov-top-plays">{r.plays.toLocaleString()}</span>
+                      <span className="ov-top-rate">{r.rate}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="ov-card">
+              <div className="ov-card-head">
+                <h3>Traffic sources</h3>
+                <span className="sub">Where players come from</span>
+              </div>
+              <div className="ov-card-body">
+                <div className="ov-bars">
+                  {[
+                    { lab: 'lrt.lt embed',     pct: 62, val: '34.2k', color: 'var(--tool-accent)' },
+                    { lab: 'Direct link',      pct: 21, val: '11.6k', color: '#7e22ce' },
+                    { lab: 'Newsletter',       pct: 9,  val: '4.9k',  color: '#15803d' },
+                    { lab: 'Social',           pct: 5,  val: '2.7k',  color: '#0891b2' },
+                    { lab: 'Other',            pct: 3,  val: '1.7k',  color: '#9a9285' },
+                  ].map((r, i) => (
+                    <div className="ov-bar-row" key={i}>
+                      <span className="ov-bar-lab">{r.lab}</span>
+                      <div className="ov-bar-track"><span style={{width: `${r.pct}%`, background: r.color}}></span></div>
+                      <span className="ov-bar-val">{r.val} · {r.pct}%</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{marginTop: 18, paddingTop: 14, borderTop: '1px dashed var(--tool-border)', display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap: 12}}>
+                  <div>
+                    <div style={{fontSize:10, fontFamily:'var(--font-mono)', textTransform:'uppercase', color:'var(--tool-text-faint)', letterSpacing:'0.06em'}}>Mobile</div>
+                    <div style={{fontSize:18, fontWeight:600, marginTop:2}}>71%</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10, fontFamily:'var(--font-mono)', textTransform:'uppercase', color:'var(--tool-text-faint)', letterSpacing:'0.06em'}}>Desktop</div>
+                    <div style={{fontSize:18, fontWeight:600, marginTop:2}}>24%</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10, fontFamily:'var(--font-mono)', textTransform:'uppercase', color:'var(--tool-text-faint)', letterSpacing:'0.06em'}}>Tablet</div>
+                    <div style={{fontSize:18, fontWeight:600, marginTop:2}}>5%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ACTIVITY HEATMAP + FUNNEL */}
+          <div className="ov-analytics">
+            <div className="ov-card">
+              <div className="ov-card-head">
+                <h3>When players play</h3>
+                <span className="sub">Plays by day &amp; hour · last 30 days</span>
+                <span className="spacer"></span>
+                <div className="ov-heat-legend">
+                  Less
+                  <div className="scale">
+                    <span style={{background:'var(--tool-surface-2)'}}></span>
+                    <span style={{background:'rgba(194,65,12,0.25)'}}></span>
+                    <span style={{background:'rgba(194,65,12,0.5)'}}></span>
+                    <span style={{background:'rgba(194,65,12,0.75)'}}></span>
+                    <span style={{background:'rgba(194,65,12,1)'}}></span>
+                  </div>
+                  More
+                </div>
+              </div>
+              <div className="ov-card-body">
+                <Heatmap/>
+                <div style={{marginTop:14, paddingTop:12, borderTop:'1px dashed var(--tool-border)', display:'flex', gap:24, fontSize:12, color:'var(--tool-text-soft)'}}>
+                  <span><strong style={{color:'var(--tool-text)'}}>Peak hour</strong> · 9pm Sun (1.4k plays)</span>
+                  <span><strong style={{color:'var(--tool-text)'}}>Quiet</strong> · 4am Tue (12 plays)</span>
+                  <span><strong style={{color:'var(--tool-text)'}}>Avg session</strong> · 7m 22s</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="ov-card">
+              <div className="ov-card-head">
+                <h3>Player funnel</h3>
+                <span className="sub">Last 14 days</span>
+              </div>
+              <div className="ov-card-body">
+                <div className="ov-funnel">
+                  {[
+                    { lab: 'Visited',   n: 84200, w: 100, color: '#c2410c' },
+                    { lab: 'Started',   n: 55200, w: 65,  color: '#c2410c', delta: '−34%' },
+                    { lab: 'Half-way',  n: 41100, w: 49,  color: '#a8390b', delta: '−26%' },
+                    { lab: 'Completed', n: 37500, w: 45,  color: '#86310a', delta: '−9%' },
+                    { lab: 'Shared',    n: 4820,  w: 6,   color: '#5e220a', delta: '−87%' },
+                  ].map((r, i) => (
+                    <div className="ov-funnel-row" key={i}>
+                      <div className="ov-funnel-bar" style={{width: `${r.w}%`, background: r.color}}>
+                        {r.lab}
+                        <span style={{marginLeft:'auto', fontFamily:'var(--font-mono)', fontSize:11.5, fontWeight:400, opacity:0.9}}>{r.n.toLocaleString()}</span>
+                      </div>
+                      <div className="ov-funnel-meta">
+                        <span>{((r.n / 84200) * 100).toFixed(0)}% of visitors</span>
+                        {r.delta && <span className="delta">{r.delta} step</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

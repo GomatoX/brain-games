@@ -1,12 +1,10 @@
 "use client"
-import HelpHint from "../fields/HelpHint"
+import { RotateCcw } from "lucide-react"
 import type { TokenDef } from "@/lib/branding/token-registry"
 
 type Props = {
   token: TokenDef
-  /** Resolved colour shown in the swatch (override value if pinned, else derived). */
   value: string
-  /** True when the user has pinned an override for this token. */
   isPinned: boolean
   onPin: (value: string) => void
   onReset: () => void
@@ -17,46 +15,54 @@ type Props = {
 export default function TokenRow({
   token, value, isPinned, onPin, onReset, onChange, onHover,
 }: Props) {
+  const handleChange = (v: string) => {
+    if (isPinned) {
+      onChange(v)
+    } else {
+      onPin(v)
+    }
+  }
+
   return (
     <div
-      className="bp-token-row"
+      className="flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 transition-colors hover:border-foreground/20"
       onMouseEnter={() => onHover?.(token.id)}
       onMouseLeave={() => onHover?.(null)}
       onFocus={() => onHover?.(token.id)}
       onBlur={() => onHover?.(null)}
     >
-      <span className="bp-token-swatch" style={{ background: value }} />
-      <span className="bp-token-label">{token.label}</span>
-      <HelpHint text={token.description} />
-      <span className="bp-token-id">{token.id}</span>
-      {isPinned ? (
-        <>
-          <input
-            type="color"
-            aria-label={`${token.label} color`}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="bp-swatch !w-5 !h-5"
-          />
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-[10px] text-[var(--tool-accent)] hover:underline shrink-0"
-            aria-label={`Reset ${token.label}`}
-            tabIndex={0}
-          >
-            Reset
-          </button>
-        </>
-      ) : (
+      <div className="relative h-[22px] w-[22px] shrink-0 overflow-hidden rounded-[5px] border border-black/10">
+        <input
+          type="color"
+          aria-label={`${token.label} color`}
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          className="absolute inset-0 h-full w-full cursor-pointer border-none opacity-0"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 rounded-[4px]"
+          style={{ background: value }}
+        />
+      </div>
+      <span className="text-[11px] font-medium text-foreground/70 shrink-0">
+        {token.label}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
+        className="min-w-0 flex-1 border-none bg-transparent font-mono text-xs lowercase text-foreground outline-none"
+        aria-label={`${token.label} hex value`}
+      />
+      {isPinned && (
         <button
           type="button"
-          onClick={() => onPin(value)}
-          className="text-[10px] text-[var(--tool-text-faint)] hover:text-[var(--tool-text)] shrink-0"
-          aria-label={`Pin ${token.label}`}
-          tabIndex={0}
+          onClick={onReset}
+          className="grid h-5 w-5 shrink-0 place-items-center rounded text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
+          aria-label={`Reset ${token.label} to derived value`}
+          title="Reset to auto-derived value"
         >
-          Pin
+          <RotateCcw className="h-3 w-3" />
         </button>
       )}
     </div>

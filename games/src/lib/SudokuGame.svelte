@@ -1,6 +1,7 @@
 <script>
   import { onMount, onDestroy } from "svelte";
   import { applyBrandingFromData } from "../../../shared/game-lib/branding.js";
+  import { createApiClient } from "../../../shared/game-lib/api-client.js";
 
   // Props
   export let gameId = "";
@@ -91,6 +92,12 @@
       // Apply branding if assigned
       if (game.branding && containerEl) {
         applyBrandingFromData(containerEl, game.branding);
+      }
+
+      // Record play (fire-and-forget)
+      if (apiUrl) {
+        const api = createApiClient({ apiUrl, token });
+        api.recordPlay("sudoku", gameId);
       }
 
       // Parse puzzle and solution

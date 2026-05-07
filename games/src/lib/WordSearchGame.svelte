@@ -3,6 +3,7 @@
   import { onMount } from "svelte"
   import { locale, t } from "../../../shared/game-lib/i18n/index.js"
   import { applyBrandingFromData } from "../../../shared/game-lib/branding.js"
+  import { createApiClient } from "../../../shared/game-lib/api-client.js"
   import CelebrationOverlay from "./crossword/CelebrationOverlay.svelte"
 
   export let puzzleId = ""
@@ -111,6 +112,13 @@
       }))
 
       applyBrandingFromData(containerEl, branding)
+
+      // Record play (fire-and-forget)
+      if (apiUrl) {
+        const api = createApiClient({ apiUrl, token })
+        api.recordPlay("wordsearches", puzzleId)
+      }
+
       startTimer()
     } catch (err) {
       error = err.message || "Failed to load game"
@@ -158,6 +166,13 @@
       shareUrl = ""
 
       applyBrandingFromData(containerEl, branding)
+
+      // Record play (fire-and-forget)
+      if (apiUrl && data.id) {
+        const api = createApiClient({ apiUrl, token })
+        api.recordPlay("wordsearches", data.id)
+      }
+
       startTimer()
     } catch (err) {
       error = err.message || "Failed to load game"

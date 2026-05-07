@@ -90,6 +90,11 @@
       if (game.branding && containerEl) {
         applyBrandingFromData(containerEl, game.branding);
       }
+
+      // Record play (fire-and-forget, skipped in preview mode)
+      if (!isPreviewMode && api) {
+        api.recordPlay("wordgames", gameId);
+      }
     } catch (err) {
       error = `Failed to load game: ${err.status ?? "unknown"}`;
     } finally {

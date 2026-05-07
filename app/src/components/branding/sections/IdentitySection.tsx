@@ -19,7 +19,8 @@ export default function IdentitySection({ draft, update }: Props) {
     <details open className="bp-section">
       <summary className="bp-header">
         <ChevronRight className="bp-chevron" />
-        Identity
+        <span>Logo</span>
+        <span className="ml-auto font-mono text-[10px] font-medium text-muted-foreground">2 marks</span>
       </summary>
       <div className="bp-body">
         {FIELDS.map(({ key, label, kind }) => (

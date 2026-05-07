@@ -62,7 +62,7 @@ export default async function WordSearchPage({
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
-    <DashboardContainer>
+    <DashboardContainer wide>
       <GameListClient
         games={rows.map(mapGame)}
         type="wordsearches"

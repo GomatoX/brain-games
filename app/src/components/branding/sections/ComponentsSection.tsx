@@ -1,31 +1,6 @@
 "use client"
+import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
-import SelectField from "../fields/SelectField"
-import RadioCardGroup from "../fields/RadioCardGroup"
-import ButtonVariantPreview from "../preview/ButtonVariantPreview"
-import CardElevationPreview from "../preview/CardElevationPreview"
-import InputVariantPreview from "../preview/InputVariantPreview"
-
-const BUTTON_VARIANT = [
-  { value: "solid", label: "Solid", preview: <ButtonVariantPreview variant="solid" /> },
-  { value: "outline", label: "Outline", preview: <ButtonVariantPreview variant="outline" /> },
-  { value: "ghost-fill", label: "Ghost-fill", preview: <ButtonVariantPreview variant="ghost-fill" /> },
-]
-const BUTTON_ELEVATION = [
-  { value: "none", label: "Flat" },
-  { value: "subtle", label: "Subtle" },
-  { value: "pronounced", label: "Lifted" },
-]
-const INPUT_VARIANT = [
-  { value: "outlined", label: "Outlined", preview: <InputVariantPreview variant="outlined" /> },
-  { value: "filled", label: "Filled", preview: <InputVariantPreview variant="filled" /> },
-  { value: "underlined", label: "Underlined", preview: <InputVariantPreview variant="underlined" /> },
-]
-const CARD_ELEVATION = [
-  { value: "flat", label: "Flat", preview: <CardElevationPreview elevation="flat" /> },
-  { value: "subtle", label: "Subtle", preview: <CardElevationPreview elevation="subtle" /> },
-  { value: "lifted", label: "Lifted", preview: <CardElevationPreview elevation="lifted" /> },
-]
 
 type Props = {
   draft: DraftState
@@ -34,51 +9,104 @@ type Props = {
 
 export default function ComponentsSection({ draft, update }: Props) {
   return (
-    <details open className="mb-4">
-      <summary className="font-semibold cursor-pointer">Components</summary>
-      <div className="mt-3 space-y-4">
-        <RadioCardGroup
-          label="Button variant"
-          value={draft.components.button.variant}
-          options={BUTTON_VARIANT}
-          onChange={(v) => update("components", {
-            ...draft.components,
-            button: { ...draft.components.button, variant: v as DraftState["components"]["button"]["variant"] },
-          })}
-        />
-        {/* Button elevation stays as a SelectField (not a RadioCardGroup):
-            elevation differences are subtle (none / subtle / pronounced) and
-            don't render distinct enough on the small swatch we'd have room
-            for. Variant, Input style, and Card elevation all use swatches —
-            those have visually distinct shapes/borders/fills. */}
-        <SelectField
-          label="Button elevation"
-          value={draft.components.button.shadow}
-          options={BUTTON_ELEVATION}
-          onChange={(v) => update("components", {
-            ...draft.components,
-            button: { ...draft.components.button, shadow: v as DraftState["components"]["button"]["shadow"] },
-          })}
-        />
-        <RadioCardGroup
-          label="Input variant"
-          value={draft.components.input.variant}
-          options={INPUT_VARIANT}
-          onChange={(v) => update("components", {
-            ...draft.components,
-            input: { variant: v as DraftState["components"]["input"]["variant"] },
-          })}
-        />
-        <RadioCardGroup
-          label="Card elevation"
-          value={draft.components.card.elevation}
-          options={CARD_ELEVATION}
-          onChange={(v) => update("components", {
-            ...draft.components,
-            card: { elevation: v as DraftState["components"]["card"]["elevation"] },
-          })}
-        />
-      </div>
-    </details>
+    <>
+      <details open className="bp-section">
+        <summary className="bp-header">
+          <ChevronRight className="bp-chevron" />
+          <span>Buttons</span>
+        </summary>
+        <div className="bp-body">
+          <div className="flex flex-col gap-[5px]">
+            <label className="bp-field-label">Primary variant</label>
+            <div className="bp-variant-grid">
+              {([
+                { id: "solid", label: "Solid" },
+                { id: "outline", label: "Outline" },
+                { id: "ghost-fill", label: "Soft" },
+              ] as const).map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  className={`bp-variant-card ${draft.components.button.variant === v.id ? "active" : ""}`}
+                  onClick={() =>
+                    update("components", {
+                      ...draft.components,
+                      button: { ...draft.components.button, variant: v.id as DraftState["components"]["button"]["variant"] },
+                    })
+                  }
+                >
+                  <span
+                    className="grid h-[22px] min-w-[44px] place-items-center rounded px-2.5 text-[10px] font-semibold tracking-wide"
+                    style={{
+                      background:
+                        v.id === "solid"
+                          ? draft.tokens.primary
+                          : v.id === "ghost-fill"
+                            ? `color-mix(in oklab, ${draft.tokens.primary} 18%, ${draft.tokens.surface})`
+                            : "transparent",
+                      color: v.id === "solid" ? "#fff" : draft.tokens.primary,
+                      border: v.id === "outline" ? `1.5px solid ${draft.tokens.primary}` : "none",
+                      borderRadius: `${Math.min(draft.spacing.radius * 0.4, 12)}px`,
+                    }}
+                  >
+                    Aa
+                  </span>
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details open className="bp-section">
+        <summary className="bp-header">
+          <ChevronRight className="bp-chevron" />
+          <span>Cells &amp; tiles</span>
+        </summary>
+        <div className="bp-body">
+          <div className="flex flex-col gap-[5px]">
+            <label className="bp-field-label">Tile fill</label>
+            <div className="bp-segmented" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+              {(["flat", "subtle", "lifted"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={draft.components.card.elevation === v ? "active" : ""}
+                  onClick={() =>
+                    update("components", {
+                      ...draft.components,
+                      card: { elevation: v },
+                    })
+                  }
+                >
+                  {v === "flat" ? "Flat" : v === "subtle" ? "Soft" : "Bordered"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-[5px]">
+            <label className="bp-field-label">Input style</label>
+            <div className="bp-segmented" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
+              {(["outlined", "filled"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={draft.components.input.variant === v ? "active" : ""}
+                  onClick={() =>
+                    update("components", {
+                      ...draft.components,
+                      input: { variant: v },
+                    })
+                  }
+                >
+                  {v === "outlined" ? "Outlined" : "Filled"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </details>
+    </>
   )
 }

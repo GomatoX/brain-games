@@ -146,6 +146,19 @@ export const uploadedFiles = sqliteTable("uploaded_files", {
     .default(sql`(datetime('now'))`),
 });
 
+// ─── Play Events (anonymous dedup for play counting) ────
+export const playEvents = sqliteTable("play_events", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  gameType: text("game_type").notNull(),
+  gameId: text("game_id").notNull(),
+  sessionHash: text("session_hash").notNull(),
+  playedAt: text("played_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 // ─── Crosswords ─────────────────────────────────────────
 export const crosswords = sqliteTable("crosswords", {
   id: text("id")
@@ -167,6 +180,7 @@ export const crosswords = sqliteTable("crosswords", {
   layout: text("layout", { mode: "json" }).$type<Record<string, any>>(),
   mainWord: text("main_word"),
   scheduledDate: text("scheduled_date"),
+  plays: integer("plays").notNull().default(0),
   brandingId: text("branding_id").references(() => branding.id, {
     onDelete: "set null",
   }),
@@ -195,6 +209,7 @@ export const wordgames = sqliteTable("wordgames", {
   definition: text("definition"),
   maxAttempts: integer("max_attempts").default(6),
   scheduledDate: text("scheduled_date"),
+  plays: integer("plays").notNull().default(0),
   brandingId: text("branding_id").references(() => branding.id, {
     onDelete: "set null",
   }),
@@ -223,6 +238,7 @@ export const sudoku = sqliteTable("sudoku", {
   puzzle: text("puzzle", { mode: "json" }).$type<number[][]>(),
   solution: text("solution", { mode: "json" }).$type<number[][]>(),
   scheduledDate: text("scheduled_date"),
+  plays: integer("plays").notNull().default(0),
   brandingId: text("branding_id").references(() => branding.id, {
     onDelete: "set null",
   }),
@@ -254,6 +270,7 @@ export const wordsearches = sqliteTable("wordsearches", {
   grid: text("grid", { mode: "json" }).$type<string[][]>(),
   gridSize: integer("grid_size"),
   scheduledDate: text("scheduled_date"),
+  plays: integer("plays").notNull().default(0),
   brandingId: text("branding_id").references(() => branding.id, {
     onDelete: "set null",
   }),

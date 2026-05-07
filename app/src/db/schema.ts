@@ -25,3 +25,4 @@ export const crosswords = activeSchema.crosswords;
 export const wordgames = activeSchema.wordgames;
 export const sudoku = activeSchema.sudoku;
 export const wordsearches = activeSchema.wordsearches;
+export const playEvents = activeSchema.playEvents;

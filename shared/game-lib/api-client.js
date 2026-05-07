@@ -51,5 +51,28 @@ export function createApiClient({ apiUrl, token } = {}) {
     return response.json();
   };
 
-  return { fetchGame, fetchPublicConfig };
+  /**
+   * Record a play event (fire-and-forget).
+   * POST {apiUrl}/api/public/games/play
+   *
+   * Uses an anonymous session cookie for dedup — refreshes
+   * within 24h won't be double-counted. No PII is stored.
+   *
+   * @param {string} type - Game type, e.g. "wordgames" or "crosswords".
+   * @param {string} id - Game id.
+   */
+  const recordPlay = async (type, id) => {
+    try {
+      await fetch(`${apiUrl}/api/public/games/play`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        credentials: "include",
+        body: JSON.stringify({ type, id }),
+      });
+    } catch {
+      // Fire-and-forget: don't break the game if analytics fails
+    }
+  };
+
+  return { fetchGame, fetchPublicConfig, recordPlay };
 }

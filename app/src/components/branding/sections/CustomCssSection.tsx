@@ -1,4 +1,5 @@
 "use client"
+import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -12,12 +13,15 @@ type Props = {
 export default function CustomCssSection({ draft, update }: Props) {
   const value = draft.customCssGames ?? ""
   return (
-    <details className="mb-4">
-      <summary className="font-semibold cursor-pointer">Custom CSS (games only)</summary>
-      <div className="mt-3 space-y-2">
-        <p className="text-xs text-muted-foreground">
-          Extra styles applied inside game embeds for this brand only —
-          your CSS won&apos;t affect other tenants. Max {MAX_CSS_BYTES.toLocaleString()} bytes.
+    <details className="bp-section">
+      <summary className="bp-header">
+        <ChevronRight className="bp-chevron" />
+        <span>Custom CSS</span>
+      </summary>
+      <div className="bp-body">
+        <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+          Extra styles applied inside game embeds for this brand only.
+          Max {MAX_CSS_BYTES.toLocaleString()} bytes.
         </p>
         <Textarea
           aria-label="Custom CSS for games"
@@ -26,7 +30,7 @@ export default function CustomCssSection({ draft, update }: Props) {
           value={value}
           onChange={(e) => update("customCssGames", e.target.value)}
         />
-        <div className="text-xs text-muted-foreground">
+        <div className="text-[11px] text-muted-foreground">
           {value.length} / {MAX_CSS_BYTES} bytes
         </div>
       </div>

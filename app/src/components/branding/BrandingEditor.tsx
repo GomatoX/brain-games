@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { CheckCircle2, Rocket, Undo2, AlertTriangle } from "lucide-react"
+import { CheckCircle2, ChevronRight, Rocket, Undo2, AlertTriangle, Save } from "lucide-react"
 import { toast } from "sonner"
 import BrandingPreviewPane from "./BrandingPreviewPane"
 import IdentitySection from "./sections/IdentitySection"
@@ -114,6 +114,7 @@ export default function BrandingEditor({
   const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft)
   const [saveState, setSaveState] = useState<SaveState>("idle")
   const [draftUpdatedAt, setDraftUpdatedAt] = useState<string | null>(initialDraft?.updatedAt ?? null)
+  const [inspectorTab, setInspectorTab] = useState<"design" | "identity" | "components">("design")
   const [conflicted, setConflicted] = useState(false)
   const [publishing, setPublishing] = useState(false)
   // Refs — declared up front so every effect/handler can reference them
@@ -289,46 +290,64 @@ export default function BrandingEditor({
   const publishDisabled = !hasDraft || saveState === "saving" || publishing || conflicted
   const editorLocked = conflicted || publishing
 
+  const statusBadge = (() => {
+    if (saveState === "saving") return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+        Saving…
+      </span>
+    )
+    if (saveState === "just-saved") return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[11.5px] font-medium text-green-700">
+        <CheckCircle2 className="size-3.5" />
+        Saved
+      </span>
+    )
+    if (saveState === "just-published") return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[11.5px] font-medium text-green-700">
+        <Rocket className="size-3.5" />
+        Published
+      </span>
+    )
+    if (saveState === "just-discarded") return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+        <Undo2 className="size-3.5" />
+        Discarded
+      </span>
+    )
+    if (hasDraft) return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        Unpublished draft
+      </span>
+    )
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11.5px] font-medium text-muted-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+        Live
+      </span>
+    )
+  })()
+
   return (
-    <div className="flex flex-col h-screen" style={{ background: "var(--surface)" }}>
-      <header className="flex items-center gap-4 px-6 py-3 border-b" style={{ borderColor: "var(--border)" }}>
-        <Link href="/dashboard/branding" className="text-sm">← Back</Link>
-        <span className="font-semibold">{live.name}</span>
-        <span className="ml-4 text-sm">
-          {saveState === "saving" && "Saving…"}
-          {saveState === "just-saved" && (
-            <span className="inline-flex items-center gap-1 text-green-600">
-              <CheckCircle2 className="size-4" />
-              Saved
-            </span>
-          )}
-          {saveState === "just-published" && (
-            <span className="inline-flex items-center gap-1 text-green-600">
-              <Rocket className="size-4" />
-              Published
-            </span>
-          )}
-          {saveState === "just-discarded" && (
-            <span className="inline-flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-              <Undo2 className="size-4" />
-              Discarded
-            </span>
-          )}
-          {saveState === "idle" && hasDraft && (
-            <span className="inline-flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-full bg-yellow-500" /> Unpublished draft
-            </span>
-          )}
-          {saveState === "idle" && !hasDraft && (
-            <span className="inline-flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500" /> Live
-            </span>
-          )}
-        </span>
-        <div className="ml-auto flex gap-2">
+    <div className="flex flex-col h-screen" style={{ "--primary": "#c2410c", "--ring": "#c2410c" } as React.CSSProperties}>
+      <header className="flex h-[52px] shrink-0 items-center gap-4 border-b border-border bg-card px-5">
+        <Link
+          href="/dashboard/branding"
+          className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <ChevronRight className="size-3.5 rotate-180" />
+          Back
+        </Link>
+        <div className="flex items-center gap-2 text-[13.5px]">
+          <span className="text-muted-foreground">{live.name}</span>
+          <span className="text-muted-foreground/50">/</span>
+          <strong className="font-semibold">Branding</strong>
+          {statusBadge}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={discard}
             disabled={!hasDraft || editorLocked}
@@ -337,9 +356,19 @@ export default function BrandingEditor({
           </Button>
           <Button
             type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void saveDraft()}
+            disabled={!dirtyRef.current || editorLocked}
+          >
+            Save
+          </Button>
+          <Button
+            type="button"
             size="sm"
             onClick={publish}
             disabled={publishDisabled}
+            className="bg-[var(--primary)] text-white hover:bg-[#a8390a]"
           >
             {publishing ? "Publishing…" : "Publish"}
           </Button>
@@ -362,20 +391,59 @@ export default function BrandingEditor({
 
       <div className="flex flex-1 overflow-hidden">
         <aside
-          className="w-[480px] overflow-y-auto p-6 border-r"
-          style={{ borderColor: "var(--border)", pointerEvents: editorLocked ? "none" : undefined, opacity: editorLocked ? 0.5 : 1 }}
+          className="flex w-[min(30%,480px)] min-w-[320px] flex-col border-r border-border bg-card"
+          style={{ pointerEvents: editorLocked ? "none" : undefined, opacity: editorLocked ? 0.5 : 1 }}
         >
-          {/* Section order is canonically defined in @/lib/branding/section-order.ts */}
-          <ThemeSection draft={draft} update={update} onTokenHover={setHoveredToken} />
-          <IdentitySection draft={draft} update={update} />
-          <TypographySection draft={draft} update={update} />
-          <SpacingSection draft={draft} update={update} />
-          <ComponentsSection draft={draft} update={update} />
-          <GameColorsSection draft={draft} update={update} onTokenHover={setHoveredToken} />
-          <ImagerySection draft={draft} update={update} />
-          <CustomCssSection draft={draft} update={update} />
+          {/* Inspector tabs */}
+          <div className="flex shrink-0 gap-0.5 border-b border-border px-2">
+            {([
+              { id: "design" as const, label: "Design", count: "14" },
+              { id: "identity" as const, label: "Identity", count: null },
+              { id: "components" as const, label: "Components", count: null },
+            ]).map(({ id, label, count }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setInspectorTab(id)}
+                className={`relative -mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[12.5px] font-medium transition-colors ${
+                  inspectorTab === id
+                    ? "border-[var(--primary)] text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+                {count && (
+                  <span className="rounded bg-muted px-1.5 py-px font-mono text-[10.5px] text-muted-foreground">
+                    {count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Inspector body */}
+          <div className="flex-1 overflow-y-auto pb-6">
+            {inspectorTab === "design" && (
+              <>
+                <ThemeSection draft={draft} update={update} onTokenHover={setHoveredToken} />
+                <TypographySection draft={draft} update={update} />
+                <SpacingSection draft={draft} update={update} />
+                <GameColorsSection draft={draft} update={update} onTokenHover={setHoveredToken} />
+              </>
+            )}
+            {inspectorTab === "identity" && (
+              <>
+                <IdentitySection draft={draft} update={update} />
+                <ImagerySection draft={draft} update={update} />
+                <CustomCssSection draft={draft} update={update} />
+              </>
+            )}
+            {inspectorTab === "components" && (
+              <ComponentsSection draft={draft} update={update} />
+            )}
+          </div>
         </aside>
-        <section className="flex-1 overflow-y-auto">
+        <section className="flex-1 overflow-hidden">
           <BrandingPreviewPane
             draft={draft}
             hoveredToken={hoveredToken}

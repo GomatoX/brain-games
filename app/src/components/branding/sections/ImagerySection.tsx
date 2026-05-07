@@ -1,4 +1,5 @@
 "use client"
+import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
 import FileUploadField from "../fields/FileUploadField"
 
@@ -14,9 +15,12 @@ const FIELDS: { key: keyof DraftState; label: string; kind: string }[] = [
 
 export default function ImagerySection({ draft, update }: Props) {
   return (
-    <details className="mb-4">
-      <summary className="font-semibold cursor-pointer">Imagery</summary>
-      <div className="mt-3 space-y-3">
+    <details className="bp-section">
+      <summary className="bp-header">
+        <ChevronRight className="bp-chevron" />
+        <span>Imagery</span>
+      </summary>
+      <div className="bp-body">
         {FIELDS.map(({ key, label, kind }) => (
           <FileUploadField
             key={key as string}

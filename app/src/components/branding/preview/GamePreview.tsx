@@ -1,7 +1,7 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { createContext, useContext, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Grid3X3, LetterText, Search } from "lucide-react"
 
 import {
   PLATFORM_PUZZLE_IDS,
@@ -28,8 +28,14 @@ const ENGINE_FOR: Record<PreviewGameType, string> = {
 
 const TYPE_LABELS: Record<PreviewGameType, string> = {
   crossword:  "Crossword",
-  wordsearch: "Word search",
-  wordgame:   "Word game",
+  wordsearch: "Word Search",
+  wordgame:   "Word Game",
+}
+
+const TYPE_ICONS: Record<PreviewGameType, typeof Grid3X3> = {
+  crossword:  Grid3X3,
+  wordsearch: Search,
+  wordgame:   LetterText,
 }
 
 const loadedScripts = new Set<PreviewGameType>()
@@ -47,17 +53,60 @@ function ensureEngineLoaded(type: PreviewGameType): Promise<void> {
   })
 }
 
-type Props = {
-  /** Game types the current org has at least one puzzle in. Drives both the
-   *  default selection and which buttons render. Empty array → empty state. */
+type GameCtx = {
+  type: PreviewGameType | null
+  setType: (t: PreviewGameType) => void
   availableTypes: PreviewGameType[]
-  /** Pre-resolved default (highest-priority available type). Null when the
-   *  org has nothing yet. */
+}
+
+const GameContext = createContext<GameCtx>({
+  type: null,
+  setType: () => {},
+  availableTypes: [],
+})
+
+type SharedProps = {
+  availableTypes: PreviewGameType[]
   defaultType: PreviewGameType | null
 }
 
-export default function GamePreview({ availableTypes, defaultType }: Props) {
-  const [type, setType] = useState<PreviewGameType | null>(defaultType)
+const ALL_GAME_TYPES: PreviewGameType[] = ["wordsearch", "crossword", "wordgame"]
+
+function Tabs(_props: SharedProps) {
+  const ctx = useContext(GameContext)
+  const active = ctx.type ?? "wordsearch"
+  const setType = ctx.setType
+
+  return (
+    <div className="flex items-end gap-0.5" role="tablist">
+      {ALL_GAME_TYPES.map((t) => {
+        const Icon = TYPE_ICONS[t]
+        const isActive = active === t
+        return (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => setType(t)}
+            className={`relative -mb-px flex items-center gap-2 rounded-t-lg border border-b-0 px-3.5 py-2.5 text-[12.5px] font-medium transition-colors ${
+              isActive
+                ? "z-[2] border-border bg-card text-foreground"
+                : "border-transparent text-muted-foreground hover:bg-white/60 hover:text-foreground"
+            }`}
+          >
+            <Icon className="size-3.5 opacity-70" />
+            {TYPE_LABELS[t]}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function Stage({ availableTypes, defaultType }: SharedProps) {
+  const ctx = useContext(GameContext)
+  const type = ctx.type ?? defaultType
   const hostRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -78,14 +127,11 @@ export default function GamePreview({ availableTypes, defaultType }: Props) {
     }
   }, [type])
 
-  // Empty-org state: no puzzles in any supported game type. Surface it with a
-  // CTA instead of a broken iframe so the user knows brand changes still apply
-  // — they just need content to preview against.
   if (availableTypes.length === 0 || !type) {
     return (
       <div
-        className="border rounded p-6 text-center text-sm"
-        style={{ borderColor: "var(--border)", background: "var(--surface-elevated)" }}
+        className="rounded border border-border p-6 text-center text-sm"
+        style={{ background: "var(--surface-elevated)" }}
       >
         <p className="mb-2 font-medium" style={{ color: "var(--text)" }}>
           No puzzles to preview yet
@@ -95,7 +141,7 @@ export default function GamePreview({ availableTypes, defaultType }: Props) {
         </p>
         <Link
           href="/dashboard/crosswords/new"
-          className="inline-block px-3 py-1 rounded text-white"
+          className="inline-block rounded px-3 py-1 text-white"
           style={{ background: "var(--primary)" }}
         >
           Create your first puzzle
@@ -105,39 +151,30 @@ export default function GamePreview({ availableTypes, defaultType }: Props) {
   }
 
   return (
-    <div>
-      {availableTypes.length > 1 && (
-        <div className="mb-3 flex gap-2 text-sm">
-          <span className="self-center mr-1">Game type:</span>
-          {availableTypes.map((t) => (
-            <Button
-              key={t}
-              type="button"
-              size="sm"
-              variant={type === t ? "default" : "outline"}
-              style={
-                type === t
-                  ? {
-                      background: "var(--primary, var(--tool-accent))",
-                      color: "var(--primary-foreground, #fff)",
-                      borderColor: "transparent",
-                    }
-                  : undefined
-              }
-              aria-pressed={type === t}
-              onClick={() => setType(t)}
-            >
-              {TYPE_LABELS[t]}
-            </Button>
-          ))}
-        </div>
-      )}
-      <div
-        ref={hostRef}
-        className="border rounded p-2 min-h-[400px]"
-        style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-      />
-      {/* Branding cascades from the parent's data-brand-preview wrapper via CSS vars */}
-    </div>
+    <div
+      ref={hostRef}
+      className="min-h-[400px] w-full"
+    />
   )
 }
+
+function GamePreviewProvider({
+  availableTypes,
+  defaultType,
+  children,
+}: SharedProps & { children: React.ReactNode }) {
+  const [type, setType] = useState<PreviewGameType | null>(defaultType)
+  return (
+    <GameContext.Provider value={{ type, setType, availableTypes }}>
+      {children}
+    </GameContext.Provider>
+  )
+}
+
+const GamePreview = {
+  Provider: GamePreviewProvider,
+  Tabs,
+  Stage,
+}
+
+export default GamePreview

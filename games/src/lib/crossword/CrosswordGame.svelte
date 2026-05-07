@@ -5,6 +5,7 @@
     generateLayoutOptimized,
   } from "../crosswordLayout.js";
   import { applyBrandingFromData } from "../../../../shared/game-lib/branding.js";
+  import { createApiClient } from "../../../../shared/game-lib/api-client.js";
   import { locale, t } from "../../../../shared/game-lib/i18n/index.js";
   import CluesSidebar from "./CluesSidebar.svelte";
   import ClueBanner from "./ClueBanner.svelte";
@@ -194,6 +195,12 @@
         applyBrandingFromData(containerEl, puzzle.branding);
       }
 
+      // Record play (fire-and-forget, skipped in preview mode)
+      if (!isPreviewMode && apiUrl) {
+        const api = createApiClient({ apiUrl, token });
+        api.recordPlay("crosswords", puzzleId);
+      }
+
       if (puzzle.layout_seed !== undefined && puzzle.layout_seed !== null) {
         currentSeed = puzzle.layout_seed;
       }
@@ -230,6 +237,12 @@
 
       if (puzzle.branding && containerEl) {
         applyBrandingFromData(containerEl, puzzle.branding);
+      }
+
+      // Record play (fire-and-forget, skipped in preview mode)
+      if (!isPreviewMode && apiUrl && puzzle.id) {
+        const api = createApiClient({ apiUrl, token });
+        api.recordPlay("crosswords", puzzle.id);
       }
 
       if (puzzle.layout_seed !== undefined && puzzle.layout_seed !== null) {

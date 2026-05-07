@@ -1,35 +1,36 @@
 "use client"
 import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
-import SelectField from "../fields/SelectField"
-import HelpHint from "../fields/HelpHint"
 
 const SANS_FONTS = [
-  "Inter, sans-serif", "Roboto, sans-serif", "Open Sans, sans-serif",
-  "Lato, sans-serif", "Montserrat, sans-serif", "Poppins, sans-serif",
-  "Source Sans Pro, sans-serif", "Nunito, sans-serif", "Work Sans, sans-serif",
-  "DM Sans, sans-serif", "Manrope, sans-serif", "system-ui, sans-serif",
+  { v: "Inter, sans-serif", label: "Inter (default)" },
+  { v: "Roboto, sans-serif", label: "Roboto" },
+  { v: "Open Sans, sans-serif", label: "Open Sans" },
+  { v: "Lato, sans-serif", label: "Lato" },
+  { v: "Montserrat, sans-serif", label: "Montserrat" },
+  { v: "Poppins, sans-serif", label: "Poppins" },
+  { v: "Source Sans Pro, sans-serif", label: "Source Sans Pro" },
+  { v: "Nunito, sans-serif", label: "Nunito" },
+  { v: "Work Sans, sans-serif", label: "Work Sans" },
+  { v: "DM Sans, sans-serif", label: "DM Sans" },
+  { v: "Manrope, sans-serif", label: "Manrope" },
+  { v: "system-ui, sans-serif", label: "System UI" },
 ]
 const SERIF_FONTS = [
-  "Playfair Display, serif", "Merriweather, serif", "Lora, serif",
-  "PT Serif, serif", "Crimson Text, serif", "EB Garamond, serif",
-  "Cormorant Garamond, serif", "Libre Baskerville, serif",
-  "Spectral, serif", "serif",
+  { v: "Playfair Display, serif", label: "Playfair Display" },
+  { v: "Merriweather, serif", label: "Merriweather" },
+  { v: "Lora, serif", label: "Lora" },
+  { v: "PT Serif, serif", label: "PT Serif" },
+  { v: "Crimson Text, serif", label: "Crimson Text" },
+  { v: "EB Garamond, serif", label: "EB Garamond" },
+  { v: "Cormorant Garamond, serif", label: "Cormorant Garamond" },
+  { v: "Libre Baskerville, serif", label: "Libre Baskerville" },
+  { v: "Spectral, serif", label: "Spectral" },
+  { v: "serif", label: "Serif (default)" },
 ]
-
-const SCALE_OPTIONS = [
-  { value: "compact", label: "Compact" },
-  { value: "default", label: "Default" },
-  { value: "relaxed", label: "Relaxed" },
-]
-
-const SCALE_HELP =
-  "Adjusts how big body text and headings render. Compact for dense layouts; Relaxed for showcase pages."
 
 const FONT_DEFAULT = "__default__"
-
-const fontOptions = (fonts: string[]) =>
-  [{ value: FONT_DEFAULT, label: "(default)" }, ...fonts.map((f) => ({ value: f, label: f.split(",")[0] }))]
+const SCALE_OPTIONS = ["Compact", "Default", "Large"] as const
 
 type Props = {
   draft: DraftState
@@ -41,32 +42,71 @@ export default function TypographySection({ draft, update }: Props) {
     <details open className="bp-section">
       <summary className="bp-header">
         <ChevronRight className="bp-chevron" />
-        Typography
+        <span>Typography</span>
+        <span className="ml-auto font-mono text-[10px] font-medium text-muted-foreground">2 fonts</span>
       </summary>
       <div className="bp-body">
-        <SelectField
-          label="Sans font"
-          value={draft.typography.fontSans ?? FONT_DEFAULT}
-          options={fontOptions(SANS_FONTS)}
-          onChange={(v) => update("typography", { ...draft.typography, fontSans: v === FONT_DEFAULT ? null : v })}
-        />
-        <SelectField
-          label="Serif font"
-          value={draft.typography.fontSerif ?? FONT_DEFAULT}
-          options={fontOptions(SERIF_FONTS)}
-          onChange={(v) => update("typography", { ...draft.typography, fontSerif: v === FONT_DEFAULT ? null : v })}
-        />
-        <div className="flex items-center gap-1">
-          <div className="flex-1">
-            <SelectField
-              label="Type scale"
-              value={draft.typography.scale}
-              options={SCALE_OPTIONS}
-              onChange={(v) => update("typography", { ...draft.typography, scale: v as DraftState["typography"]["scale"] })}
-            />
-          </div>
-          <div className="self-end pb-2">
-            <HelpHint text={SCALE_HELP} />
+        <div className="flex flex-col gap-[5px]">
+          <label className="bp-field-label">Sans (UI)</label>
+          <select
+            className="bp-select"
+            value={draft.typography.fontSans ?? FONT_DEFAULT}
+            onChange={(e) =>
+              update("typography", {
+                ...draft.typography,
+                fontSans: e.target.value === FONT_DEFAULT ? null : e.target.value,
+              })
+            }
+          >
+            <option value={FONT_DEFAULT}>(default)</option>
+            {SANS_FONTS.map((f) => (
+              <option key={f.v} value={f.v}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-[5px]">
+          <label className="bp-field-label">Serif (display)</label>
+          <select
+            className="bp-select"
+            value={draft.typography.fontSerif ?? FONT_DEFAULT}
+            onChange={(e) =>
+              update("typography", {
+                ...draft.typography,
+                fontSerif: e.target.value === FONT_DEFAULT ? null : e.target.value,
+              })
+            }
+          >
+            <option value={FONT_DEFAULT}>(default)</option>
+            {SERIF_FONTS.map((f) => (
+              <option key={f.v} value={f.v}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-[5px]">
+          <label className="bp-field-label">Type scale</label>
+          <div
+            className="bp-segmented"
+            style={{ gridTemplateColumns: "repeat(3, 1fr)" }}
+          >
+            {SCALE_OPTIONS.map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={draft.typography.scale === v.toLowerCase() || (v === "Large" && draft.typography.scale === "relaxed") ? "active" : ""}
+                onClick={() =>
+                  update("typography", {
+                    ...draft.typography,
+                    scale: (v === "Large" ? "relaxed" : v.toLowerCase()) as DraftState["typography"]["scale"],
+                  })
+                }
+              >
+                {v}
+              </button>
+            ))}
           </div>
         </div>
       </div>

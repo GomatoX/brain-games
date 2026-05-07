@@ -1,19 +1,8 @@
 "use client"
 import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
-import SelectField from "../fields/SelectField"
-import HelpHint from "../fields/HelpHint"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
 
-const DENSITY_OPTIONS = [
-  { value: "compact", label: "Compact" },
-  { value: "cozy", label: "Cozy" },
-  { value: "comfortable", label: "Comfortable" },
-]
-
-const DENSITY_HELP =
-  "Controls the breathing room around buttons, cards, and form fields. Compact = tighter; Comfortable = roomier."
+const DENSITY_OPTIONS = ["Compact", "Comfortable", "Spacious"] as const
 
 type Props = {
   draft: DraftState
@@ -25,40 +14,66 @@ export default function SpacingSection({ draft, update }: Props) {
     <details open className="bp-section">
       <summary className="bp-header">
         <ChevronRight className="bp-chevron" />
-        Spacing
+        <span>Shape &amp; spacing</span>
+        <span className="ml-auto font-mono text-[10px] font-medium text-muted-foreground">2 tokens</span>
       </summary>
       <div className="bp-body">
-        <div className="flex items-center gap-1">
-          <div className="flex-1">
-            <SelectField
-              label="Density"
-              value={draft.spacing.density}
-              options={DENSITY_OPTIONS}
-              onChange={(v) =>
-                update("spacing", { ...draft.spacing, density: v as DraftState["spacing"]["density"] })
+        <div className="flex flex-col gap-[5px]">
+          <label className="bp-field-label">
+            Corner radius
+            <span className="bp-hint">{draft.spacing.radius}px</span>
+          </label>
+          <div className="bp-slider-wrap">
+            <input
+              type="range"
+              className="bp-slider"
+              min={0}
+              max={40}
+              step={1}
+              value={draft.spacing.radius}
+              onChange={(e) =>
+                update("spacing", { ...draft.spacing, radius: Number(e.target.value) })
               }
+              aria-label="Corner radius"
             />
-          </div>
-          <div className="self-end pb-2">
-            <HelpHint text={DENSITY_HELP} />
+            <span className="bp-slider-value">{draft.spacing.radius}px</span>
           </div>
         </div>
-        <div className="block text-sm">
-          <Label className="block mb-1" htmlFor="branding-radius">
-            Corner radius: {draft.spacing.radius} px
-          </Label>
-          <Slider
-            id="branding-radius"
-            aria-label="Corner radius"
-            min={0}
-            max={24}
-            step={1}
-            value={[draft.spacing.radius]}
-            onValueChange={(values) =>
-              update("spacing", { ...draft.spacing, radius: values[0] })
-            }
-            className="w-full"
-          />
+        <div className="flex flex-col gap-[5px]">
+          <label className="bp-field-label">Density</label>
+          <div
+            className="bp-segmented"
+            style={{ gridTemplateColumns: "repeat(3, 1fr)" }}
+          >
+            {DENSITY_OPTIONS.map((v) => {
+              const mapping: Record<string, DraftState["spacing"]["density"]> = {
+                Compact: "compact",
+                Comfortable: "cozy",
+                Spacious: "comfortable",
+              }
+              const reverseMapping: Record<string, string> = {
+                compact: "Compact",
+                cozy: "Comfortable",
+                comfortable: "Spacious",
+              }
+              const isActive = reverseMapping[draft.spacing.density] === v
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  className={isActive ? "active" : ""}
+                  onClick={() =>
+                    update("spacing", {
+                      ...draft.spacing,
+                      density: mapping[v],
+                    })
+                  }
+                >
+                  {v}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
     </details>
