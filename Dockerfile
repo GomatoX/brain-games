@@ -56,8 +56,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy standalone output
-COPY --from=app-build /app/.next/standalone ./
+# Copy standalone output (nested under app/ due to turbopack.root in next.config)
+COPY --from=app-build /app/.next/standalone/app ./
 COPY --from=app-build /app/.next/static ./.next/static
 COPY --from=app-build /app/public ./public
 
