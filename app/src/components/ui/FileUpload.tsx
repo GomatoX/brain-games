@@ -53,7 +53,7 @@ export const FileUpload = ({
   return (
     <div className="flex flex-col gap-2">
       {label && (
-        <span className="text-[11px] font-semibold text-[#64748b] uppercase tracking-[0.04em]">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.04em]">
           {label}
         </span>
       )}
@@ -64,7 +64,7 @@ export const FileUpload = ({
             <img
               src={preview}
               alt="Preview"
-              className="h-[120px] max-w-[200px] rounded-[4px] object-contain border border-[#e2e8f0] bg-[#f8fafc] p-2"
+              className="h-[120px] max-w-[200px] rounded-md object-contain border border-border bg-background p-2"
             />
             {onRemove && (
               <Button
@@ -89,15 +89,15 @@ export const FileUpload = ({
       ) : (
         <div
           {...getRootProps()}
-          className="group relative flex flex-col items-center justify-center w-full h-[120px] rounded-[4px] border border-dashed border-[#cbd5e1] bg-[#f8fafc] hover:bg-[#f1f5f9] hover:border-[#94a3b8] transition-all cursor-pointer"
+          className="group relative flex flex-col items-center justify-center w-full h-[120px] rounded-md border border-dashed border-border-strong bg-background hover:bg-muted hover:border-muted-foreground transition-all cursor-pointer"
         >
           <input {...getInputProps()} />
           <div className="flex flex-col items-center gap-2 text-center pointer-events-none">
-            <UploadCloud className="text-[#94a3b8] size-6" />
-            <p className="text-[13px] font-medium text-navy-900">
+            <UploadCloud className="text-muted-foreground size-6" />
+            <p className="text-sm font-medium text-foreground">
               Drag &amp; drop or click to upload
             </p>
-            <p className="text-[11px] text-[#94a3b8]">{hint}</p>
+            <p className="text-xs text-muted-foreground">{hint}</p>
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 "use client"
+import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
 import SelectField from "../fields/SelectField"
 import HelpHint from "../fields/HelpHint"
@@ -25,8 +26,10 @@ const SCALE_OPTIONS = [
 const SCALE_HELP =
   "Adjusts how big body text and headings render. Compact for dense layouts; Relaxed for showcase pages."
 
+const FONT_DEFAULT = "__default__"
+
 const fontOptions = (fonts: string[]) =>
-  [{ value: "", label: "(default)" }, ...fonts.map((f) => ({ value: f, label: f.split(",")[0] }))]
+  [{ value: FONT_DEFAULT, label: "(default)" }, ...fonts.map((f) => ({ value: f, label: f.split(",")[0] }))]
 
 type Props = {
   draft: DraftState
@@ -35,20 +38,23 @@ type Props = {
 
 export default function TypographySection({ draft, update }: Props) {
   return (
-    <details open className="mb-4">
-      <summary className="font-semibold cursor-pointer">Typography</summary>
-      <div className="mt-3 space-y-3">
+    <details open className="bp-section">
+      <summary className="bp-header">
+        <ChevronRight className="bp-chevron" />
+        Typography
+      </summary>
+      <div className="bp-body">
         <SelectField
           label="Sans font"
-          value={draft.typography.fontSans ?? ""}
+          value={draft.typography.fontSans ?? FONT_DEFAULT}
           options={fontOptions(SANS_FONTS)}
-          onChange={(v) => update("typography", { ...draft.typography, fontSans: v || null })}
+          onChange={(v) => update("typography", { ...draft.typography, fontSans: v === FONT_DEFAULT ? null : v })}
         />
         <SelectField
           label="Serif font"
-          value={draft.typography.fontSerif ?? ""}
+          value={draft.typography.fontSerif ?? FONT_DEFAULT}
           options={fontOptions(SERIF_FONTS)}
-          onChange={(v) => update("typography", { ...draft.typography, fontSerif: v || null })}
+          onChange={(v) => update("typography", { ...draft.typography, fontSerif: v === FONT_DEFAULT ? null : v })}
         />
         <div className="flex items-center gap-1">
           <div className="flex-1">

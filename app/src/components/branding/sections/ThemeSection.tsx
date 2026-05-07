@@ -1,5 +1,6 @@
 "use client"
 import { useMemo } from "react"
+import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
 import { PRESETS } from "@/lib/branding/presets"
 import SelectField from "../fields/SelectField"
@@ -10,8 +11,6 @@ import {
   THEME_DETAIL_TOKENS,
   hasThemeDetailOverrides,
 } from "@/lib/branding/section-groups"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 type Props = {
   draft: DraftState
@@ -41,15 +40,15 @@ export default function ThemeSection({ draft, update, onTokenHover }: Props) {
       THEME_DETAIL_TOKENS.map((id) => TOKEN_REGISTRY.find((t) => t.id === id)!),
     [],
   )
-  // Open the details panel automatically if the user has already pinned any
-  // derivative — otherwise keep it closed so a typical session shows just the
-  // three brand seeds.
   const detailsOpen = hasThemeDetailOverrides(draft.tokens.overrides)
 
   return (
-    <details open className="mb-4">
-      <summary className="font-semibold cursor-pointer">Theme</summary>
-      <div className="mt-3 space-y-3">
+    <details open className="bp-section">
+      <summary className="bp-header">
+        <ChevronRight className="bp-chevron" />
+        Theme
+      </summary>
+      <div className="bp-body">
         <SelectField
           label="Preset"
           value=""
@@ -60,40 +59,40 @@ export default function ThemeSection({ draft, update, onTokenHover }: Props) {
         {(["primary", "surface", "text"] as const).map((k) => (
           <div
             key={k}
-            className="block text-sm rounded px-1 -mx-1 hover:bg-accent focus-within:bg-accent"
+            className="bp-prop"
             onMouseEnter={() => onTokenHover?.(k)}
             onMouseLeave={() => onTokenHover?.(null)}
             onFocus={() => onTokenHover?.(k)}
             onBlur={() => onTokenHover?.(null)}
           >
-            <Label className="block mb-1 capitalize" htmlFor={`brand-seed-${k}`}>
-              {k}
-            </Label>
-            <div className="flex gap-2 items-center">
+            <span className="bp-prop-label">{k}</span>
+            <div className="bp-prop-control">
               <input
                 type="color"
                 aria-label={`${k} color`}
                 value={draft.tokens[k]}
                 onChange={(e) => setSeed(k, e.target.value)}
-                className="h-9 w-10 rounded border border-input cursor-pointer bg-background"
+                className="bp-swatch"
               />
-              <Input
+              <input
                 id={`brand-seed-${k}`}
                 type="text"
                 value={draft.tokens[k]}
                 onChange={(e) => setSeed(k, e.target.value)}
-                className="flex-1"
+                className="bp-hex-input"
+                aria-label={`${k} hex value`}
               />
             </div>
           </div>
         ))}
 
-        <details open={detailsOpen} className="mt-2 border-t pt-2">
-          <summary className="text-sm cursor-pointer text-slate-600">
-            Theme details (auto-derived) ·{" "}
-            <span className="text-slate-400">{THEME_DETAIL_TOKENS.length} tokens</span>
+        <details open={detailsOpen} className="bp-subsection">
+          <summary className="bp-subsection-header">
+            <ChevronRight className="bp-chevron" />
+            <span>Theme details (auto-derived)</span>
+            <span className="ml-1 opacity-50">· {THEME_DETAIL_TOKENS.length} tokens</span>
           </summary>
-          <div className="mt-2 space-y-1">
+          <div className="mt-1.5 flex flex-col gap-0.5">
             {detailTokens.map((t) => {
               const isPinned = t.id in draft.tokens.overrides
               const value = isPinned ? draft.tokens.overrides[t.id] : derived[t.id]

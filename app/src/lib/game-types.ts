@@ -26,6 +26,7 @@ export interface Game {
   solution?: any
   grid_size?: number
   branding?: string | number | null
+  plays?: number
   user_created?: string
   created_by?: string | null
   org_id?: string
@@ -53,6 +54,7 @@ export const mapGame = (row: any): Game => {
     grid_size: row.gridSize,
     scheduled_date: row.scheduledDate,
     branding: row.brandingId,
+    plays: row.plays ?? 0,
     user_created: row.userId,
     created_by: creatorName,
     org_id: row.orgId,

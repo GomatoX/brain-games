@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Dialog,
   DialogContent,
@@ -9,29 +10,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Code, Copy, Check, Grid3x3, SpellCheck2, Search } from "lucide-react"
+import { FieldLabel } from "@/components/ui/field"
+
+import { PageHeader } from "@/components/ui/PageHeader"
+import { SearchInput } from "@/components/ui/SearchInput"
+import { FilterChip } from "@/components/ui/FilterChip"
+
+import { Code, Copy, Check, Plus, Upload, Download } from "lucide-react"
 import { toast } from "sonner"
 import { GameSection } from "@/components/GameSection"
 import { GameModal } from "@/components/GameModal"
 import { GamePagination } from "@/components/GamePagination"
 import type { Game, GameType } from "@/lib/game-types"
 
-const GAME_HEADERS: Record<
-  GameType,
-  { Icon: typeof Grid3x3; iconClass: string }
-> = {
-  crosswords: { Icon: Grid3x3, iconClass: "bg-blue-50 text-blue-600" },
-  wordgames: { Icon: SpellCheck2, iconClass: "bg-green-50 text-green-600" },
-  wordsearches: { Icon: Search, iconClass: "bg-purple-50 text-purple-600" },
-  sudoku: { Icon: Grid3x3, iconClass: "bg-orange-50 text-orange-600" },
-}
-
 const PLAY_BASE =
   typeof window !== "undefined" ? `${window.location.origin}/play` : "/play"
 const API_URL = typeof window !== "undefined" ? window.location.origin : ""
 
-interface Props {
+const FILTERS = [
+  { id: "all", label: "All" },
+  { id: "published", label: "Published" },
+  { id: "scheduled", label: "Scheduled" },
+  { id: "draft", label: "Draft" },
+] as const
+
+type Props = {
   games: Game[]
   type: GameType
   page: number
@@ -54,7 +57,6 @@ export const GameListClient = ({
   title,
   basePath,
 }: Props) => {
-  const { Icon, iconClass } = GAME_HEADERS[type]
   const router = useRouter()
   const [modal, setModal] = useState<{
     open: boolean
@@ -71,6 +73,36 @@ export const GameListClient = ({
     type: GameType
   } | null>(null)
   const [embedCopied, setEmbedCopied] = useState(false)
+
+  /* ── Client-side search + filter ── */
+  const [query, setQuery] = useState("")
+  const [filter, setFilter] = useState<string>("all")
+
+  const counts = useMemo(
+    () => ({
+      all: games.length,
+      published: games.filter((g) => g.status === "published").length,
+      scheduled: games.filter((g) => g.status === "scheduled").length,
+      draft: games.filter((g) => g.status === "draft").length,
+    }),
+    [games],
+  )
+
+  const filteredGames = useMemo(() => {
+    let result = games
+    if (filter !== "all") {
+      result = result.filter((g) => g.status === filter)
+    }
+    if (query.trim()) {
+      const q = query.toLowerCase()
+      result = result.filter(
+        (g) =>
+          (g.title || "").toLowerCase().includes(q) ||
+          (g.word || "").toLowerCase().includes(q),
+      )
+    }
+    return result
+  }, [games, filter, query])
 
   const getEmbedSnippet = (gameId: string | number) => {
     const tagMap: Record<GameType, { tag: string; script: string }> = {
@@ -117,7 +149,7 @@ export const GameListClient = ({
         row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
       )
       .join("\n")
-    const blob = new Blob(["﻿" + csvContent], {
+    const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
     })
     const url = URL.createObjectURL(blob)
@@ -175,25 +207,87 @@ export const GameListClient = ({
 
   return (
     <div>
-      <div className="px-4 sm:px-6 py-4 border-b border-border flex items-center gap-3">
-        <div
-          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${iconClass}`}
+      {/* ── Page header ── */}
+      <PageHeader
+        title={title}
+        subtitle={`${total} ${total === 1 ? "puzzle" : "puzzles"} · ${counts.published} published, ${counts.draft} drafts`}
+        action={
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => toast.info("Import coming soon")}
+              aria-label="Import games"
+              tabIndex={0}
+            >
+              <Download className="size-4" />
+              Import
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setModal({ open: true, mode: "create" })}
+            >
+              <Plus className="size-4" />
+              New {title.replace(/s$/, "")}
+            </Button>
+          </div>
+        }
+        className="mb-3"
+      />
+
+      {/* ── Games sub-nav ── */}
+      <nav className="games-nav" aria-label="Game types">
+        <Link
+          href="/dashboard/word-game"
+          className={type === "wordgames" ? "active" : ""}
         >
-          <Icon className="size-[18px]" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-[#0f172a] leading-tight">
-            {title}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {total} total · page {page} of {Math.max(1, totalPages)}
-          </p>
-        </div>
+          Word Game
+        </Link>
+        <Link
+          href="/dashboard/word-search"
+          className={type === "wordsearches" ? "active" : ""}
+        >
+          Word Search
+        </Link>
+        <Link
+          href="/dashboard/crosswords"
+          className={type === "crosswords" ? "active" : ""}
+        >
+          Crossword
+        </Link>
+      </nav>
+
+      {/* ── Toolbar ── */}
+      <div className="list-toolbar">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder={
+            type === "wordgames"
+              ? "Search by title or word…"
+              : "Search…"
+          }
+        />
+        {FILTERS.map((f) => (
+          <FilterChip
+            key={f.id}
+            label={f.label}
+            count={counts[f.id as keyof typeof counts]}
+            active={filter === f.id}
+            onClick={() => setFilter(f.id)}
+          />
+        ))}
+        <div className="flex-1" />
+        <Button type="button" variant="outline" size="sm" className="h-8">
+          <Upload className="size-3.5" />
+          Export
+        </Button>
       </div>
 
+      {/* ── Table ── */}
       <GameSection
         title={title}
-        games={games}
+        games={filteredGames}
         type={type}
         onAdd={() => setModal({ open: true, mode: "create" })}
         onEdit={(g) => setModal({ open: true, mode: "edit", game: g })}
@@ -205,12 +299,15 @@ export const GameListClient = ({
         orgId={orgId}
       />
 
+      {/* ── Pagination ── */}
       <GamePagination
         page={page}
         totalPages={totalPages}
+        total={total}
         basePath={basePath}
       />
 
+      {/* ── Create/Edit Modal ── */}
       {modal.open && (
         <GameModal
           mode={modal.mode}
@@ -225,7 +322,7 @@ export const GameListClient = ({
         />
       )}
 
-      {/* Delete Confirmation */}
+      {/* ── Delete Confirmation ── */}
       <Dialog
         open={!!deleteConfirm}
         onOpenChange={(open) => {
@@ -241,13 +338,15 @@ export const GameListClient = ({
           </p>
           <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-4">
             <Button
-              variant="outline"
+              type="button"
+              variant="ghost"
               onClick={() => setDeleteConfirm(null)}
               disabled={deleting}
             >
               Cancel
             </Button>
             <Button
+              type="button"
               variant="destructive"
               onClick={() =>
                 deleteConfirm &&
@@ -261,7 +360,7 @@ export const GameListClient = ({
         </DialogContent>
       </Dialog>
 
-      {/* Embed Code Popover */}
+      {/* ── Embed Code Dialog ── */}
       <Dialog
         open={!!embedPopover}
         onOpenChange={(open) => {
@@ -293,10 +392,13 @@ export const GameListClient = ({
               </div>
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2 gap-2">
-                  <Label>Paste this into your HTML</Label>
+                  <FieldLabel className="mb-0">
+                    Paste this into your HTML
+                  </FieldLabel>
                   <Button
+                    type="button"
+                    variant="outline"
                     size="sm"
-                    variant="secondary"
                     onClick={() =>
                       handleCopyEmbedSnippet(embedPopover.game.id)
                     }
@@ -309,13 +411,14 @@ export const GameListClient = ({
                     {embedCopied ? "Copied!" : "Copy"}
                   </Button>
                 </div>
-                <pre className="bg-slate-900 text-slate-300 rounded-md p-4 text-xs overflow-x-auto leading-relaxed">
+                <pre className="bg-foreground text-muted rounded-md p-4 text-xs overflow-x-auto leading-relaxed font-mono">
                   <code>{getEmbedSnippet(embedPopover.game.id)}</code>
                 </pre>
               </div>
               <div className="flex justify-end">
                 <Button
-                  variant="outline"
+                  type="button"
+                  variant="ghost"
                   onClick={() => {
                     setEmbedPopover(null)
                     setEmbedCopied(false)

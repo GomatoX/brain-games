@@ -32,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         isWhiteLabel={config.isWhiteLabel}
         orgLogoUrl={org?.logoUrl || null}
       />
-      <main className="flex-1 lg:ml-[260px] pt-14 lg:pt-0 h-screen overflow-y-auto">
+      <main className="flex-1 lg:ml-[220px] pt-12 lg:pt-0 h-screen overflow-y-auto">
         <SessionGuard>{children}</SessionGuard>
       </main>
     </div>

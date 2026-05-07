@@ -172,7 +172,7 @@ export default function TeamContent({
         description={
           <>
             Manage members of{" "}
-            <span className="font-medium text-[#0f172a]">{data.org.name}</span>.
+            <span className="font-medium text-foreground">{data.org.name}</span>.
             All members share the same games, branding, and API token.
           </>
         }
@@ -193,7 +193,7 @@ export default function TeamContent({
           )}
         </CardHeader>
 
-        <div className="divide-y divide-[#e2e8f0]">
+        <div className="divide-y divide-border">
           {data.members.map((member) => {
             const name =
               [member.first_name, member.last_name].filter(Boolean).join(" ") ||
@@ -203,14 +203,14 @@ export default function TeamContent({
             return (
               <div
                 key={member.id}
-                className="px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-slate-50 transition-colors"
+                className="px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-muted transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
                       member.invite_pending
                         ? "bg-amber-50 text-amber-600"
-                        : "bg-navy-900/10 text-navy-900"
+                        : "bg-primary/10 text-foreground"
                     }`}
                   >
                     {member.invite_pending ? (
@@ -224,15 +224,15 @@ export default function TeamContent({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#0f172a] truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {name}
                       {isCurrentUser && (
-                        <span className="text-xs text-[#64748b] ml-1.5">
+                        <span className="text-xs text-muted-foreground ml-1.5">
                           (you)
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-[#64748b] truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {member.email} ·{" "}
                       {member.invite_pending
                         ? "Invited"
@@ -310,14 +310,14 @@ export default function TeamContent({
           </DialogHeader>
           {inviteLink ? (
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-[4px] mx-auto">
+              <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-md mx-auto">
                 <CheckCircle2 className="size-6 text-green-600" />
               </div>
               <p className="text-sm text-muted-foreground text-center">
                 Share this link with the new member. They&apos;ll be able to set
                 their own password and join your organization.
               </p>
-              <div className="flex items-center gap-2 bg-slate-50 border rounded-md px-3 py-2.5">
+              <div className="flex items-center gap-2 bg-muted border rounded-md px-3 py-2.5">
                 <Input
                   type="text"
                   readOnly
@@ -366,7 +366,7 @@ export default function TeamContent({
             <p className="text-sm text-muted-foreground text-center">
               Share this updated link with the member.
             </p>
-            <div className="flex items-center gap-2 bg-slate-50 border rounded-md px-3 py-2.5">
+            <div className="flex items-center gap-2 bg-muted border rounded-md px-3 py-2.5">
               <Input
                 type="text"
                 readOnly

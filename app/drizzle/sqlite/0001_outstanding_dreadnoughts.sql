@@ -39,5 +39,5 @@ ALTER TABLE `branding` ADD `favicon_path` text;--> statement-breakpoint
 ALTER TABLE `branding` ADD `background_path` text;--> statement-breakpoint
 ALTER TABLE `branding` ADD `og_image_path` text;--> statement-breakpoint
 ALTER TABLE `branding` ADD `custom_css_games` text;--> statement-breakpoint
-ALTER TABLE `branding` ADD `updated_at` text DEFAULT (datetime('now')) NOT NULL;--> statement-breakpoint
-ALTER TABLE `users` ADD `use_platform_chrome` integer DEFAULT false NOT NULL;
+ALTER TABLE `branding` ADD `updated_at` text DEFAULT '' NOT NULL;--> statement-breakpoint
+ALTER TABLE `users` ADD `use_platform_chrome` integer DEFAULT 0 NOT NULL;

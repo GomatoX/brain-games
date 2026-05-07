@@ -1,4 +1,5 @@
 "use client"
+import { ChevronRight } from "lucide-react"
 import type { DraftState } from "../BrandingEditor"
 import SelectField from "../fields/SelectField"
 import HelpHint from "../fields/HelpHint"
@@ -21,9 +22,12 @@ type Props = {
 
 export default function SpacingSection({ draft, update }: Props) {
   return (
-    <details open className="mb-4">
-      <summary className="font-semibold cursor-pointer">Spacing</summary>
-      <div className="mt-3 space-y-3">
+    <details open className="bp-section">
+      <summary className="bp-header">
+        <ChevronRight className="bp-chevron" />
+        Spacing
+      </summary>
+      <div className="bp-body">
         <div className="flex items-center gap-1">
           <div className="flex-1">
             <SelectField

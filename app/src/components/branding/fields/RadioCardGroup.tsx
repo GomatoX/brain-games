@@ -55,10 +55,10 @@ export default function RadioCardGroup({ label, value, options, onChange }: Prop
               onKeyDown={handleKey(o, i)}
               className={
                 "flex flex-col items-stretch gap-1 p-2 border rounded cursor-pointer transition " +
-                (selected ? "border-slate-800 bg-slate-50" : "border-slate-200 hover:border-slate-400")
+                (selected ? "border-[var(--tool-text)] bg-[var(--tool-surface-2)]" : "border-[var(--tool-border)] hover:border-[var(--tool-text-faint)]")
               }
             >
-              <div className="flex items-center justify-center h-12 bg-white rounded border border-dashed border-slate-200">
+              <div className="flex items-center justify-center h-12 bg-white rounded border border-dashed border-[var(--tool-border)]">
                 {o.preview}
               </div>
               <div className="text-center text-xs">{o.label}</div>

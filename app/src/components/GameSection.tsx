@@ -1,18 +1,51 @@
 "use client"
 
-import { Card, CardAction, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+
+
+import { StatusPill } from "@/components/ui/StatusPill"
+import { DifficultyDots } from "@/components/ui/DifficultyDots"
+import { MiniCrossword } from "@/components/ui/MiniCrossword"
+import { TitleCell } from "@/components/ui/TitleCell"
 import {
   Plus,
-  Code,
-  Download,
   Eye,
   Pencil,
-  Trash2,
   CalendarClock,
+  Inbox,
+  Grid3x3,
+  SpellCheck2,
+  Search,
 } from "lucide-react"
 import type { Game, GameType } from "@/lib/game-types"
+
+const GAME_ICON: Record<GameType, typeof Grid3x3> = {
+  crosswords: Grid3x3,
+  wordgames: SpellCheck2,
+  wordsearches: Search,
+  sudoku: Grid3x3,
+}
+
+const formatRelativeTime = (dateStr: string) => {
+  const now = new Date()
+  const date = new Date(dateStr)
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return "today"
+  if (diffDays === 1) return "1d ago"
+  if (diffDays < 30) return `${diffDays}d ago`
+  const diffMonths = Math.floor(diffDays / 30)
+  return `${diffMonths}mo ago`
+}
+
+const getSubtitle = (game: Game, type: GameType) => {
+  if (type === "crosswords") {
+    const gridSize = game.grid_size || 13
+    return `${gridSize}×${gridSize} grid`
+  }
+  if (type === "wordgames" && game.word) return `"${game.word}"`
+  return game.created_by || ""
+}
 
 export const GameSection = ({
   title,
@@ -39,131 +72,206 @@ export const GameSection = ({
   lang: string
   orgId: string
 }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-[15px] flex items-center gap-2">
-          {title}
-          <Badge variant="secondary">{games.length}</Badge>
-        </CardTitle>
-        <CardAction>
-          <Button size="sm" onClick={onAdd}>
+  if (games.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <div className="py-14 flex flex-col items-center gap-3 text-center">
+          <Inbox className="size-10 text-muted-foreground/40" strokeWidth={1.2} />
+          <p className="text-sm text-muted-foreground">
+            No {title.toLowerCase()} yet.
+          </p>
+          <Button type="button" size="sm" onClick={onAdd}>
             <Plus className="size-4" />
-            New
+            Create first
           </Button>
-        </CardAction>
-      </CardHeader>
+        </div>
+      </div>
+    )
+  }
 
-      {games.length === 0 ? (
-        <div className="p-8 text-center text-sm text-muted-foreground">
-          No {title.toLowerCase()} yet. Click &quot;New&quot; to create one.
-        </div>
-      ) : (
-        <div className="divide-y divide-border border-t">
-          {games.map((game) => (
-            <div
-              key={game.id}
-              className="px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:bg-slate-50 transition-colors"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#0f172a] truncate">
-                  {game.title || `#${game.id}`}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(game.date_created).toLocaleDateString()}
-                  {game.created_by && ` · by ${game.created_by}`}
-                  {game.word && ` · "${game.word}"`}
-                </p>
-              </div>
-              <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
-                {game.status === "scheduled" && game.scheduled_date ? (
-                  <Badge
-                    variant="scheduled"
-                    onClick={() => onToggleStatus(type, game.id, game.status)}
-                    title="Click to publish now"
-                    className="cursor-pointer"
-                  >
-                    <CalendarClock className="size-3" />
-                    {new Date(game.scheduled_date).toLocaleDateString(
-                      undefined,
-                      {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      },
-                    )}
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant={game.status === "published" ? "success" : "draft"}
-                    onClick={() => onToggleStatus(type, game.id, game.status)}
-                    title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
-                    className="cursor-pointer"
-                  >
-                    {game.status}
-                  </Badge>
+  const hasEntries = type === "crosswords" || type === "wordsearches"
+  const hasDifficulty = type !== "wordgames"
+  const hasWordColumn = type === "wordgames"
+
+  const firstColumnHeader =
+    type === "wordsearches"
+      ? "Pack"
+      : type === "wordgames"
+        ? "Game"
+        : "Puzzle"
+
+  return (
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <table className="gtbl">
+        <thead>
+          <tr>
+            <th style={{ width: "30%" }}>{firstColumnHeader}</th>
+            {hasWordColumn && <th style={{ width: "14%" }}>Word</th>}
+            {hasEntries && <th style={{ width: "13%" }}>Entries</th>}
+            {hasDifficulty && <th style={{ width: "14%" }}>Difficulty</th>}
+            <th style={{ width: "13%" }}>Status</th>
+            <th style={{ width: "10%" }}>Plays</th>
+            <th style={{ width: "10%" }}>Updated</th>
+            <th style={{ width: "8%", textAlign: "right" }}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {games.map((game) => {
+            const Icon = GAME_ICON[type]
+            return (
+              <tr key={game.id}>
+                {/* Puzzle */}
+                <td>
+                  <TitleCell
+                    icon={<Icon className="size-[14px]" />}
+                    title={game.title || `#${game.id}`}
+                    subtitle={getSubtitle(game, type)}
+                  />
+                </td>
+
+                {/* Word (word game tiles) */}
+                {hasWordColumn && (
+                  <td>
+                    <div className="flex gap-[3px]">
+                      {(game.word || "").toUpperCase().split("").slice(0, 5).map((letter, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-center rounded-[3px] border text-[11px] font-bold"
+                          style={{
+                            width: 22,
+                            height: 26,
+                            background:
+                              game.status === "published"
+                                ? i % 3 === 0
+                                  ? "var(--tool-accent)"
+                                  : i % 3 === 1
+                                    ? "#fdf2ea"
+                                    : "var(--tool-surface)"
+                                : "var(--tool-surface)",
+                            color:
+                              game.status === "published" && i % 3 === 0
+                                ? "white"
+                                : game.status === "published" && i % 3 === 1
+                                  ? "var(--tool-accent)"
+                                  : "var(--tool-text)",
+                            borderColor:
+                              game.status === "published" && i % 3 !== 2
+                                ? "transparent"
+                                : "var(--tool-border)",
+                          }}
+                        >
+                          {letter}
+                        </div>
+                      ))}
+                    </div>
+                  </td>
                 )}
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onShowCode(game)}
-                    title="Embed Code"
-                    className="hover:text-rust"
-                  >
-                    <Code className="size-4" />
-                  </Button>
-                  {onExportCsv && game.words && game.words.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onExportCsv(game)}
-                      title="Export CSV"
-                      className="hover:text-emerald-600"
-                    >
-                      <Download className="size-4" />
-                    </Button>
+
+                {/* Entries */}
+                {hasEntries && (
+                  <td>
+                    <div className="flex items-center gap-2">
+                      {type === "crosswords" && <MiniCrossword />}
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {game.words?.length ?? 0}
+                      </span>
+                    </div>
+                  </td>
+                )}
+
+                {/* Difficulty */}
+                {hasDifficulty && (
+                  <td>
+                    <DifficultyDots difficulty={game.difficulty || "easy"} />
+                  </td>
+                )}
+
+                {/* Status */}
+                <td>
+                  {game.status === "scheduled" && game.scheduled_date ? (
+                    <div className="flex flex-col gap-0.5">
+                      <StatusPill
+                        status="scheduled"
+                        onClick={() =>
+                          onToggleStatus(type, game.id, game.status)
+                        }
+                        title="Click to publish now"
+                      />
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        <CalendarClock className="inline size-3 mr-0.5" />
+                        {new Date(game.scheduled_date).toLocaleDateString(
+                          undefined,
+                          { month: "short", day: "numeric" },
+                        )}
+                      </span>
+                    </div>
+                  ) : (
+                    <StatusPill
+                      status={game.status}
+                      onClick={() =>
+                        onToggleStatus(type, game.id, game.status)
+                      }
+                      title={`Click to ${game.status === "published" ? "unpublish" : "publish"}`}
+                    />
                   )}
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="icon"
-                    title="Preview"
-                    className="hover:text-blue-600"
-                  >
-                    <a
-                      href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : type === "wordsearches" ? "wordsearch" : "sudoku"}&id=${game.id}&lang=${lang}&org=${orgId}&preview=true`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                </td>
+
+                {/* Plays */}
+                <td>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {game.status === "published"
+                      ? (game.plays ?? 0).toLocaleString()
+                      : "—"}
+                  </span>
+                </td>
+
+                {/* Updated */}
+                <td>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {formatRelativeTime(
+                      game.date_updated || game.date_created,
+                    )}
+                  </span>
+                </td>
+
+                {/* Actions */}
+                <td>
+                  <div className="row-actions justify-end">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="icon"
+                      className="size-8"
                     >
-                      <Eye className="size-4" />
-                    </a>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(game)}
-                    title="Edit"
-                    className="hover:text-amber-600"
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(game.id)}
-                    title="Delete"
-                    className="hover:text-red-600"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
+                      <a
+                        href={`/play?type=${type === "crosswords" ? "crosswords" : type === "wordgames" ? "word" : type === "wordsearches" ? "wordsearch" : "sudoku"}&id=${game.id}&lang=${lang}&org=${orgId}&preview=true`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Preview"
+                        aria-label="Preview"
+                        tabIndex={0}
+                      >
+                        <Eye className="size-4" />
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-8"
+                      onClick={() => onEdit(game)}
+                      title="Edit"
+                      aria-label="Edit"
+                      tabIndex={0}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }

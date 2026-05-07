@@ -2,9 +2,8 @@
 
 import Link from "next/link"
 import type { ComponentType } from "react"
+import { Button } from "@/components/ui/button"
 import { Grid, Grid3x3, Search, SpellCheck2 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 
 interface OverviewCounts {
   crosswords: number
@@ -23,8 +22,8 @@ type GameType = {
   label: string
   description: string
   icon: ComponentType<{ className?: string }>
-  accent: string
-  iconBg: string
+  accentColor: string
+  accentBg: string
   countKey: keyof OverviewCounts
   comingSoon?: boolean
 }
@@ -35,8 +34,8 @@ const GAME_TYPES: GameType[] = [
     label: "Crosswords",
     description: "Classic grid-based word puzzles with across and down clues.",
     icon: Grid3x3,
-    accent: "from-blue-500 to-indigo-500",
-    iconBg: "bg-blue-50 text-blue-600",
+    accentColor: "#1d4ed8",
+    accentBg: "#dbeafe",
     countKey: "crosswords",
   },
   {
@@ -44,8 +43,8 @@ const GAME_TYPES: GameType[] = [
     label: "Word Game",
     description: "Vocabulary and spelling challenges for players of all ages.",
     icon: SpellCheck2,
-    accent: "from-emerald-500 to-teal-500",
-    iconBg: "bg-green-50 text-green-600",
+    accentColor: "#15803d",
+    accentBg: "#dcfce7",
     countKey: "wordgames",
   },
   {
@@ -53,8 +52,8 @@ const GAME_TYPES: GameType[] = [
     label: "Word Search",
     description: "Hidden word grids — words concealed in any direction.",
     icon: Search,
-    accent: "from-violet-500 to-pink-500",
-    iconBg: "bg-purple-50 text-purple-600",
+    accentColor: "#7e22ce",
+    accentBg: "#f3e8ff",
     countKey: "wordsearches",
   },
   {
@@ -62,79 +61,107 @@ const GAME_TYPES: GameType[] = [
     label: "Sudoku",
     description: "Classic number-placement puzzles on a 9×9 grid.",
     icon: Grid,
-    accent: "from-orange-400 to-yellow-400",
-    iconBg: "bg-orange-50 text-orange-500",
+    accentColor: "#b45309",
+    accentBg: "#fef3c7",
     countKey: "sudoku",
     comingSoon: true,
   },
 ]
 
-export default function DashboardContent({ counts, publishedCount }: Props) {
+const DashboardContent = ({ counts, publishedCount }: Props) => {
   const totalGames =
     counts.crosswords + counts.wordgames + counts.wordsearches + counts.sudoku
   const activeTypes = GAME_TYPES.filter((g) => !g.comingSoon).length
 
   return (
-    <div className="px-4 sm:px-6 py-6">
+    <div>
       {/* Hero */}
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-[#0f172a] tracking-tight mb-1">Games Overview</h1>
-        <p className="text-sm text-[#64748b]">
-          Manage your game library — select a type to browse, filter, and create puzzles.
-        </p>
+      <div className="page-head mb-6">
+        <div className="min-w-0 flex-1">
+          <h1 className="page-title">Games Overview</h1>
+          <p className="text-sm text-muted-foreground mt-0.5 mb-0">
+            Manage your game library — select a type to browse, filter, and create
+            puzzles.
+          </p>
+        </div>
       </div>
 
       {/* Summary strip */}
-      <Card className="mb-6 rounded-[4px] shadow-sharp">
-        <CardContent className="flex flex-wrap gap-x-6 gap-y-3 items-center py-3.5">
+      <div className="mb-6 bg-card border border-border rounded-lg shadow-sharp">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-center px-5 py-3.5">
           <div className="flex flex-col gap-0.5">
-            <span className="text-xl font-bold text-[#0f172a] leading-none">{totalGames}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-[#94a3b8]">Total games</span>
+            <span className="text-xl font-bold text-foreground leading-none">
+              {totalGames}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Total games
+            </span>
           </div>
-          <div className="w-px self-stretch bg-[#e2e8f0]" />
+          <div className="w-px self-stretch bg-border" />
           <div className="flex flex-col gap-0.5">
-            <span className="text-xl font-bold text-[#0f172a] leading-none">{publishedCount}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-[#94a3b8]">Published</span>
+            <span className="text-xl font-bold text-foreground leading-none">
+              {publishedCount}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Published
+            </span>
           </div>
-          <div className="w-px self-stretch bg-[#e2e8f0]" />
+          <div className="w-px self-stretch bg-border" />
           <div className="flex flex-col gap-0.5">
-            <span className="text-xl font-bold text-[#0f172a] leading-none">{activeTypes}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-[#94a3b8]">Game types</span>
+            <span className="text-xl font-bold text-foreground leading-none">
+              {activeTypes}
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Game types
+            </span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Game cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {GAME_TYPES.map((g) => {
           const Icon = g.icon
           const cardContent = (
-            <Card
-              className={`overflow-hidden rounded-[4px] shadow-sharp transition-all p-0 gap-0 ${
+            <div
+              className={`overflow-hidden rounded-lg border border-border bg-card transition-all ${
                 g.comingSoon
                   ? "opacity-50 cursor-not-allowed"
-                  : "hover:shadow-md hover:border-[#cbd5e1] cursor-pointer"
+                  : "hover:shadow-md hover:border-border-strong cursor-pointer"
               }`}
             >
               {/* Colored top accent */}
-              <div className={`h-[3px] bg-gradient-to-r ${g.accent}`} />
+              <div
+                className="h-[3px]"
+                style={{ background: g.accentColor }}
+              />
 
               {/* Card body */}
               <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-4">
                 <div className="min-w-0 flex items-start gap-3">
-                  <div className={`flex items-center justify-center size-8 rounded-[4px] ${g.iconBg}`}>
+                  <div
+                    className="flex items-center justify-center size-8 rounded-md"
+                    style={{
+                      background: g.accentBg,
+                      color: g.accentColor,
+                    }}
+                  >
                     <Icon className="size-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-[#0f172a] text-[15px] mb-1">{g.label}</p>
-                    <p className="text-xs text-[#64748b] leading-relaxed">{g.description}</p>
+                    <p className="font-semibold text-foreground text-[15px] mb-1">
+                      {g.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {g.description}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-3xl font-bold text-[#0f172a] leading-none tracking-tight">
+                  <p className="text-3xl font-bold text-foreground leading-none tracking-tight">
                     {g.comingSoon ? "—" : counts[g.countKey]}
                   </p>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#94a3b8] mt-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-1">
                     puzzles
                   </p>
                 </div>
@@ -143,17 +170,25 @@ export default function DashboardContent({ counts, publishedCount }: Props) {
               {/* Card footer */}
               <div className="px-5 pb-4 flex items-center justify-between">
                 {g.comingSoon ? (
-                  <Badge variant="info">Coming soon</Badge>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full">
+                    Coming soon
+                  </span>
                 ) : (
                   <>
-                    <span className="text-xs font-semibold text-indigo-600">View all →</span>
-                    <span className="text-[11px] font-semibold px-3 py-1 border border-[#e2e8f0] rounded-[4px] text-[#0f172a] bg-[#f8fafc]">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      style={{ color: g.accentColor }}
+                    >
+                      View all →
+                    </Button>
+                    <Button variant="outline" size="sm">
                       ＋ Create new
-                    </span>
+                    </Button>
                   </>
                 )}
               </div>
-            </Card>
+            </div>
           )
 
           return g.comingSoon ? (
@@ -168,3 +203,5 @@ export default function DashboardContent({ counts, publishedCount }: Props) {
     </div>
   )
 }
+
+export default DashboardContent

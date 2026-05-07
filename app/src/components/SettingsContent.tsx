@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FieldLabel } from "@/components/ui/field"
 import {
   Select,
   SelectContent,
@@ -186,7 +186,7 @@ export default function SettingsContent({
         <Card>
           <CardContent className="p-4 sm:p-6 lg:p-8 space-y-8">
             <div className="space-y-2">
-              <Label htmlFor="org-name">Organization Name</Label>
+              <FieldLabel htmlFor="org-name">Organization Name</FieldLabel>
               <Input
                 id="org-name"
                 value={orgName}
@@ -206,7 +206,7 @@ export default function SettingsContent({
               />
             ) : (
               <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-semibold text-[#64748b] uppercase tracking-[0.04em]">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.04em]">
                   Workspace Logo
                 </span>
                 <div className="flex items-center gap-3">
@@ -218,12 +218,12 @@ export default function SettingsContent({
                     <img
                       src={logoPreview}
                       alt="Organization logo"
-                      className="h-12 max-w-[120px] rounded-[4px] object-contain border border-[#e2e8f0] bg-[#f8fafc] p-1"
+                      className="h-12 max-w-[120px] rounded-md object-contain border border-border bg-background p-1"
                     />
                   ) : (
-                    <span className="text-sm text-[#94a3b8]">No logo set</span>
+                    <span className="text-sm text-muted-foreground">No logo set</span>
                   )}
-                  <span className="text-xs text-[#94a3b8]">
+                  <span className="text-xs text-muted-foreground">
                     Only the owner can change the logo
                   </span>
                 </div>
@@ -233,7 +233,7 @@ export default function SettingsContent({
             {/* Language + Default Branding — Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
+                <FieldLabel htmlFor="language">Language</FieldLabel>
                 <Select
                   value={language}
                   onValueChange={setLanguage}
@@ -249,7 +249,7 @@ export default function SettingsContent({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="branding">Default Branding</Label>
+                <FieldLabel htmlFor="branding">Default Branding</FieldLabel>
                 <Select
                   value={defaultBranding || "__none__"}
                   onValueChange={(v) =>
@@ -275,7 +275,7 @@ export default function SettingsContent({
 
           {/* Save Footer */}
           {isOwner && (
-            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[var(--tool-border)] flex items-center justify-end gap-3">
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
@@ -283,7 +283,7 @@ export default function SettingsContent({
           )}
 
           {!isOwner && (
-            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9]">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[var(--tool-border)]">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <Lock className="size-4" />
                 Settings can only be changed by the organization owner
@@ -295,9 +295,9 @@ export default function SettingsContent({
         {/* Appearance (per-user) */}
         <Card>
           <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6">
-            <div className="border-b border-[#f1f5f9] pb-4">
-              <h2 className="text-lg font-semibold text-navy-900">Appearance</h2>
-              <p className="text-sm text-[#94a3b8] mt-1">
+            <div className="border-b border-border pb-4">
+              <h2 className="text-lg font-semibold text-foreground">Appearance</h2>
+              <p className="text-sm text-muted-foreground mt-1">
                 Controls how the dashboard chrome looks for you.
               </p>
             </div>
@@ -309,12 +309,12 @@ export default function SettingsContent({
                 onCheckedChange={(checked) => void handleChromeToggle(checked)}
                 className="mt-0.5"
               />
-              <Label
+              <label
                 htmlFor="use-platform-chrome"
-                className="text-sm font-normal cursor-pointer"
+                className="text-sm font-normal cursor-pointer text-foreground"
               >
                 Use the platform default appearance (don&apos;t apply my organization&apos;s brand to the dashboard).
-              </Label>
+              </label>
             </div>
           </CardContent>
         </Card>
@@ -325,17 +325,17 @@ export default function SettingsContent({
         {/* Social Sharing */}
         <Card>
           <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6">
-            <div className="border-b border-[#f1f5f9] pb-4">
-              <h2 className="text-lg font-semibold text-navy-900">
+            <div className="border-b border-border pb-4">
+              <h2 className="text-lg font-semibold text-foreground">
                 Social Sharing
               </h2>
-              <p className="text-sm text-[#94a3b8] mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Configure how shared game results appear on social media.
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="share-image-url">Share Image URL</Label>
+              <FieldLabel htmlFor="share-image-url">Share Image URL</FieldLabel>
               <Input
                 id="share-image-url"
                 value={shareImageUrl}
@@ -346,7 +346,7 @@ export default function SettingsContent({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="share-title">Share Title</Label>
+                <FieldLabel htmlFor="share-title">Share Title</FieldLabel>
                 <Input
                   id="share-title"
                   value={shareTitle}
@@ -356,7 +356,7 @@ export default function SettingsContent({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="share-description">Share Description</Label>
+                <FieldLabel htmlFor="share-description">Share Description</FieldLabel>
                 <Input
                   id="share-description"
                   value={shareDescription}
@@ -366,13 +366,13 @@ export default function SettingsContent({
                 />
               </div>
             </div>
-            <p className="text-xs text-[#94a3b8]">
+            <p className="text-xs text-muted-foreground">
               Available variables:{" "}
-              <code className="bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
+              <code className="bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                 {"{{time}}"}
               </code>{" "}
               — solver&apos;s time (MM:SS),{" "}
-              <code className="bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[#475569]">
+              <code className="bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                 {"{{title}}"}
               </code>{" "}
               — game title
@@ -380,7 +380,7 @@ export default function SettingsContent({
           </CardContent>
 
           {isOwner && (
-            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
+            <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-border flex items-center justify-end gap-3">
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
@@ -426,8 +426,8 @@ function PasswordSection() {
   return (
     <Card>
       <CardContent className="p-4 sm:p-6 lg:p-8 pt-6 space-y-6">
-        <div className="border-b border-[#f1f5f9] pb-4">
-          <h2 className="text-lg font-semibold text-navy-900">
+        <div className="border-b border-border pb-4">
+          <h2 className="text-lg font-semibold text-foreground">
             Security &amp; Access
           </h2>
         </div>
@@ -479,7 +479,7 @@ function PasswordSection() {
           </form>
         </Form>
       </CardContent>
-      <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[#f1f5f9] flex items-center justify-end gap-3">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 border-t border-[var(--tool-border)] flex items-center justify-end gap-3">
         <Button
           variant="outline"
           form="password-form"

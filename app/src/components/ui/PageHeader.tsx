@@ -1,23 +1,35 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react"
+import { cn } from "@/lib/utils"
 
-interface PageHeaderProps {
-  title: string;
-  description?: string | ReactNode;
-  action?: ReactNode;
+type PageHeaderProps = {
+  title: string
+  subtitle?: ReactNode
+  /** @deprecated Use `subtitle` instead */
+  description?: ReactNode
+  action?: ReactNode
+  className?: string
 }
 
-export const PageHeader = ({ title, description, action }: PageHeaderProps) => {
+export const PageHeader = ({
+  title,
+  subtitle,
+  description,
+  action,
+  className,
+}: PageHeaderProps) => {
+  const sub = subtitle ?? description
+
   return (
-    <header className="mb-10 flex items-start justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold text-navy-900 tracking-tight mb-1">
-          {title}
-        </h1>
-        {description && (
-          <p className="text-[#64748b] text-[15px]">{description}</p>
+    <div className={cn("page-head", className)}>
+      <div className="min-w-0 flex-1">
+        <h1 className="page-title">{title}</h1>
+        {sub && (
+          <p className="text-sm text-muted-foreground mt-0.5 mb-0">
+            {sub}
+          </p>
         )}
       </div>
-      {action && <div>{action}</div>}
-    </header>
-  );
-};
+      {action && <div className="flex-shrink-0">{action}</div>}
+    </div>
+  )
+}

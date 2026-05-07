@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+
 import {
   PLATFORM_PUZZLE_IDS,
   type PreviewGameType,
@@ -114,6 +115,15 @@ export default function GamePreview({ availableTypes, defaultType }: Props) {
               type="button"
               size="sm"
               variant={type === t ? "default" : "outline"}
+              style={
+                type === t
+                  ? {
+                      background: "var(--primary, var(--tool-accent))",
+                      color: "var(--primary-foreground, #fff)",
+                      borderColor: "transparent",
+                    }
+                  : undefined
+              }
               aria-pressed={type === t}
               onClick={() => setType(t)}
             >

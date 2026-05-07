@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { Menu } from "lucide-react"
 import PlatformLogo from "@/components/PlatformLogo"
-import { Button } from "@/components/ui/button"
 
 interface DashboardTopbarProps {
   onOpenDrawer: () => void
@@ -12,33 +11,32 @@ interface DashboardTopbarProps {
   orgLogoUrl?: string | null
 }
 
-export default function DashboardTopbar({
+const DashboardTopbar = ({
   onOpenDrawer,
   platformName,
   isWhiteLabel,
   orgLogoUrl,
-}: DashboardTopbarProps) {
-  return (
-    <header className="lg:hidden fixed top-0 inset-x-0 h-14 z-30 flex items-center gap-3 px-3 bg-[#F8FAFC] border-b border-[#e2e8f0]">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={onOpenDrawer}
-        aria-label="Open navigation"
-      >
-        <Menu className="size-5" />
-      </Button>
-      <Link
-        href={isWhiteLabel ? "/dashboard" : "/"}
-        className="flex items-center"
-      >
-        <PlatformLogo
-          platformName={platformName}
-          orgLogoUrl={orgLogoUrl}
-          size="sm"
-        />
-      </Link>
-    </header>
-  )
-}
+}: DashboardTopbarProps) => (
+  <header className="lg:hidden fixed top-0 inset-x-0 h-12 z-30 flex items-center gap-3 px-3 bg-background border-b border-border">
+    <button
+      type="button"
+      onClick={onOpenDrawer}
+      aria-label="Open navigation"
+      className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
+    >
+      <Menu className="size-[18px]" />
+    </button>
+    <Link
+      href={isWhiteLabel ? "/dashboard" : "/"}
+      className="flex items-center"
+    >
+      <PlatformLogo
+        platformName={platformName}
+        orgLogoUrl={orgLogoUrl}
+        size="sm"
+      />
+    </Link>
+  </header>
+)
+
+export default DashboardTopbar

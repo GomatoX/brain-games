@@ -128,7 +128,7 @@ const KeysContent = ({
           {token ? (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <code className="flex-1 bg-slate-50 border border-[#e2e8f0] rounded-lg px-3 sm:px-4 py-2.5 text-sm text-[#0f172a] font-mono break-all">
+                <code className="flex-1 bg-muted border border-border rounded-lg px-3 sm:px-4 py-2.5 text-sm text-foreground font-mono break-all">
                   {token}
                 </code>
                 <Button
@@ -144,7 +144,7 @@ const KeysContent = ({
                 </Button>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <p className="text-xs text-[#64748b] flex-1">
+                <p className="text-xs text-muted-foreground flex-1">
                   Shared across your organization. Use this token to
                   authenticate API requests.
                 </p>
@@ -161,7 +161,7 @@ const KeysContent = ({
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <p className="text-sm text-[#64748b]">
+              <p className="text-sm text-muted-foreground">
                 No API token generated yet.
               </p>
               <Button

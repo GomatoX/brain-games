@@ -1,7 +1,6 @@
 "use client"
 import HelpHint from "../fields/HelpHint"
 import type { TokenDef } from "@/lib/branding/token-registry"
-import { Button } from "@/components/ui/button"
 
 type Props = {
   token: TokenDef
@@ -20,16 +19,16 @@ export default function TokenRow({
 }: Props) {
   return (
     <div
-      className="flex items-center gap-2 py-1 px-1 rounded hover:bg-accent focus-within:bg-accent"
+      className="bp-token-row"
       onMouseEnter={() => onHover?.(token.id)}
       onMouseLeave={() => onHover?.(null)}
       onFocus={() => onHover?.(token.id)}
       onBlur={() => onHover?.(null)}
     >
-      <span className="inline-block w-4 h-4 border rounded shrink-0" style={{ background: value }} />
-      <span className="font-medium truncate text-xs">{token.label}</span>
+      <span className="bp-token-swatch" style={{ background: value }} />
+      <span className="bp-token-label">{token.label}</span>
       <HelpHint text={token.description} />
-      <span className="font-mono text-[10px] text-muted-foreground ml-auto truncate">{token.id}</span>
+      <span className="bp-token-id">{token.id}</span>
       {isPinned ? (
         <>
           <input
@@ -37,28 +36,28 @@ export default function TokenRow({
             aria-label={`${token.label} color`}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-8 h-6 shrink-0 rounded border border-input cursor-pointer bg-background"
+            className="bp-swatch !w-5 !h-5"
           />
-          <Button
+          <button
             type="button"
-            variant="link"
-            size="sm"
             onClick={onReset}
-            className="h-auto p-0 text-xs shrink-0"
+            className="text-[10px] text-[var(--tool-accent)] hover:underline shrink-0"
+            aria-label={`Reset ${token.label}`}
+            tabIndex={0}
           >
             Reset
-          </Button>
+          </button>
         </>
       ) : (
-        <Button
+        <button
           type="button"
-          variant="link"
-          size="sm"
           onClick={() => onPin(value)}
-          className="h-auto p-0 text-xs shrink-0"
+          className="text-[10px] text-[var(--tool-text-faint)] hover:text-[var(--tool-text)] shrink-0"
+          aria-label={`Pin ${token.label}`}
+          tabIndex={0}
         >
           Pin
-        </Button>
+        </button>
       )}
     </div>
   )
