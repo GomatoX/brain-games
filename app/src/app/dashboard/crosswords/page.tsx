@@ -30,6 +30,7 @@ export default async function CrosswordsPage({
         difficulty: crosswords.difficulty,
         words: crosswords.words,
         mainWord: crosswords.mainWord,
+        plays: crosswords.plays,
         scheduledDate: crosswords.scheduledDate,
         brandingId: crosswords.brandingId,
         userId: crosswords.userId,
@@ -43,7 +44,7 @@ export default async function CrosswordsPage({
       .from(crosswords)
       .innerJoin(users, eq(users.id, crosswords.userId))
       .where(eq(crosswords.orgId, user.orgId))
-      .orderBy(desc(crosswords.createdAt))
+      .orderBy(desc(crosswords.updatedAt))
       .limit(PAGE_SIZE)
       .offset(offset),
     db

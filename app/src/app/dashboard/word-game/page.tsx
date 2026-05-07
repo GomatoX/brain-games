@@ -30,6 +30,7 @@ export default async function WordGamePage({
         word: wordgames.word,
         definition: wordgames.definition,
         maxAttempts: wordgames.maxAttempts,
+        plays: wordgames.plays,
         scheduledDate: wordgames.scheduledDate,
         brandingId: wordgames.brandingId,
         userId: wordgames.userId,
@@ -43,7 +44,7 @@ export default async function WordGamePage({
       .from(wordgames)
       .innerJoin(users, eq(users.id, wordgames.userId))
       .where(eq(wordgames.orgId, user.orgId))
-      .orderBy(desc(wordgames.createdAt))
+      .orderBy(desc(wordgames.updatedAt))
       .limit(PAGE_SIZE)
       .offset(offset),
     db

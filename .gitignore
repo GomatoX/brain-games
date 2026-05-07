@@ -16,6 +16,8 @@ app/public/word-game-engine.iife.js
 
 # SQLite data
 app/data/
+app/data/_local
+local.db
 
 # IDE
 .vscode

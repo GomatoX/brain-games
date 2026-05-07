@@ -311,16 +311,10 @@
   text-overflow: ellipsis;
 }
 
-/* Row actions — hidden until hover */
+/* Row actions */
 .gtbl .row-actions {
   display: flex;
   gap: 2px;
-  opacity: 0;
-  transition: opacity 0.12s;
-}
-
-.gtbl tbody tr:hover .row-actions {
-  opacity: 1;
 }
 
 

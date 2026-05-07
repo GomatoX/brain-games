@@ -16,7 +16,7 @@ import { PageHeader } from "@/components/ui/PageHeader"
 import { SearchInput } from "@/components/ui/SearchInput"
 import { FilterChip } from "@/components/ui/FilterChip"
 
-import { Code, Copy, Check, Plus, Upload, Download } from "lucide-react"
+import { Code, Copy, Check, Plus, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { GameSection } from "@/components/GameSection"
 import { GameModal } from "@/components/GameModal"
@@ -73,6 +73,7 @@ export const GameListClient = ({
     type: GameType
   } | null>(null)
   const [embedCopied, setEmbedCopied] = useState(false)
+  const [selected, setSelected] = useState<Set<string | number>>(new Set())
 
   /* ── Client-side search + filter ── */
   const [query, setQuery] = useState("")
@@ -134,16 +135,111 @@ export const GameListClient = ({
     setTimeout(() => setEmbedCopied(false), 2000)
   }
 
-  const handleExportGameCsv = (game: Game) => {
+  const handleToggleSelect = (id: string | number) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleToggleSelectAll = () => {
+    if (selected.size === filteredGames.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(filteredGames.map((g) => g.id)))
+    }
+  }
+
+  const handleExportCsv = () => {
+    const gamesToExport = selected.size > 0
+      ? filteredGames.filter((g) => selected.has(g.id))
+      : filteredGames
+    if (gamesToExport.length === 0) {
+      toast.error("No games to export")
+      return
+    }
+
     const rows: string[][] = []
-    if (game.main_word) {
-      rows.push(["Main Word", game.main_word])
-      rows.push([])
+
+    if (type === "crosswords") {
+      rows.push(["Game Title", "Main Word", "Grid Size", "Difficulty", "Status", "Word", "Clue"])
+      for (const game of gamesToExport) {
+        const words = game.words ?? []
+        if (words.length === 0) {
+          rows.push([
+            game.title || "",
+            game.main_word || "",
+            String(game.grid_size || 13),
+            game.difficulty || "",
+            game.status || "",
+            "",
+            "",
+          ])
+        } else {
+          for (const w of words) {
+            rows.push([
+              game.title || "",
+              game.main_word || "",
+              String(game.grid_size || 13),
+              game.difficulty || "",
+              game.status || "",
+              w.word,
+              w.clue,
+            ])
+          }
+        }
+      }
+    } else if (type === "wordgames") {
+      rows.push(["Game Title", "Word", "Definition", "Max Attempts", "Difficulty", "Status"])
+      for (const game of gamesToExport) {
+        rows.push([
+          game.title || "",
+          game.word || "",
+          game.definition || "",
+          String(game.max_attempts ?? ""),
+          game.difficulty || "",
+          game.status || "",
+        ])
+      }
+    } else if (type === "wordsearches") {
+      rows.push(["Game Title", "Difficulty", "Status", "Word", "Clue"])
+      for (const game of gamesToExport) {
+        const words = game.words ?? []
+        if (words.length === 0) {
+          rows.push([
+            game.title || "",
+            game.difficulty || "",
+            game.status || "",
+            "",
+            "",
+          ])
+        } else {
+          for (const w of words) {
+            rows.push([
+              game.title || "",
+              game.difficulty || "",
+              game.status || "",
+              w.word,
+              w.clue,
+            ])
+          }
+        }
+      }
+    } else {
+      rows.push(["Game Title", "Difficulty", "Status", "Plays", "Created"])
+      for (const game of gamesToExport) {
+        rows.push([
+          game.title || "",
+          game.difficulty || "",
+          game.status || "",
+          String(game.plays ?? 0),
+          game.date_created || "",
+        ])
+      }
     }
-    rows.push(["Word", "Clue"])
-    if (game.words) {
-      for (const w of game.words) rows.push([w.word, w.clue])
-    }
+
     const csvContent = rows
       .map((row) =>
         row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
@@ -155,9 +251,10 @@ export const GameListClient = ({
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `${game.title || "crossword"}-words.csv`
+    link.download = `${title.toLowerCase()}-export.csv`
     link.click()
     URL.revokeObjectURL(url)
+    toast.success(`Exported ${gamesToExport.length} ${gamesToExport.length === 1 ? "game" : "games"}`)
   }
 
   const handleDelete = async (deleteType: GameType, id: string | number) => {
@@ -212,25 +309,13 @@ export const GameListClient = ({
         title={title}
         subtitle={`${total} ${total === 1 ? "puzzle" : "puzzles"} · ${counts.published} published, ${counts.draft} drafts`}
         action={
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => toast.info("Import coming soon")}
-              aria-label="Import games"
-              tabIndex={0}
-            >
-              <Download className="size-4" />
-              Import
-            </Button>
-            <Button
-              type="button"
-              onClick={() => setModal({ open: true, mode: "create" })}
-            >
-              <Plus className="size-4" />
-              New {title.replace(/s$/, "")}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            onClick={() => setModal({ open: true, mode: "create" })}
+          >
+            <Plus className="size-4" />
+            New {title.replace(/s$/, "")}
+          </Button>
         }
         className="mb-3"
       />
@@ -278,9 +363,23 @@ export const GameListClient = ({
           />
         ))}
         <div className="flex-1" />
-        <Button type="button" variant="outline" size="sm" className="h-8">
+        {selected.size > 0 && (
+          <span className="text-xs text-muted-foreground self-center">
+            {selected.size} selected
+          </span>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8"
+          onClick={handleExportCsv}
+          disabled={selected.size === 0}
+          aria-label="Export games as CSV"
+          tabIndex={0}
+        >
           <Upload className="size-3.5" />
-          Export
+          Export{selected.size > 0 ? ` (${selected.size})` : ""}
         </Button>
       </div>
 
@@ -294,7 +393,9 @@ export const GameListClient = ({
         onDelete={(id) => setDeleteConfirm({ type, id })}
         onToggleStatus={handleToggleStatus}
         onShowCode={(g) => setEmbedPopover({ game: g, type })}
-        onExportCsv={type === "crosswords" ? handleExportGameCsv : undefined}
+        selected={selected}
+        onToggleSelect={handleToggleSelect}
+        onToggleSelectAll={handleToggleSelectAll}
         lang={initialLang}
         orgId={orgId}
       />

@@ -56,7 +56,9 @@ export const GameSection = ({
   onDelete,
   onToggleStatus,
   onShowCode,
-  onExportCsv,
+  selected,
+  onToggleSelect,
+  onToggleSelectAll,
   lang,
   orgId,
 }: {
@@ -68,7 +70,9 @@ export const GameSection = ({
   onDelete: (id: string | number) => void
   onToggleStatus: (type: GameType, id: string | number, status: string) => void
   onShowCode: (game: Game) => void
-  onExportCsv?: (game: Game) => void
+  selected: Set<string | number>
+  onToggleSelect: (id: string | number) => void
+  onToggleSelectAll: () => void
   lang: string
   orgId: string
 }) => {
@@ -105,7 +109,16 @@ export const GameSection = ({
       <table className="gtbl">
         <thead>
           <tr>
-            <th style={{ width: "30%" }}>{firstColumnHeader}</th>
+            <th style={{ width: "3%" }}>
+              <input
+                type="checkbox"
+                checked={games.length > 0 && selected.size === games.length}
+                onChange={onToggleSelectAll}
+                aria-label="Select all games"
+                className="accent-primary size-3.5 cursor-pointer"
+              />
+            </th>
+            <th style={{ width: "27%" }}>{firstColumnHeader}</th>
             {hasWordColumn && <th style={{ width: "14%" }}>Word</th>}
             {hasEntries && <th style={{ width: "13%" }}>Entries</th>}
             {hasDifficulty && <th style={{ width: "14%" }}>Difficulty</th>}
@@ -120,6 +133,16 @@ export const GameSection = ({
             const Icon = GAME_ICON[type]
             return (
               <tr key={game.id}>
+                {/* Checkbox */}
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(game.id)}
+                    onChange={() => onToggleSelect(game.id)}
+                    aria-label={`Select ${game.title || game.id}`}
+                    className="accent-primary size-3.5 cursor-pointer"
+                  />
+                </td>
                 {/* Puzzle */}
                 <td>
                   <TitleCell

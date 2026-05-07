@@ -30,6 +30,7 @@ export default async function WordSearchPage({
         difficulty: wordsearches.difficulty,
         words: wordsearches.words,
         gridSize: wordsearches.gridSize,
+        plays: wordsearches.plays,
         scheduledDate: wordsearches.scheduledDate,
         brandingId: wordsearches.brandingId,
         userId: wordsearches.userId,
@@ -43,7 +44,7 @@ export default async function WordSearchPage({
       .from(wordsearches)
       .innerJoin(users, eq(users.id, wordsearches.userId))
       .where(eq(wordsearches.orgId, user.orgId))
-      .orderBy(desc(wordsearches.createdAt))
+      .orderBy(desc(wordsearches.updatedAt))
       .limit(PAGE_SIZE)
       .offset(offset),
     db
