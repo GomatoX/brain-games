@@ -11,6 +11,7 @@ import {
   Plus,
   Eye,
   Pencil,
+  Code,
   CalendarClock,
   Inbox,
   Grid3x3,
@@ -287,6 +288,17 @@ export const GameSection = ({
                       tabIndex={0}
                     >
                       <Pencil className="size-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-8"
+                      onClick={() => onShowCode(game)}
+                      title="Embed code"
+                      aria-label="Embed code"
+                      tabIndex={0}
+                    >
+                      <Code className="size-4" />
                     </Button>
                   </div>
                 </td>
